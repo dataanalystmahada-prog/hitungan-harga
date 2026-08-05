@@ -29,6 +29,7 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
   const { masterProduk, modalProduk, modalLogo, margin: marginList, users } = useMasterData();
 
   const [sales, setSales] = useState('');
+  const [namaPt, setNamaPt] = useState('');
   const [produk, setProduk] = useState('');
   const [kode, setKode] = useState('');
   const [prosesLogo, setProsesLogo] = useState('');
@@ -45,6 +46,7 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
   useEffect(() => {
     if (calculation) {
       setSales(role === 'sales' && user?.nama ? user.nama : calculation.sales || '');
+      setNamaPt(calculation.nama_pt || '');
       setProduk(calculation.produk || '');
       setKode(calculation.kode || '');
       setProsesLogo(calculation.proses_logo || '');
@@ -154,6 +156,7 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
 
     const updates: Partial<Perhitungan> = {
       sales,
+      nama_pt: (namaPt || '').trim(),
       produk,
       kode,
       proses_logo: prosesLogo,
@@ -176,7 +179,7 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Edit Kalkulasi Harga"
-      subtitle="Perbarui produk, kuantiti, atau diskon dengan kalkulasi otomatis dari master data."
+      subtitle="Perbarui produk, nama klien, kuantiti, atau diskon dengan kalkulasi otomatis dari master data."
       maxWidth="2xl"
       footer={
         <div className="flex items-center justify-between w-full">
@@ -207,7 +210,7 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
           </span>
         </div>
 
-        {/* Row 1: Sales PIC & Produk Dropdown */}
+        {/* Row 1: Sales PIC & Nama Klien */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
             label="Sales In-Charge (PIC)"
@@ -216,6 +219,16 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
             onChange={(e) => setSales(e.target.value)}
             disabled={role === 'sales'}
           />
+          <Input
+            label="Nama Klien / Perusahaan"
+            placeholder="Contoh: PT Bank Central Asia Tbk"
+            value={namaPt}
+            onChange={(e) => setNamaPt(e.target.value)}
+          />
+        </div>
+
+        {/* Row 2: Produk Dropdown */}
+        <div>
           <Select
             label="Pilih Produk (Master)"
             options={productOptions}

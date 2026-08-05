@@ -21,13 +21,12 @@ const CONFIG = {
   DEFAULT_SUPABASE_URL: 'https://your-project-id.supabase.co',
   DEFAULT_API_KEY: 'your-anon-or-service-role-key',
   
-  // Sheet names matching the active Google Spreadsheet
+  // Sheet names matching the active Google Spreadsheet (Master Data only)
+  // Perhitungan & SPH dikelola langsung oleh aplikasi web React dan tidak di-overwrite dari Spreadsheet
   SHEETS: {
     MODAL_PRODUK: 'ModalProduk',
     MODAL_LOGO: 'ModalLogo',
     MARGIN: 'Margin',
-    PERHITUNGAN: 'Perhitungan',
-    SPH: 'SPH',
     USERS: 'Users',
     DIVISI: 'Divisi',
     BRANDS: 'Brands',
@@ -40,8 +39,6 @@ const CONFIG = {
     'ModalProduk': 'modal_produk',
     'ModalLogo': 'modal_logo',
     'Margin': 'margin',
-    'Perhitungan': 'perhitungan',
-    'SPH': 'sph',
     'Users': 'users',
     'Divisi': 'divisi',
     'Brands': 'brands',

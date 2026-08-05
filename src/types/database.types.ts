@@ -56,6 +56,7 @@ export interface Perhitungan {
   id: string;
   tanggal?: string;
   sales?: string;
+  nama_pt?: string;
   produk: string;
   kode?: string;
   proses_logo?: string;

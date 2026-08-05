@@ -84,6 +84,7 @@ export const ManualKalkulator: React.FC = () => {
         id: `MANUAL-${Date.now()}`,
         tanggal: dateFormatted,
         sales: (user?.nama || sales || 'Sales Admin').trim(),
+        nama_pt: (namaPt || '').trim(),
         produk: summaryProduk,
         kode: summaryKode,
         proses_logo: summaryLogo,

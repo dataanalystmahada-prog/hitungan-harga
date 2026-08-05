@@ -7,7 +7,23 @@ import { TableColumn, FilterConfig } from '../types/table.types';
 import { Perhitungan, UserSales, MasterProduk, ModalLogo } from '../types/database.types';
 import { formatRupiah, formatNumber, formatPercent } from '../utils/formatters';
 import { Button } from '../components/common/Button';
-import { Plus, Trash2, FileText, CheckSquare, Layers, Pencil } from 'lucide-react';
+import { Card } from '../components/common/Card';
+import {
+  Plus,
+  Trash2,
+  FileText,
+  CheckSquare,
+  Layers,
+  Pencil,
+  Building2,
+  Calendar,
+  User,
+  Calculator,
+  TrendingUp,
+  DollarSign,
+  Sparkles,
+  ShoppingBag
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SPHPreviewModal } from '../components/sph/SPHPreviewModal';
 import { EditPerhitunganModal } from '../components/perhitungan/EditPerhitunganModal';
@@ -35,6 +51,7 @@ export const PerhitunganPage: React.FC = () => {
   const {
     dataList,
     pagination,
+    metrics,
     isLoading,
     refetch,
     deleteCalculation,
@@ -52,6 +69,7 @@ export const PerhitunganPage: React.FC = () => {
 
   const [sphModalData, setSphModalData] = useState<{
     isOpen: boolean;
+    sourceCalculationIds?: string[];
     data?: {
       no_sph?: string;
       tanggal?: string;
@@ -68,6 +86,7 @@ export const PerhitunganPage: React.FC = () => {
       namaPt?: string;
       brand?: string;
       items?: SPHItemDetail[];
+      sourceCalculationIds?: string[];
     };
   }>({ isOpen: false });
 
@@ -184,13 +203,18 @@ export const PerhitunganPage: React.FC = () => {
     const sphLineItems: SPHItemDetail[] = selectedRows.flatMap(row => parsePerhitunganItems(row));
     const totalDiskon = selectedRows.reduce((acc, row) => acc + (row.diskon || 0), 0);
     const commonSales = selectedRows[0]?.sales || '';
+    const commonNamaPt = selectedRows.find(r => r.nama_pt)?.nama_pt || '';
+    const selectedIdsArray = Array.from(selectedIds);
 
     setSphModalData({
       isOpen: true,
+      sourceCalculationIds: selectedIdsArray,
       data: {
         sales: commonSales,
+        namaPt: commonNamaPt,
         diskon: totalDiskon,
         items: sphLineItems,
+        sourceCalculationIds: selectedIdsArray,
         deskripsi: sphLineItems.length > 1
           ? `Paket Penawaran Khusus (${sphLineItems.length} Macam Produk)`
           : undefined,
@@ -206,14 +230,17 @@ export const PerhitunganPage: React.FC = () => {
 
     setSphModalData({
       isOpen: true,
+      sourceCalculationIds: [row.id],
       data: {
         sales: row.sales || '',
+        namaPt: row.nama_pt || '',
         diskon: row.diskon || 0,
         items: sphLineItems,
         produk: row.produk,
         qty: row.qty,
         hargaJualUnit: row.harga_jual,
         totalHargaJual: row.total_harga_jual,
+        sourceCalculationIds: [row.id],
         deskripsi: sphLineItems.length > 1
           ? `Paket Penawaran Khusus (${sphLineItems.length} Macam Produk)`
           : undefined,
@@ -254,7 +281,7 @@ export const PerhitunganPage: React.FC = () => {
           />
         </div>
       ),
-      width: 48,
+      width: 44,
       align: 'center',
       sortable: false,
       hideable: false,
@@ -274,31 +301,68 @@ export const PerhitunganPage: React.FC = () => {
       key: 'tanggal',
       title: 'Tanggal',
       width: 105,
-      render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500">{row.tanggal}</span>,
+      render: (row: Perhitungan) => (
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+          <Calendar className="w-3.5 h-3.5 opacity-60 flex-shrink-0" />
+          <span>{row.tanggal || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'nama_pt',
+      title: 'Nama Klien',
+      width: 175,
+      render: (row: Perhitungan) => (
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex-shrink-0">
+            <Building2 className="w-3.5 h-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-800 dark:text-slate-100 truncate text-xs" title={row.nama_pt || 'Non-PT / Umum'}>
+              {row.nama_pt || <span className="text-slate-400 font-normal italic">Non-PT / Umum</span>}
+            </p>
+          </div>
+        </div>
+      ),
     },
     {
       key: 'sales',
-      title: 'Sales',
+      title: 'Sales PIC',
       width: 130,
-      render: (row: Perhitungan) => <span className="font-semibold text-slate-800 dark:text-slate-200">{row.sales}</span>,
+      render: (row: Perhitungan) => (
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300">
+            {(row.sales || 'S').charAt(0).toUpperCase()}
+          </div>
+          <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate max-w-[90px]">
+            {row.sales || '-'}
+          </span>
+        </div>
+      ),
     },
     {
       key: 'produk',
-      title: 'Produk',
+      title: 'Produk & Model',
       width: 220,
       render: (row: Perhitungan) => (
-        <div>
-          <p className="font-medium text-slate-900 dark:text-slate-100">{row.produk}</p>
-          {row.kode && <span className="text-[10px] font-mono text-slate-400">Kode: {row.kode}</span>}
+        <div className="flex flex-col gap-0.5">
+          <p className="font-semibold text-slate-900 dark:text-slate-100 text-xs sm:text-sm line-clamp-1" title={row.produk}>
+            {row.produk}
+          </p>
+          {row.kode && row.kode !== '-' && (
+            <span className="inline-block px-1.5 py-0.2 text-[10px] font-mono rounded bg-slate-100 dark:bg-slate-800 text-slate-500 w-fit">
+              Kode: {row.kode}
+            </span>
+          )}
         </div>
       ),
     },
     {
       key: 'proses_logo',
       title: 'Proses Logo',
-      width: 180,
+      width: 170,
       render: (row: Perhitungan) => (
-        <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/40">
           {row.proses_logo || '-'}
         </span>
       ),
@@ -307,8 +371,12 @@ export const PerhitunganPage: React.FC = () => {
       key: 'qty',
       title: 'Qty',
       align: 'center',
-      width: 80,
-      render: (row: Perhitungan) => <span className="font-mono font-bold">{formatNumber(row.qty)}</span>,
+      width: 85,
+      render: (row: Perhitungan) => (
+        <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+          {formatNumber(row.qty)} <span className="text-[10px] font-normal text-slate-400">pcs</span>
+        </div>
+      ),
     },
     ...(role !== 'sales' ? ([
       {
@@ -316,14 +384,14 @@ export const PerhitunganPage: React.FC = () => {
         title: 'Modal Unit',
         align: 'right',
         width: 110,
-        render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_produk)}</span>,
+        render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500">{formatRupiah(row.modal_produk)}</span>,
       },
       {
         key: 'modal_logo',
         title: 'Modal Logo',
         align: 'right',
         width: 110,
-        render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_logo)}</span>,
+        render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500">{formatRupiah(row.modal_logo)}</span>,
       },
     ] as TableColumn<Perhitungan>[]) : []),
     {
@@ -331,26 +399,34 @@ export const PerhitunganPage: React.FC = () => {
       title: 'Margin',
       align: 'center',
       width: 90,
-      render: (row: Perhitungan) => (
-        <span className="font-bold text-amber-600 dark:text-amber-400">
-          {formatPercent(row.margin)}
-        </span>
-      ),
+      render: (row: Perhitungan) => {
+        const m = row.margin || 0;
+        const colorClass = m >= 30 
+          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/60'
+          : m >= 20 
+          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/60'
+          : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200/60';
+        return (
+          <span className={`inline-block px-2 py-0.5 rounded-md font-mono text-xs font-bold border ${colorClass}`}>
+            {formatPercent(m)}
+          </span>
+        );
+      },
     },
     {
       key: 'total_harga_jual',
       title: 'Total Kotor',
       align: 'right',
-      width: 130,
-      render: (row: Perhitungan) => <span className="font-mono">{formatRupiah(row.total_harga_jual)}</span>,
+      width: 125,
+      render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-600 dark:text-slate-400">{formatRupiah(row.total_harga_jual)}</span>,
     },
     {
       key: 'diskon',
-      title: 'Diskon (Rp)',
+      title: 'Diskon',
       align: 'right',
-      width: 100,
+      width: 95,
       render: (row: Perhitungan) => (
-        <span className={row.diskon > 0 ? 'text-rose-500 font-bold font-mono' : 'text-slate-400 font-mono'}>
+        <span className={`font-mono text-xs ${row.diskon > 0 ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
           {row.diskon > 0 ? `-${formatRupiah(row.diskon)}` : '-'}
         </span>
       ),
@@ -361,7 +437,7 @@ export const PerhitunganPage: React.FC = () => {
       align: 'right',
       width: 140,
       render: (row: Perhitungan) => (
-        <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+        <span className="font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
           {formatRupiah(row.harga_jual_net)}
         </span>
       ),
@@ -372,26 +448,26 @@ export const PerhitunganPage: React.FC = () => {
       align: 'center',
       sortable: false,
       hideable: false,
-      width: 120,
+      width: 125,
       render: (row: Perhitungan) => (
         <div className="flex items-center justify-center gap-1">
           <button
             onClick={(e) => handleOpenSPH(e, row)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
-            title="Buat SPH dari hitungan ini"
+            className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-all shadow-sm active:scale-95"
+            title="Buat SPH (otomatis hapus dari daftar setelah simpan)"
           >
-            <FileText className="w-4 h-4 text-emerald-500" />
+            <FileText className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => handleEdit(e, row)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+            className="p-1.5 rounded-lg text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all shadow-sm active:scale-95"
             title="Edit data perhitungan"
           >
-            <Pencil className="w-4 h-4 text-amber-500" />
+            <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => handleDelete(e, row.id)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all shadow-sm active:scale-95"
             title="Hapus record"
           >
             <Trash2 className="w-4 h-4" />
@@ -402,15 +478,16 @@ export const PerhitunganPage: React.FC = () => {
   ], [role, selectedIds, dataList]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Calculator className="w-6 h-6 text-brand-600" />
             Database Perhitungan Harga
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Pilih satu atau beberapa produk (centang kotak) untuk langsung membuat Surat Penawaran Harga (SPH) multi-item.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Daftar kalkulasi harga aktif. Centang baris untuk membuat SPH, data akan otomatis dipindahkan ke SPH setelah disimpan.
           </p>
         </div>
 
@@ -422,42 +499,101 @@ export const PerhitunganPage: React.FC = () => {
               onClick={handleOpenSPHSelected}
               leftIcon={<Layers className="w-4 h-4" />}
             >
-              Buat SPH ({selectedIds.size} Produk Terpilih)
+              Buat SPH ({selectedIds.size} Item Terpilih)
             </Button>
           )}
           <Link to="/kalkulator">
-            <Button variant="outline" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
+            <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
               Hitung Harga Baru
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Floating Batch Selection Notification */}
+      {/* KPI Metric Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <Card className="p-3.5 flex items-center gap-3 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <ShoppingBag className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400">Total Hitungan Aktif</p>
+            <p className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
+              {formatNumber(pagination?.totalRecords || dataList.length)}
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-3.5 flex items-center gap-3 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400">Total Estimasi Net</p>
+            <p className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              {formatRupiah(metrics?.totalRevenue || dataList.reduce((acc, c) => acc + (c.harga_jual_net || c.total_harga_jual || 0), 0))}
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-3.5 flex items-center gap-3 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400">Rata-rata Margin</p>
+            <p className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
+              {formatPercent(metrics?.avgMargin || (dataList.length > 0 ? dataList.reduce((a, b) => a + (b.margin || 0), 0) / dataList.length : 0))}
+            </p>
+          </div>
+        </Card>
+
+        <Card className={`p-3.5 flex items-center gap-3 border transition-colors ${
+          selectedIds.size > 0 
+            ? 'bg-brand-50/80 dark:bg-brand-950/50 border-brand-300 dark:border-brand-800' 
+            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
+        }`}>
+          <div className={`p-2.5 rounded-xl ${
+            selectedIds.size > 0 
+              ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+          }`}>
+            <CheckSquare className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-slate-400">Item Terpilih SPH</p>
+            <p className={`text-lg font-bold font-mono ${selectedIds.size > 0 ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>
+              {selectedIds.size} <span className="text-xs font-normal">item</span>
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Floating Batch Selection Bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between p-3.5 bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800/60 rounded-xl text-xs text-brand-900 dark:text-brand-200">
-          <div className="flex items-center gap-2">
-            <CheckSquare className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+        <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-brand-600 to-indigo-700 text-white rounded-xl shadow-lg shadow-brand-600/20 animate-fade-in text-xs">
+          <div className="flex items-center gap-2 font-medium">
+            <Sparkles className="w-4 h-4 text-amber-300" />
             <span>
-              <b>{selectedIds.size} produk</b> dipilih untuk pembuatan Surat Penawaran Harga multi-baris.
+              <b>{selectedIds.size} produk terpilih</b> siap digabungkan menjadi 1 berkas Surat Penawaran Harga (SPH).
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant="primary"
+              variant="outline"
               size="sm"
               onClick={handleOpenSPHSelected}
-              leftIcon={<FileText className="w-3.5 h-3.5" />}
+              className="bg-white text-brand-700 hover:bg-slate-100 border-transparent font-bold"
+              leftIcon={<FileText className="w-3.5 h-3.5 text-brand-700" />}
             >
-              Generate SPH Multi-Item
+              Generate SPH Sekarang
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setSelectedIds(new Set())}
+              className="text-white/80 hover:text-white text-xs underline ml-2 cursor-pointer"
             >
-              Batal Pilih
-            </Button>
+              Batal
+            </button>
           </div>
         </div>
       )}
@@ -474,7 +610,7 @@ export const PerhitunganPage: React.FC = () => {
         onLimitChange={setLimit}
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Cari produk, kode, sales, proses logo..."
+        searchPlaceholder="Cari nama klien, produk, kode, sales, proses logo..."
         sort={sort}
         onSortChange={handleSort}
         filters={filters}
@@ -493,6 +629,11 @@ export const PerhitunganPage: React.FC = () => {
           isOpen={sphModalData.isOpen}
           onClose={() => setSphModalData({ isOpen: false })}
           defaultData={sphModalData.data}
+          sourceCalculationIds={sphModalData.sourceCalculationIds}
+          onSaveSuccess={() => {
+            setSelectedIds(new Set());
+            refetch();
+          }}
         />
       )}
 

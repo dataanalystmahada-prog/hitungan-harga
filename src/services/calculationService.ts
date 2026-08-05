@@ -78,4 +78,11 @@ export class CalculationService {
   public static async deleteCalculation(id: string): Promise<boolean> {
     return PerhitunganRepository.delete(id);
   }
+
+  /**
+   * Delete multiple calculation records (Batch)
+   */
+  public static async deleteBatchCalculations(ids: string[]): Promise<boolean> {
+    return PerhitunganRepository.deleteBatch(ids);
+  }
 }

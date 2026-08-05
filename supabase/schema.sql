@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.perhitungan (
     id TEXT PRIMARY KEY,
     tanggal TEXT,
     sales TEXT,
+    nama_pt TEXT,
     produk TEXT NOT NULL,
     kode TEXT,
     proses_logo TEXT,
@@ -84,10 +85,15 @@ CREATE TABLE IF NOT EXISTS public.perhitungan (
     total_harga_jual NUMERIC(15,2) DEFAULT 0 NOT NULL,
     harga_jual_net NUMERIC(15,2) DEFAULT 0 NOT NULL,
     diskon NUMERIC(15,2) DEFAULT 0 NOT NULL,
+    items JSONB,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     synced_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migration Helper if table already exists in Supabase:
+-- ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS nama_pt TEXT;
+-- ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS items JSONB;
 
 -- Table: SPH (Surat Penawaran Harga Quotations)
 CREATE TABLE IF NOT EXISTS public.sph (

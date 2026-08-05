@@ -40,13 +40,15 @@ export class PerhitunganRepository extends BaseRepository {
         let list = [...this.getMockData()];
 
         // Search
-        if (params.search && params.search.trim()) {
-          const s = params.search.toLowerCase().trim();
-          list = list.filter(item => 
-            (item.produk && item.produk.toLowerCase().includes(s)) ||
-            (item.kode && item.kode.toLowerCase().includes(s)) ||
-            (item.sales && item.sales.toLowerCase().includes(s)) ||
-            (item.proses_logo && item.proses_logo.toLowerCase().includes(s))
+        if (params.search) {
+          const term = params.search.toLowerCase();
+          list = list.filter(
+            item =>
+              item.produk?.toLowerCase().includes(term) ||
+              item.kode?.toLowerCase().includes(term) ||
+              item.sales?.toLowerCase().includes(term) ||
+              item.nama_pt?.toLowerCase().includes(term) ||
+              item.proses_logo?.toLowerCase().includes(term)
           );
         }
 
@@ -59,6 +61,9 @@ export class PerhitunganRepository extends BaseRepository {
         }
         if (params.filters?.proses_logo) {
           list = list.filter(item => item.proses_logo === params.filters?.proses_logo);
+        }
+        if (params.filters?.nama_pt) {
+          list = list.filter(item => item.nama_pt === params.filters?.nama_pt);
         }
 
         // Sorting
@@ -108,6 +113,7 @@ export class PerhitunganRepository extends BaseRepository {
       'id',
       'tanggal',
       'sales',
+      'nama_pt',
       'produk',
       'kode',
       'proses_logo',
@@ -119,6 +125,8 @@ export class PerhitunganRepository extends BaseRepository {
       'total_harga_jual',
       'harga_jual_net',
       'diskon',
+      'ref_id',
+      'items',
       'created_at',
       'updated_at',
       'synced_at',
@@ -134,6 +142,17 @@ export class PerhitunganRepository extends BaseRepository {
   }
 
   /**
+   * Helper to strip optional columns if they do not yet exist in Supabase table
+   */
+  private static stripMissingColumns(record: any): any {
+    const fallback = { ...record };
+    delete fallback.nama_pt;
+    delete fallback.items;
+    delete fallback.ref_id;
+    return fallback;
+  }
+
+  /**
    * Save a single calculation
    */
   public static async create(record: Omit<Perhitungan, 'created_at' | 'updated_at' | 'synced_at'>): Promise<Perhitungan> {
@@ -145,9 +164,20 @@ export class PerhitunganRepository extends BaseRepository {
     };
 
     if (isConfigured) {
-      const { data, error } = await supabase.from('perhitungan').insert(newRecord).select().single();
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.from('perhitungan').insert(newRecord).select().single();
+        if (error) throw error;
+        return data;
+      } catch (err: any) {
+        // Defensive fallback: if nama_pt or items column doesn't exist in Supabase yet
+        if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
+          const stripped = this.stripMissingColumns(newRecord);
+          const { data, error } = await supabase.from('perhitungan').insert(stripped).select().single();
+          if (error) throw error;
+          return { ...data, nama_pt: newRecord.nama_pt };
+        }
+        throw err;
+      }
     }
 
     // Mock storage
@@ -168,9 +198,19 @@ export class PerhitunganRepository extends BaseRepository {
     }));
 
     if (isConfigured) {
-      const { data, error } = await supabase.from('perhitungan').insert(prepared).select();
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase.from('perhitungan').insert(prepared).select();
+        if (error) throw error;
+        return data || [];
+      } catch (err: any) {
+        if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
+          const strippedList = prepared.map(p => this.stripMissingColumns(p));
+          const { data, error } = await supabase.from('perhitungan').insert(strippedList).select();
+          if (error) throw error;
+          return data || [];
+        }
+        throw err;
+      }
     }
 
     const mock = this.getMockData();
@@ -189,14 +229,29 @@ export class PerhitunganRepository extends BaseRepository {
     };
 
     if (isConfigured) {
-      const { data, error } = await supabase
-        .from('perhitungan')
-        .update(updatedPayload)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from('perhitungan')
+          .update(updatedPayload)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } catch (err: any) {
+        if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
+          const stripped = this.stripMissingColumns(updatedPayload);
+          const { data, error } = await supabase
+            .from('perhitungan')
+            .update(stripped)
+            .eq('id', id)
+            .select()
+            .single();
+          if (error) throw error;
+          return { ...data, nama_pt: updates.nama_pt };
+        }
+        throw err;
+      }
     }
 
     const mock = this.getMockData();
@@ -223,6 +278,24 @@ export class PerhitunganRepository extends BaseRepository {
     const mock = this.getMockData();
     const idx = mock.findIndex(m => m.id === id);
     if (idx !== -1) mock.splice(idx, 1);
+    return true;
+  }
+
+  /**
+   * Batch Delete calculations
+   */
+  public static async deleteBatch(ids: string[]): Promise<boolean> {
+    if (!ids || ids.length === 0) return true;
+    if (isConfigured) {
+      const { error } = await supabase.from('perhitungan').delete().in('id', ids);
+      if (error) throw error;
+      return true;
+    }
+    const mock = this.getMockData();
+    const idSet = new Set(ids);
+    const remaining = mock.filter(m => !idSet.has(m.id));
+    mock.length = 0;
+    mock.push(...remaining);
     return true;
   }
 }

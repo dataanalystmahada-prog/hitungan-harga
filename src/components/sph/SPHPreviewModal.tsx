@@ -5,6 +5,7 @@ import { Input } from '../common/Input';
 import { Select } from '../common/Select';
 import { useMasterData } from '../../hooks/useMasterData';
 import { useSPH } from '../../hooks/useSPH';
+import { CalculationService } from '../../services/calculationService';
 import { formatRupiah, formatNumber } from '../../utils/formatters';
 import { Printer, Save } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
@@ -30,15 +31,20 @@ export interface SPHPreviewModalProps {
     namaPt?: string;
     brand?: string;
     items?: SPHItemDetail[];
+    sourceCalculationIds?: string[];
   };
+  sourceCalculationIds?: string[];
   onSavePerhitunganBeforePrint?: (deskripsi: string, diskon: number) => Promise<void> | void;
+  onSaveSuccess?: () => void;
 }
 
 export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   isOpen,
   onClose,
   defaultData,
+  sourceCalculationIds,
   onSavePerhitunganBeforePrint,
+  onSaveSuccess,
 }) => {
   const { user, role } = useAuth();
   const { brands, users, keterangan } = useMasterData();
@@ -166,7 +172,27 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         items: lineItems,
       });
 
-      success('SPH Tersimpan', `Surat Penawaran ${noSPH} (${lineItems.length} item) berhasil disimpan ke Supabase.`);
+      // Hapus data perhitungan dari tabel Supabase jika SPH dibuat dari Data Perhitungan
+      const targetIds = sourceCalculationIds || defaultData?.sourceCalculationIds;
+      if (targetIds && targetIds.length > 0) {
+        try {
+          await CalculationService.deleteBatchCalculations(targetIds);
+        } catch (delErr) {
+          console.warn('Gagal menghapus data perhitungan setelah simpan SPH:', delErr);
+        }
+      }
+
+      success(
+        'SPH Tersimpan',
+        `Surat Penawaran ${noSPH} (${lineItems.length} item) berhasil disimpan ke SPH.${
+          targetIds && targetIds.length > 0 ? ' Data perhitungan terkait telah dipindahkan ke SPH.' : ''
+        }`
+      );
+
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
+
       onClose();
     } catch (err: any) {
       error('Gagal Menyimpan SPH', err.message);
