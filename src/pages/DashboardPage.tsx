@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnalyticsService } from '../services/analyticsService';
 import { StatsCard } from '../components/common/StatsCard';
@@ -18,21 +18,25 @@ import {
   Clock,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useMasterData } from '../hooks/useMasterData';
 
 export const DashboardPage: React.FC = () => {
+  const [salesFilter, setSalesFilter] = useState<string>('');
+  const { users } = useMasterData();
+
   const { data: metrics } = useQuery({
-    queryKey: ['dashboard_metrics'],
-    queryFn: () => AnalyticsService.getDashboardMetrics(),
+    queryKey: ['dashboard_metrics', salesFilter],
+    queryFn: () => AnalyticsService.getDashboardMetrics(salesFilter || undefined),
   });
 
   const { data: trends = [] } = useQuery({
-    queryKey: ['revenue_trends'],
-    queryFn: () => AnalyticsService.getMonthlyRevenueTrends(),
+    queryKey: ['revenue_trends', salesFilter],
+    queryFn: () => AnalyticsService.getMonthlyRevenueTrends(salesFilter || undefined),
   });
 
   const { data: leaderboard = [] } = useQuery({
-    queryKey: ['sales_leaderboard'],
-    queryFn: () => AnalyticsService.getSalesLeaderboard(),
+    queryKey: ['sales_leaderboard', salesFilter],
+    queryFn: () => AnalyticsService.getSalesLeaderboard(salesFilter || undefined),
   });
 
   return (
@@ -69,6 +73,21 @@ export const DashboardPage: React.FC = () => {
 
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      </div>
+
+      {/* Filter Section */}
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Filter Sales:</label>
+        <select
+          value={salesFilter}
+          onChange={(e) => setSalesFilter(e.target.value)}
+          className="w-full sm:w-64 rounded-xl border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm px-4 py-2.5"
+        >
+          <option value="">Semua Sales</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.nama_lengkap || u.nama_sales}>{u.nama_lengkap || u.nama_sales}</option>
+          ))}
+        </select>
       </div>
 
       {/* KPI Stats Grid */}

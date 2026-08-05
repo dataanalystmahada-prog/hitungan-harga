@@ -192,6 +192,13 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             <p className="text-slate-600">Up. Bagian Pengadaan / Procurement</p>
           </div>
 
+          <div className="mb-6 text-sm text-slate-800 leading-relaxed">
+            <p>Dengan hormat,</p>
+            <p className="mt-2">
+              Pada kesempatan kali ini, kami {activeBrand?.nama_brand || 'PT MAHADA GROUP INTERNASIONAL'} bermaksud memberikan penawaran harga. Berikut spesifikasi tawaran yang dimaksud :
+            </p>
+          </div>
+
           {/* Multi-Item Table */}
           <div className="mb-6 overflow-x-auto">
             <table className="w-full text-left border-collapse border border-slate-300">
@@ -214,31 +221,10 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                       {item.proses_logo && <p className="text-slate-500 text-[11px]">Proses Logo: {item.proses_logo}</p>}
                     </td>
                     <td className="py-3 px-3 text-center font-mono border-r border-slate-300">{formatNumber(item.qty)} pcs</td>
-                    <td className="py-3 px-3 text-right font-mono border-r border-slate-300">{formatRupiah(item.hargaJualUnit)}</td>
-                    <td className="py-3 px-3 text-right font-mono font-bold">{formatRupiah(item.hargaJualUnit * item.qty)}</td>
+                    <td className="py-3 px-3 text-right font-mono border-r border-slate-300">{formatRupiah(item.hargaJualNetUnit || item.hargaJualUnit)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold">{formatRupiah((item.hargaJualNetUnit || item.hargaJualUnit) * item.qty)}</td>
                   </tr>
                 ))}
-
-                {/* Subtotal */}
-                <tr className="border-b border-slate-300 bg-slate-50">
-                  <td colSpan={4} className="py-2 px-3 text-right font-semibold border-r border-slate-300 text-xs">
-                    Subtotal ({formatNumber(totalQtyPcs)} pcs):
-                  </td>
-                  <td className="py-2 px-3 text-right font-mono font-bold">
-                    {formatRupiah(subtotalGross)}
-                  </td>
-                </tr>
-
-                {totalDiskon > 0 && (
-                  <tr className="border-b border-slate-300 bg-slate-50 text-slate-700">
-                    <td colSpan={4} className="py-2 px-3 text-right font-semibold border-r border-slate-300 text-xs">
-                      Potongan Diskon:
-                    </td>
-                    <td className="py-2 px-3 text-right font-mono text-rose-600 font-bold">
-                      - {formatRupiah(totalDiskon)}
-                    </td>
-                  </tr>
-                )}
 
                 <tr className="bg-slate-100 font-bold">
                   <td colSpan={4} className="py-3 px-3 text-right border-r border-slate-300 text-xs uppercase">
@@ -250,6 +236,10 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-4 mb-6 text-sm text-slate-800 leading-relaxed">
+            <p>Demikian surat penawaran yang dapat kami sampaikan saat ini dan semoga harga dan modelnya cocok. Atas perhatiannya kami ucapkan terima kasih.</p>
           </div>
 
           {/* Terms & Payment Information */}

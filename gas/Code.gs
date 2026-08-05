@@ -220,9 +220,12 @@ function syncSingleSheet(sheetName, syncType = 'MANUAL') {
       }
     }
     
-    // Pastikan record memiliki ID unik
+    // Pastikan record memiliki ID unik yang KONSISTEN (mencegah duplikasi saat sinkronisasi berulang)
     if (!record.id) {
-      record.id = `${sheetName.toUpperCase()}-${r + 1}-${new Date().getTime()}`;
+      // Gunakan kombinasi field utama sebagai ID unik yang konsisten agar saat di-sync ulang, data hanya di-update (bukan ganda)
+      const baseKey = (record.produk || record.nama_produk || record.nama_brand || record.nama_divisi || record.isi_keterangan || record.judul || record.nama || `ROW${r + 1}`).toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const subKey = (record.kode || record.proses_logo || '').toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      record.id = `${sheetName.toUpperCase()}-${baseKey}${subKey ? '-' + subKey : ''}`;
     }
     
     sanitizedRecords.push(record);

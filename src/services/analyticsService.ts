@@ -25,10 +25,10 @@ export interface ProductShareItem {
 }
 
 export class AnalyticsService {
-  public static async getDashboardMetrics(): Promise<DashboardMetrics> {
+  public static async getDashboardMetrics(sales?: string): Promise<DashboardMetrics> {
     const [calcData, sphData, masterProd, users, syncLogs] = await Promise.all([
-      PerhitunganRepository.getPaginated({ page: 1, limit: 1 }),
-      SPHRepository.getPaginated({ page: 1, limit: 1 }),
+      PerhitunganRepository.getPaginated({ page: 1, limit: 1, filters: { sales } }),
+      SPHRepository.getPaginated({ page: 1, limit: 1, filters: { sales } }),
       MasterDataRepository.getMasterProduk(),
       MasterDataRepository.getUsers(),
       SyncLogRepository.getRecentLogs(20),
