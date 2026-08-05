@@ -139,7 +139,7 @@ export const PerhitunganPage: React.FC = () => {
       width: 80,
       render: (row: Perhitungan) => <span className="font-mono font-bold">{formatNumber(row.qty)}</span>,
     },
-    ...(role !== 'sales' ? [
+    ...(role !== 'sales' ? ([
       {
         key: 'modal_produk',
         title: 'Modal Unit',
@@ -154,7 +154,7 @@ export const PerhitunganPage: React.FC = () => {
         width: 110,
         render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_logo)}</span>,
       },
-    ] : [] as TableColumn<Perhitungan>[]),
+    ] as TableColumn<Perhitungan>[]) : []),
     {
       key: 'margin',
       title: 'Margin',

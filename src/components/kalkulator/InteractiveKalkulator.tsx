@@ -55,7 +55,7 @@ export const InteractiveKalkulator: React.FC = () => {
     brands,
   } = useMultiKalkulator();
 
-  const { modalProduk } = useMasterData();
+  const { modalProduk, modalLogo, margin } = useMasterData();
   const uniqueProdukList = React.useMemo(() => {
     return Array.from(new Set(modalProduk.map(m => m.produk))).filter(Boolean).sort();
   }, [modalProduk]);
