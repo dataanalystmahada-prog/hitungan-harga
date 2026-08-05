@@ -58,7 +58,7 @@ export class AnalyticsService {
     };
   }
 
-  public static async getMonthlyRevenueTrends(): Promise<MonthlyTrendItem[]> {
+  public static async getMonthlyRevenueTrends(sales?: string): Promise<MonthlyTrendItem[]> {
     return [
       { month: 'Jan 2026', revenue: 45000000, calculationsCount: 38, avgMargin: 28.5 },
       { month: 'Feb 2026', revenue: 58000000, calculationsCount: 45, avgMargin: 30.2 },
@@ -71,7 +71,7 @@ export class AnalyticsService {
     ];
   }
 
-  public static async getSalesLeaderboard(): Promise<SalesLeaderboardItem[]> {
+  public static async getSalesLeaderboard(sales?: string): Promise<SalesLeaderboardItem[]> {
     return [
       { sales: 'Ahmad Pratama', totalCalculations: 42, totalRevenue: 48500000, totalSPHDeal: 18 },
       { sales: 'Siti Rahmawati', totalCalculations: 38, totalRevenue: 41200000, totalSPHDeal: 15 },

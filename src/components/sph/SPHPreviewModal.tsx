@@ -221,8 +221,8 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                       {item.proses_logo && <p className="text-slate-500 text-[11px]">Proses Logo: {item.proses_logo}</p>}
                     </td>
                     <td className="py-3 px-3 text-center font-mono border-r border-slate-300">{formatNumber(item.qty)} pcs</td>
-                    <td className="py-3 px-3 text-right font-mono border-r border-slate-300">{formatRupiah(item.hargaJualNetUnit || item.hargaJualUnit)}</td>
-                    <td className="py-3 px-3 text-right font-mono font-bold">{formatRupiah((item.hargaJualNetUnit || item.hargaJualUnit) * item.qty)}</td>
+                    <td className="py-3 px-3 text-right font-mono border-r border-slate-300">{formatRupiah(item.hargaJualUnit - (item.diskon / (item.qty || 1)))}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold">{formatRupiah((item.hargaJualUnit - (item.diskon / (item.qty || 1))) * item.qty)}</td>
                   </tr>
                 ))}
 

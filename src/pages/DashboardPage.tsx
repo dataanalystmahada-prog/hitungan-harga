@@ -85,7 +85,7 @@ export const DashboardPage: React.FC = () => {
         >
           <option value="">Semua Sales</option>
           {users.map((u) => (
-            <option key={u.id} value={u.nama_lengkap || u.nama_sales}>{u.nama_lengkap || u.nama_sales}</option>
+            <option key={u.id} value={u.nama}>{u.nama}</option>
           ))}
         </select>
       </div>
