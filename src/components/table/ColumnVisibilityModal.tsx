@@ -19,7 +19,7 @@ export function ColumnVisibilityModal<T>({
   visibleColumns,
   onToggleColumn,
 }: ColumnVisibilityModalProps<T>) {
-  const hideableCols = columns.filter(c => c.hideable !== false && c.key !== 'actions');
+  const hideableCols = columns.filter(c => c.hideable !== false && c.key !== 'actions' && c.key !== 'select');
 
   return (
     <Modal

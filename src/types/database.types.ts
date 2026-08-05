@@ -68,6 +68,7 @@ export interface Perhitungan {
   harga_jual_net: number;
   diskon: number;
   ref_id?: string;
+  items?: any[];
   created_at?: string;
   updated_at?: string;
   synced_at?: string;

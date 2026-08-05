@@ -445,7 +445,7 @@ export const PerhitunganPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Button
               variant="primary"
-              size="xs"
+              size="sm"
               onClick={handleOpenSPHSelected}
               leftIcon={<FileText className="w-3.5 h-3.5" />}
             >
@@ -453,7 +453,7 @@ export const PerhitunganPage: React.FC = () => {
             </Button>
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
               onClick={() => setSelectedIds(new Set())}
             >
               Batal Pilih

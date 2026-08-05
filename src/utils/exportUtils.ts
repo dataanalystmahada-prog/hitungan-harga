@@ -1,6 +1,11 @@
 import * as XLSX from 'xlsx';
 import { TableColumn } from '../types/table.types';
 
+function getColumnTitleString<T>(col: TableColumn<T>): string {
+  if (typeof col.title === 'string') return col.title;
+  return String(col.key);
+}
+
 /**
  * Enterprise Excel (XLSX) Export Utility
  */
@@ -15,17 +20,18 @@ export function exportToExcel<T>(
   }
 
   // Filter out hidden/non-exportable columns
-  const exportableCols = columns.filter(c => c.key !== 'actions');
+  const exportableCols = columns.filter(c => c.key !== 'actions' && c.key !== 'select');
 
   // Map rows to clean export objects with user-friendly headers
   const exportRows = data.map((row, idx) => {
     const item: Record<string, any> = { 'No': idx + 1 };
     exportableCols.forEach(col => {
+      const headerTitle = getColumnTitleString(col);
       if (col.exportValue) {
-        item[col.title] = col.exportValue(row);
+        item[headerTitle] = col.exportValue(row);
       } else {
         const val = (row as any)[col.key];
-        item[col.title] = val !== undefined && val !== null ? val : '';
+        item[headerTitle] = val !== undefined && val !== null ? val : '';
       }
     });
     return item;
@@ -34,9 +40,12 @@ export function exportToExcel<T>(
   const worksheet = XLSX.utils.json_to_sheet(exportRows);
   
   // Set automatic column widths
-  const colWidths = exportableCols.map(col => ({
-    wch: Math.max(col.title.length + 4, 15)
-  }));
+  const colWidths = exportableCols.map(col => {
+    const titleStr = getColumnTitleString(col);
+    return {
+      wch: Math.max(titleStr.length + 4, 15)
+    };
+  });
   colWidths.unshift({ wch: 6 }); // 'No' column width
   worksheet['!cols'] = colWidths;
 
@@ -60,8 +69,8 @@ export function exportToCSV<T>(
     return;
   }
 
-  const exportableCols = columns.filter(c => c.key !== 'actions');
-  const headers = ['No', ...exportableCols.map(c => `"${c.title.replace(/"/g, '""')}"`)].join(',');
+  const exportableCols = columns.filter(c => c.key !== 'actions' && c.key !== 'select');
+  const headers = ['No', ...exportableCols.map(c => `"${getColumnTitleString(c).replace(/"/g, '""')}"`)].join(',');
 
   const rows = data.map((row, idx) => {
     const values: (string | number)[] = [idx + 1];

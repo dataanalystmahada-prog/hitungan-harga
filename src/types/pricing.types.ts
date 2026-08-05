@@ -5,7 +5,7 @@ export interface CalculationInput {
   kode?: string;
   proses_logo: string;
   qty: number;
-  sales: string;
+  sales?: string;
   diskonPersen: number;
   customModalProduk?: number;
   customModalLogo?: number;

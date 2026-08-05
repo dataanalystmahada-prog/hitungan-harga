@@ -30,7 +30,7 @@ export interface FilterConfig {
 
 export interface TableColumn<T> {
   key: keyof T | string;
-  title: string;
+  title: React.ReactNode;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
   width?: string | number;
