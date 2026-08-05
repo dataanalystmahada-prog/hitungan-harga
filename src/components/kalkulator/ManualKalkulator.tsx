@@ -97,9 +97,9 @@ export const ManualKalkulator: React.FC = () => {
     deskripsi: it.prosesLogo || '-',
     proses_logo: it.prosesLogo,
     qty: it.qty,
-    hargaJualUnit: it.hargaJualNetUnit || 0,
-    totalHargaJual: it.totalHargaJualNet || 0,
-    diskon: it.diskonPersen || 0,
+    hargaJualUnit: it.hargaJualUnit || 0,
+    totalHargaJual: it.totalHargaJualKotor || 0,
+    diskon: (it.totalHargaJualKotor || 0) - (it.totalHargaJualNet || 0),
   }));
 
   const TIER_QUICK = [12, 24, 50, 75, 100, 150, 200, 300, 500] as const;
@@ -323,9 +323,12 @@ export const ManualKalkulator: React.FC = () => {
                     </label>
                     <input
                       type="number"
-                      min={1}
-                      value={item.qty}
-                      onChange={(e) => updateItem(item.id, { qty: Math.max(1, parseInt(e.target.value) || 1) })}
+                      min={0}
+                      value={item.qty === 0 ? '' : item.qty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateItem(item.id, { qty: val === '' ? 0 : Math.max(0, parseInt(val) || 0) });
+                      }}
                       className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
                     />
                   </div>

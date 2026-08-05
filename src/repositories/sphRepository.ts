@@ -14,6 +14,11 @@ export class SPHRepository extends BaseRepository {
     return this.cachedMock;
   }
 
+  private static getRomanMonth(date: Date): string {
+    const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    return romanMonths[date.getMonth()];
+  }
+
   public static async getPaginated(params: QueryParams): Promise<PaginatedApiResponse<SPH>> {
     const page = params.page || 1;
     const limit = params.limit || 20;
@@ -135,5 +140,45 @@ export class SPHRepository extends BaseRepository {
     const idx = mock.findIndex(m => m.id === id);
     if (idx !== -1) mock.splice(idx, 1);
     return true;
+  }
+
+  public static async getNextSequence(brandCode: string, date: Date): Promise<string> {
+    const year = date.getFullYear();
+    const romanMonth = this.getRomanMonth(date);
+    const pattern = `SPH %/${brandCode}/${romanMonth}/${year}`;
+
+    let lastSeq = 0;
+
+    if (isConfigured) {
+      const { data, error } = await supabase
+        .from('sph')
+        .select('no_sph')
+        .like('no_sph', pattern)
+        .order('no_sph', { ascending: false })
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        const parts = data[0].no_sph.split('/');
+        if (parts.length > 0) {
+          const seqPart = parts[0].replace('SPH ', '').trim();
+          const parsed = parseInt(seqPart, 10);
+          if (!isNaN(parsed)) lastSeq = parsed;
+        }
+      }
+    } else {
+      const mock = this.getMockData();
+      const regex = new RegExp(`^SPH (\\d{4})/${brandCode}/${romanMonth}/${year}$`);
+      const matches = mock.filter(m => m.no_sph && regex.test(m.no_sph));
+      if (matches.length > 0) {
+        matches.sort((a, b) => b.no_sph.localeCompare(a.no_sph));
+        const parts = matches[0].no_sph.split('/');
+        const seqPart = parts[0].replace('SPH ', '').trim();
+        const parsed = parseInt(seqPart, 10);
+        if (!isNaN(parsed)) lastSeq = parsed;
+      }
+    }
+
+    const nextSeq = String(lastSeq + 1).padStart(4, '0');
+    return `SPH ${nextSeq}/${brandCode}/${romanMonth}/${year}`;
   }
 }

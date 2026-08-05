@@ -90,6 +90,7 @@ export interface SPH {
   keterangan?: string;
   diskon: number;
   harga_jual_akhir: number;
+  items?: any[];
   created_at?: string;
   updated_at?: string;
   synced_at?: string;

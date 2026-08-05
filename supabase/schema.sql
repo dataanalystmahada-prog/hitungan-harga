@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS public.perhitungan (
     harga_jual NUMERIC(15,2) DEFAULT 0 NOT NULL,
     total_harga_jual NUMERIC(15,2) DEFAULT 0 NOT NULL,
     harga_jual_net NUMERIC(15,2) DEFAULT 0 NOT NULL,
-    diskon NUMERIC(8,2) DEFAULT 0 NOT NULL,
+    diskon NUMERIC(15,2) DEFAULT 0 NOT NULL,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     synced_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -104,8 +104,9 @@ CREATE TABLE IF NOT EXISTS public.sph (
     sales TEXT,
     status_sph TEXT DEFAULT 'Draft',
     keterangan TEXT,
-    diskon NUMERIC(8,2) DEFAULT 0 NOT NULL,
+    diskon NUMERIC(15,2) DEFAULT 0 NOT NULL,
     harga_jual_akhir NUMERIC(15,2) DEFAULT 0 NOT NULL,
+    items JSONB,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     synced_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL

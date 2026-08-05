@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -32,7 +32,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   defaultData,
 }) => {
   const { brands, users, keterangan } = useMasterData();
-  const { createSPH, isCreating } = useSPH({ page: 1, limit: 1 });
+  const { createSPH, isCreating, getNextSPHNumber } = useSPH({ page: 1, limit: 1 });
   const { success, error } = useToast();
 
   const [selectedBrandName, setSelectedBrandName] = useState(
@@ -55,9 +55,16 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   const now = new Date();
   const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
   const brandCode = activeBrand?.singkatan || 'AAI';
-  // No SPH: SPH/BRAND/YYYY/MM/NNNN — NNNN dari timestamp sesi agar unik & berurutan naik
-  const sphSeq = String(Math.floor((Date.now() % 100000) / 10)).padStart(4, '0');
-  const noSPH = `SPH/${brandCode}/${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${sphSeq}`;
+
+  const [noSPH, setNoSPH] = useState('');
+
+  const processedKeterangan = (keteranganTambahan || 'Pembayaran DP 50% saat PO terbit, pelunasan sebelum pengiriman.').replace(/sayangi diskon.*/gi, '').trim();
+
+  useEffect(() => {
+    if (isOpen) {
+      getNextSPHNumber(brandCode).then(setNoSPH).catch(console.error);
+    }
+  }, [isOpen, brandCode]);
 
   // Multi-item or single item normalization
   const lineItems: SPHItemDetail[] = defaultData?.items && defaultData.items.length > 0
@@ -66,8 +73,12 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         {
           produk: defaultData?.produk || 'Custom Order Garment',
           qty: defaultData?.qty || 100,
-          hargaJualUnit: defaultData?.hargaJualUnit || 85000,
-          totalHargaJual: (defaultData?.hargaJualUnit || 85000) * (defaultData?.qty || 100),
+          hargaJualUnit: defaultData?.totalHargaJual !== undefined
+            ? Math.round(((defaultData.totalHargaJual) + (defaultData.diskon || 0)) / (defaultData.qty || 1))
+            : defaultData?.hargaJualUnit || 85000,
+          totalHargaJual: defaultData?.totalHargaJual !== undefined
+            ? (defaultData.totalHargaJual + (defaultData.diskon || 0))
+            : (defaultData?.hargaJualUnit || 85000) * (defaultData?.qty || 100),
           diskon: defaultData?.diskon || 0,
         }
       ];
@@ -77,7 +88,10 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   const grandTotal = Math.max(0, subtotalGross - globalDiskon);
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = (noSPH || 'SPH-Draft').replace(/\//g, '-');
     window.print();
+    document.title = originalTitle;
   };
 
   const handleSaveToDatabase = async () => {
@@ -173,11 +187,18 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             value={globalDiskon || ''}
             onChange={(e) => setGlobalDiskon(parseInt(e.target.value) || 0)}
           />
-          <Input
-            label="Deskripsi Tambahan (Tampil di SPH)"
-            value={deskripsi}
-            onChange={(e) => setDeskripsi(e.target.value)}
-          />
+          <div className="w-full flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Deskripsi Tambahan (Tampil di SPH)
+            </label>
+            <textarea
+              value={deskripsi}
+              onChange={(e) => setDeskripsi(e.target.value)}
+              placeholder="HARUS DI ISI"
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-rose-500 placeholder:font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all duration-150 resize-none"
+            />
+          </div>
         </div>
 
         {/* Printable Formal Document Preview */}
@@ -238,8 +259,8 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                       {item.proses_logo && <p className="text-slate-500 text-[11px]">Proses Logo: {item.proses_logo}</p>}
                     </td>
                     <td className="py-3 px-3 text-center font-mono border-r border-slate-300">{formatNumber(item.qty)} pcs</td>
-                    <td className="py-3 px-3 text-right font-mono border-r border-slate-300">{formatRupiah(item.hargaJualUnit - (item.diskon / (item.qty || 1)))}</td>
-                    <td className="py-3 px-3 text-right font-mono font-bold">{formatRupiah((item.hargaJualUnit - (item.diskon / (item.qty || 1))) * item.qty)}</td>
+                    <td className="py-3 px-3 text-right font-mono border-r border-slate-300">{formatRupiah(item.hargaJualUnit)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold">{formatRupiah(item.hargaJualUnit * item.qty)}</td>
                   </tr>
                 ))}
 
@@ -247,7 +268,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                   <td colSpan={4} className="py-2 px-3 text-right border-r border-slate-300 text-xs">
                     Subtotal:
                   </td>
-                  <td className="py-2 px-3 text-right font-mono text-sm">
+                  <td className="py-2 px-3 text-right font-mono text-sm whitespace-nowrap">
                     {formatRupiah(subtotalGross)}
                   </td>
                 </tr>
@@ -256,7 +277,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                     <td colSpan={4} className="py-2 px-3 text-right border-r border-slate-300 text-xs">
                       Diskon:
                     </td>
-                    <td className="py-2 px-3 text-right font-mono text-sm">
+                    <td className="py-2 px-3 text-right font-mono text-sm whitespace-nowrap">
                       - {formatRupiah(globalDiskon)}
                     </td>
                   </tr>
@@ -265,7 +286,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                   <td colSpan={4} className="py-3 px-3 text-right border-r border-slate-300 text-xs uppercase">
                     Grand Total Penawaran Akhir:
                   </td>
-                  <td className="py-3 px-3 text-right font-mono text-sm text-indigo-700">
+                  <td className="py-3 px-3 text-right font-mono text-sm text-indigo-700 whitespace-nowrap">
                     {formatRupiah(grandTotal)}
                   </td>
                 </tr>
@@ -289,7 +310,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             <div>
               <p className="font-bold text-slate-900 mb-1 uppercase text-[10px]">Syarat & Ketentuan Pembayaran:</p>
               <ul className="list-disc list-inside text-slate-600 space-y-1 text-[11px]">
-                <li>{keteranganTambahan || 'Pembayaran DP 50% saat PO terbit, pelunasan sebelum pengiriman.'}</li>
+                {processedKeterangan && <li>{processedKeterangan}</li>}
                 <li>Waktu pengerjaan terhitung setelah approval sampel mockup digital.</li>
                 <li>Harga penawaran ini berlaku selama 14 hari kalender sejak tanggal diterbitkan.</li>
               </ul>

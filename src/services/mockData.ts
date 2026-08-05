@@ -258,6 +258,16 @@ export const generateMockSPH = (): SPH[] => {
       keterangan: 'Harga sudah termasuk custom logo dan packing rapi.',
       diskon: diskon,
       harga_jual_akhir: totalAkhir,
+      items: [
+        {
+          produk: prod,
+          qty: qty,
+          hargaJualUnit: unitPrice,
+          totalHargaJual: totalGross,
+          diskon: diskon,
+          proses_logo: 'Sablon 1 Warna 1 Sisi'
+        }
+      ],
       created_at: new Date(Date.now() - i * 3600000 * 12).toISOString()
     });
   }

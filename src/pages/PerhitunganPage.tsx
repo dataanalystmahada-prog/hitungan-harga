@@ -89,8 +89,8 @@ export const PerhitunganPage: React.FC = () => {
       data: {
         produk: row.produk,
         qty: row.qty,
-        hargaJualUnit: Math.round((row.harga_jual_net || row.total_harga_jual) / (row.qty || 1)),
-        totalHargaJual: row.harga_jual_net || row.total_harga_jual,
+        hargaJualUnit: row.harga_jual,
+        totalHargaJual: row.total_harga_jual,
         sales: row.sales || '',
         diskon: row.diskon,
       },

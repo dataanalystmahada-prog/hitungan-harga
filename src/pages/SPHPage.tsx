@@ -265,6 +265,7 @@ export const SPHPage: React.FC = () => {
                   totalHargaJual: previewModal.row.harga_jual_akhir,
                   sales: previewModal.row.sales,
                   diskon: previewModal.row.diskon,
+                  items: previewModal.row.items,
                 }
               : undefined
           }

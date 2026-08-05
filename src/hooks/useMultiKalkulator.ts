@@ -19,7 +19,7 @@ export function useMultiKalkulator() {
       produk: '',
       kode: '',
       proses_logo: '',
-      qty: 100,
+      qty: 0,
       diskonPersen: 0,
     }
   ]);
@@ -37,7 +37,7 @@ export function useMultiKalkulator() {
           produk: defaultProd,
           kode: kodes.length > 0 ? (kodes[0].kode || '') : '',
           proses_logo: logos.length > 0 ? logos[0].proses_logo : '',
-          qty: 100,
+          qty: 0,
           diskonPersen: 0,
         }
       ]);
@@ -84,7 +84,7 @@ export function useMultiKalkulator() {
       produk: defaultProd,
       kode: kodes.length > 0 ? kodes[0].kode : '',
       proses_logo: logos.length > 0 ? logos[0] : '',
-      qty: 100,
+      qty: 0,
       diskonPersen: 0,
     };
 

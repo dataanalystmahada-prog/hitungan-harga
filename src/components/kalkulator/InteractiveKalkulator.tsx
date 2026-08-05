@@ -136,9 +136,9 @@ export const InteractiveKalkulator: React.FC = () => {
       kode: it.kode,
       proses_logo: it.proses_logo,
       qty: it.qty,
-      hargaJualUnit: calc ? calc.hargaJualNetUnit : 0,
-      totalHargaJual: calc ? calc.totalHargaJualNet : 0,
-      diskon: it.diskonPersen || 0,
+      hargaJualUnit: calc ? calc.hargaJualKotorUnit : 0,
+      totalHargaJual: calc ? calc.totalHargaJualKotor : 0,
+      diskon: calc ? (calc.diskonNominalUnit * it.qty) : 0,
     };
   });
 
@@ -289,7 +289,7 @@ export const InteractiveKalkulator: React.FC = () => {
                       options={
                         kodes.length > 0
                           ? kodes.map(k => ({
-                              label: `${k.kode} (${formatRupiah(k.harga)})`,
+                              label: k.kode,
                               value: k.kode
                             }))
                           : [{ label: 'Standard / Default', value: '' }]
@@ -318,9 +318,12 @@ export const InteractiveKalkulator: React.FC = () => {
                     <Input
                       label="Qty (Pcs)"
                       type="number"
-                      min={1}
-                      value={item.qty}
-                      onChange={(e) => updateItem(item.id, { qty: Math.max(1, parseInt(e.target.value) || 1) })}
+                      min={0}
+                      value={item.qty === 0 ? '' : item.qty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateItem(item.id, { qty: val === '' ? 0 : Math.max(0, parseInt(val) || 0) });
+                      }}
                     />
                   </div>
                 </div>
@@ -350,24 +353,28 @@ export const InteractiveKalkulator: React.FC = () => {
                 {/* Live Item Calculation Badges */}
                 {calc && (
                   <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Modal Produk:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                        {formatRupiah(calc.modalProdukUnit)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Modal Logo:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                        {formatRupiah(calc.modalLogoUnit)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Margin Target:</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                        {calc.marginPersen}%
-                      </span>
-                    </div>
+                    {role !== 'sales' && (
+                      <>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Modal Produk:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                            {formatRupiah(calc.modalProdukUnit)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Modal Logo:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                            {formatRupiah(calc.modalLogoUnit)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Margin Target:</span>
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                            {calc.marginPersen}%
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <div>
                       <span className="text-[10px] text-slate-400 block">Harga Jual / Pcs:</span>
                       <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">

@@ -24,6 +24,10 @@ export function useSPH(params: QueryParams) {
     },
   });
 
+  const getNextSPHNumberMutation = useMutation({
+    mutationFn: (brandCode: string) => SPHService.getNextSPHNumber(brandCode),
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: SPHStatus }) =>
       SPHService.updateStatus(id, status),
@@ -52,5 +56,6 @@ export function useSPH(params: QueryParams) {
     isUpdatingStatus: updateStatusMutation.isPending,
     deleteSPH: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+    getNextSPHNumber: getNextSPHNumberMutation.mutateAsync,
   };
 }

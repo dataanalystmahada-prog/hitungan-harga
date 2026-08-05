@@ -101,8 +101,8 @@ export const SavePreviewModal: React.FC<SavePreviewModalProps> = ({
               rows={2}
               value={deskripsi}
               onChange={(e) => setDeskripsi(e.target.value)}
-              placeholder="Contoh: Pengadaan Merchandise & Apparel Promosi Resmi"
-              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              placeholder="Harus di ISI"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 placeholder:text-rose-500 placeholder:font-bold"
             />
           </div>
         </div>

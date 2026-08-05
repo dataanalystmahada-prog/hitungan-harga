@@ -43,4 +43,8 @@ export class SPHService {
   public static async deleteSPH(id: string): Promise<boolean> {
     return SPHRepository.delete(id);
   }
+
+  public static async getNextSPHNumber(brandCode: string): Promise<string> {
+    return SPHRepository.getNextSequence(brandCode, new Date());
+  }
 }
