@@ -22,12 +22,14 @@ import {
   User,
   ShieldAlert
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { usePerhitungan } from '../../hooks/usePerhitungan';
 import { useMasterData } from '../../hooks/useMasterData';
 import { useToast } from '../../contexts/ToastContext';
 import { SPHPreviewModal } from '../sph/SPHPreviewModal';
 
 export const InteractiveKalkulator: React.FC = () => {
+  const { role } = useAuth();
   const {
     items,
     orderSummary,
@@ -368,12 +370,14 @@ export const InteractiveKalkulator: React.FC = () => {
                         {formatRupiah(calc.totalHargaJualNet)}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        +{formatRupiah(calc.keuntunganTotal)}
-                      </span>
-                    </div>
+                    {role !== 'sales' && (
+                      <div>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                          +{formatRupiah(calc.keuntunganTotal)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -407,12 +411,14 @@ export const InteractiveKalkulator: React.FC = () => {
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] text-emerald-400 uppercase tracking-wider block">Est. Laba Bersih:</span>
-              <span className="text-sm font-extrabold text-emerald-400 font-mono">
-                +{formatRupiah(orderSummary.totalKeuntungan)}
-              </span>
-            </div>
+            {role !== 'sales' && (
+              <div>
+                <span className="text-[11px] text-emerald-400 uppercase tracking-wider block">Est. Laba Bersih:</span>
+                <span className="text-sm font-extrabold text-emerald-400 font-mono">
+                  +{formatRupiah(orderSummary.totalKeuntungan)}
+                </span>
+              </div>
+            )}
 
             <div>
               <span className="text-[11px] text-indigo-300 uppercase tracking-wider block">Grand Total Net:</span>
@@ -447,7 +453,7 @@ export const InteractiveKalkulator: React.FC = () => {
       </div>
 
       {/* 4. Active Item Tier Matrix Simulation Table (12 - 500 Pcs) */}
-      {focusedItem && (
+      {focusedItem && role !== 'sales' && (
         <Card className="p-5">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
             <div>

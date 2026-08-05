@@ -12,8 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -39,6 +41,15 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
+  const { role, logout } = useAuth();
+  
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (role === 'admin') return true;
+    // For sales and purchasing, only show specific paths
+    const allowedPaths = ['/', '/kalkulator', '/kalkulator-manual', '/perhitungan', '/sph'];
+    return allowedPaths.includes(item.path);
+  });
+
   return (
     <aside
       className={cn(
@@ -75,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
 
         {/* Nav Items */}
         <nav className="p-3 space-y-1.5 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -120,6 +131,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
           </p>
         </div>
       )}
+
+      {/* Logout Button */}
+      <div className="p-4 border-t border-slate-800">
+        <button
+          onClick={logout}
+          className="flex items-center gap-3 w-full p-2.5 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!isCollapsed && <span>Keluar Sistem</span>}
+        </button>
+      </div>
     </aside>
   );
 };

@@ -79,4 +79,78 @@ export class MasterDataRepository extends BaseRepository {
     }
     return MOCK_PROMPT_LIBRARY;
   }
+
+  // --- CRUD Users ---
+  public static async createUser(user: Partial<UserSales>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('users').insert([user]);
+      if (error) {
+        console.error('Error creating user:', error);
+        return false;
+      }
+      return true;
+    }
+    return true; // Mock success
+  }
+
+  public static async updateUser(id: string, user: Partial<UserSales>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('users').update(user).eq('id', id);
+      if (error) {
+        console.error('Error updating user:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  public static async deleteUser(id: string): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('users').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting user:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  // --- CRUD Divisi ---
+  public static async createDivisi(divisi: Partial<Divisi>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('divisi').insert([divisi]);
+      if (error) {
+        console.error('Error creating divisi:', error);
+        return false;
+      }
+      return true;
+    }
+    return true; // Mock success
+  }
+
+  public static async updateDivisi(id: string, divisi: Partial<Divisi>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('divisi').update(divisi).eq('id', id);
+      if (error) {
+        console.error('Error updating divisi:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  public static async deleteDivisi(id: string): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('divisi').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting divisi:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
 }

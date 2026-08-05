@@ -116,6 +116,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     id TEXT PRIMARY KEY,
     nama TEXT NOT NULL,
     email TEXT,
+    role TEXT DEFAULT 'sales' NOT NULL,
+    pin TEXT DEFAULT '123456' NOT NULL,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     synced_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL

@@ -99,6 +99,8 @@ export interface UserSales {
   id: string;
   nama: string;
   email?: string;
+  role?: string;
+  pin?: string;
   created_at?: string;
   updated_at?: string;
   synced_at?: string;

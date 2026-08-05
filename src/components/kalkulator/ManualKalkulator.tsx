@@ -6,21 +6,14 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
 import { formatRupiah, formatNumber } from '../../utils/formatters';
-import {
-  Plus,
-  Trash2,
-  Copy,
-  Save,
-  FileText,
-  TrendingUp,
-  Layers,
-  PenSquare,
-} from 'lucide-react';
+import { Calculator, Save, FileText, CheckCircle, Trash2, Plus, ArrowRight, TrendingUp, Copy, Layers, PenSquare } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { usePerhitungan } from '../../hooks/usePerhitungan';
 import { useToast } from '../../contexts/ToastContext';
 import { SPHPreviewModal } from '../sph/SPHPreviewModal';
 
 export const ManualKalkulator: React.FC = () => {
+  const { role } = useAuth();
   const {
     items,
     orderSummary,
@@ -370,12 +363,14 @@ export const ManualKalkulator: React.FC = () => {
                         {formatRupiah(item.totalHargaJualNet || 0)}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        +{formatRupiah(item.keuntunganTotal || 0)}
-                      </span>
-                    </div>
+                    {role !== 'sales' && (
+                      <div>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                          +{formatRupiah(item.keuntunganTotal || 0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -409,12 +404,14 @@ export const ManualKalkulator: React.FC = () => {
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] text-emerald-400 uppercase tracking-wider block">Est. Laba Bersih:</span>
-              <span className="text-sm font-extrabold text-emerald-400 font-mono">
-                +{formatRupiah(orderSummary.totalKeuntungan)}
-              </span>
-            </div>
+            {role !== 'sales' && (
+              <div>
+                <span className="text-[11px] text-emerald-400 uppercase tracking-wider block">Est. Laba Bersih:</span>
+                <span className="text-sm font-extrabold text-emerald-400 font-mono">
+                  +{formatRupiah(orderSummary.totalKeuntungan)}
+                </span>
+              </div>
+            )}
 
             <div>
               <span className="text-[11px] text-amber-300 uppercase tracking-wider block">Grand Total Net:</span>
@@ -449,7 +446,7 @@ export const ManualKalkulator: React.FC = () => {
       </div>
 
       {/* 4. Live Tier Simulation for Focused Item */}
-      {focusedItem && focusedItem.namaProduk && (
+      {focusedItem && focusedItem.namaProduk && role !== 'sales' && (
         <Card className="p-5">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
