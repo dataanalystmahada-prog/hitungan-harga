@@ -27,6 +27,7 @@ import { usePerhitungan } from '../../hooks/usePerhitungan';
 import { useMasterData } from '../../hooks/useMasterData';
 import { useToast } from '../../contexts/ToastContext';
 import { SPHPreviewModal } from '../sph/SPHPreviewModal';
+import { SavePreviewModal } from './SavePreviewModal';
 
 export const InteractiveKalkulator: React.FC = () => {
   const { role } = useAuth();
@@ -54,25 +55,43 @@ export const InteractiveKalkulator: React.FC = () => {
     brands,
   } = useMultiKalkulator();
 
-  const { modalProduk, modalLogo, margin } = useMasterData();
+  const { modalProduk } = useMasterData();
+  const uniqueProdukList = React.useMemo(() => {
+    return Array.from(new Set(modalProduk.map(m => m.produk))).filter(Boolean).sort();
+  }, [modalProduk]);
+
   const { createBatchCalculations, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
   const { success, error } = useToast();
 
   const [isSPHModalOpen, setIsSPHModalOpen] = useState(false);
+  const [isSavePreviewModalOpen, setIsSavePreviewModalOpen] = useState(false);
 
-  // Save all items in the multi-product order to Supabase
-  const handleSaveAllCalculations = async () => {
+  // Open save preview modal
+  const handleSaveAllCalculations = () => {
     if (items.length === 0 || !items[0].produk) {
       error('Item Belum Lengkap', 'Silakan pilih produk terlebih dahulu.');
       return;
     }
+    setIsSavePreviewModalOpen(true);
+  };
 
+  // Actual save logic
+  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
     try {
       const now = new Date();
       const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+      
+      const totalKotorAll = orderSummary.totalHargaJualKotor;
 
       const payloads = items.map((it, idx) => {
         const calc = it.calculation;
+        const totalKotorItem = calc ? calc.totalHargaJualKotor : 0;
+        
+        // Distribute proportional discount to this item
+        const itemDiskon = totalKotorAll > 0 
+          ? Math.round(globalDiskon * (totalKotorItem / totalKotorAll))
+          : 0;
+
         return {
           id: `CALC-${Date.now()}-${idx + 1}`,
           tanggal: dateFormatted,
@@ -85,9 +104,12 @@ export const InteractiveKalkulator: React.FC = () => {
           modal_logo: calc ? calc.modalLogoUnit : 0,
           margin: calc ? calc.marginPersen : 25,
           harga_jual: calc ? calc.hargaJualKotorUnit : 0,
-          total_harga_jual: calc ? calc.totalHargaJualKotor : 0,
-          harga_jual_net: calc ? calc.totalHargaJualNet : 0,
-          diskon: calc ? calc.diskonPersen : 0,
+          total_harga_jual: totalKotorItem,
+          harga_jual_net: calc ? (calc.hargaJualKotorUnit - Math.round(itemDiskon / it.qty)) : 0,
+          diskon: itemDiskon,
+          // We can optionally add deskripsi if we add it to the schema, but per user request, deskripsi is mainly for SPH.
+          // The user said: "di tabel data perhitungan ada ikon edit... atau deskrispi dan diskon."
+          // But since the DB schema doesn't have it yet, we just pass the deskripsi to the SPH modal state if they open SPH next.
         };
       });
 
@@ -254,7 +276,7 @@ export const InteractiveKalkulator: React.FC = () => {
                   <div className="md:col-span-4">
                     <Select
                       label="Kategori Produk"
-                      options={masterProduk.map(p => ({ label: p.nama_produk, value: p.nama_produk }))}
+                      options={uniqueProdukList.map(p => ({ label: p, value: p }))}
                       value={item.produk}
                       onChange={(e) => handleItemProductChange(item.id, e.target.value)}
                     />
@@ -323,18 +345,6 @@ export const InteractiveKalkulator: React.FC = () => {
                       {tier} pcs
                     </button>
                   ))}
-
-                  <div className="ml-auto flex items-center gap-2">
-                    <label className="text-[11px] font-medium text-slate-500">Diskon Item (%):</label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={item.diskonPersen || 0}
-                      onChange={(e) => updateItem(item.id, { diskonPersen: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })}
-                      className="w-16 px-2 py-1 text-xs text-right font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
                 </div>
 
                 {/* Live Item Calculation Badges */}
@@ -581,6 +591,17 @@ export const InteractiveKalkulator: React.FC = () => {
             brand: brand,
             items: sphLineItems,
           }}
+        />
+      )}
+
+      {isSavePreviewModalOpen && (
+        <SavePreviewModal
+          isOpen={isSavePreviewModalOpen}
+          onClose={() => setIsSavePreviewModalOpen(false)}
+          onSave={executeSaveAll}
+          items={items}
+          totalKotor={orderSummary.totalHargaJualKotor}
+          isSaving={isCreatingBatch}
         />
       )}
     </div>

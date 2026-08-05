@@ -11,8 +11,10 @@ import { Plus, Trash2, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SPHPreviewModal } from '../components/sph/SPHPreviewModal';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export const PerhitunganPage: React.FC = () => {
+  const { role } = useAuth();
   const {
     page,
     setPage,
@@ -137,20 +139,22 @@ export const PerhitunganPage: React.FC = () => {
       width: 80,
       render: (row: Perhitungan) => <span className="font-mono font-bold">{formatNumber(row.qty)}</span>,
     },
-    {
-      key: 'modal_produk',
-      title: 'Modal Unit',
-      align: 'right',
-      width: 110,
-      render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_produk)}</span>,
-    },
-    {
-      key: 'modal_logo',
-      title: 'Modal Logo',
-      align: 'right',
-      width: 110,
-      render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_logo)}</span>,
-    },
+    ...(role !== 'sales' ? [
+      {
+        key: 'modal_produk',
+        title: 'Modal Unit',
+        align: 'right',
+        width: 110,
+        render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_produk)}</span>,
+      },
+      {
+        key: 'modal_logo',
+        title: 'Modal Logo',
+        align: 'right',
+        width: 110,
+        render: (row: Perhitungan) => <span className="font-mono text-slate-500">{formatRupiah(row.modal_logo)}</span>,
+      },
+    ] : [] as TableColumn<Perhitungan>[]),
     {
       key: 'margin',
       title: 'Margin',
@@ -171,12 +175,12 @@ export const PerhitunganPage: React.FC = () => {
     },
     {
       key: 'diskon',
-      title: 'Diskon',
-      align: 'center',
-      width: 75,
+      title: 'Diskon (Rp)',
+      align: 'right',
+      width: 100,
       render: (row: Perhitungan) => (
-        <span className={row.diskon > 0 ? 'text-rose-500 font-bold' : 'text-slate-400'}>
-          {row.diskon > 0 ? `${row.diskon}%` : '-'}
+        <span className={row.diskon > 0 ? 'text-rose-500 font-bold font-mono' : 'text-slate-400 font-mono'}>
+          {row.diskon > 0 ? `-${formatRupiah(row.diskon)}` : '-'}
         </span>
       ),
     },
@@ -217,7 +221,7 @@ export const PerhitunganPage: React.FC = () => {
         </div>
       ),
     },
-  ], []);
+  ], [role]);
 
   return (
     <div className="flex flex-col gap-6">

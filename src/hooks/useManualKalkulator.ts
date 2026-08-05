@@ -17,6 +17,7 @@ export interface ManualItem {
   marginType: 'multiplier' | 'persen'; // Mode margin
   marginValue: number;   // Multiplier (1.70) atau Persen (35)
   diskonPersen: number;
+  manualHargaJual?: number; // Added for sales direct input
   // Calculated
   totalModal?: number;
   hargaJualUnit?: number;
@@ -44,6 +45,9 @@ function calcItem(item: ManualItem): ManualItem {
   }
 
   if (totalModal === 0) hargaJualUnit = 0;
+  if (item.manualHargaJual && item.manualHargaJual > 0) {
+    hargaJualUnit = item.manualHargaJual;
+  }
 
   const diskon = Math.max(0, Math.min(100, item.diskonPersen || 0));
   const diskonNominalUnit = Math.round(hargaJualUnit * (diskon / 100));

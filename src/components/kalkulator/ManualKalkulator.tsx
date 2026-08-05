@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePerhitungan } from '../../hooks/usePerhitungan';
 import { useToast } from '../../contexts/ToastContext';
 import { SPHPreviewModal } from '../sph/SPHPreviewModal';
+import { SavePreviewModal } from './SavePreviewModal';
 
 export const ManualKalkulator: React.FC = () => {
   const { role } = useAuth();
@@ -37,34 +38,50 @@ export const ManualKalkulator: React.FC = () => {
   const { createBatchCalculations, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
   const { success, error } = useToast();
   const [isSPHModalOpen, setIsSPHModalOpen] = useState(false);
+  const [isSavePreviewModalOpen, setIsSavePreviewModalOpen] = useState(false);
 
-  // Save all manual items to Supabase
-  const handleSaveAll = async () => {
+  // Open save preview modal
+  const handleSaveAll = () => {
     if (items.length === 0 || !items[0].namaProduk) {
       error('Item Belum Lengkap', 'Silakan isi nama produk terlebih dahulu.');
       return;
     }
+    setIsSavePreviewModalOpen(true);
+  };
 
+  // Actual save logic
+  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
     try {
       const now = new Date();
       const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+      
+      const totalKotorAll = orderSummary.totalHargaJualKotor;
 
-      const payloads = items.map((it, idx) => ({
-        id: `MANUAL-${Date.now()}-${idx + 1}`,
-        tanggal: dateFormatted,
-        sales: sales || 'Sales Admin',
-        produk: it.namaProduk || '-',
-        kode: it.kode || '',
-        proses_logo: it.prosesLogo || '-',
-        qty: it.qty,
-        modal_produk: it.modalProduk || 0,
-        modal_logo: it.modalLogo || 0,
-        margin: it.marginPersen || 0,
-        harga_jual: it.hargaJualUnit || 0,
-        total_harga_jual: it.totalHargaJualKotor || 0,
-        harga_jual_net: it.totalHargaJualNet || 0,
-        diskon: it.diskonPersen || 0,
-      }));
+      const payloads = items.map((it, idx) => {
+        const totalKotorItem = it.totalHargaJualKotor || 0;
+        
+        // Distribute proportional discount to this item
+        const itemDiskon = totalKotorAll > 0 
+          ? Math.round(globalDiskon * (totalKotorItem / totalKotorAll))
+          : 0;
+
+        return {
+          id: `MANUAL-${Date.now()}-${idx + 1}`,
+          tanggal: dateFormatted,
+          sales: sales || 'Sales Admin',
+          produk: it.namaProduk || '-',
+          kode: it.kode || '',
+          proses_logo: it.prosesLogo || '-',
+          qty: it.qty,
+          modal_produk: it.modalProduk || 0,
+          modal_logo: it.modalLogo || 0,
+          margin: it.marginPersen || 0,
+          harga_jual: it.hargaJualUnit || 0,
+          total_harga_jual: totalKotorItem,
+          harga_jual_net: it.hargaJualUnit ? (it.hargaJualUnit - Math.round(itemDiskon / it.qty)) : 0,
+          diskon: itemDiskon,
+        };
+      });
 
       await createBatchCalculations(payloads);
       success('Berhasil Disimpan', `${items.length} item perhitungan manual berhasil disimpan ke database.`);
@@ -224,64 +241,81 @@ export const ManualKalkulator: React.FC = () => {
                 </div>
 
                 {/* Row 2: Modal & Margin & Qty */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                      Modal Produk (Rp)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={item.modalProduk || ''}
-                      placeholder="0"
-                      onChange={(e) => updateItem(item.id, { modalProduk: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
-                    />
-                  </div>
+                <div className={`grid grid-cols-2 gap-3 ${role !== 'sales' ? 'md:grid-cols-5' : 'md:grid-cols-2'}`}>
+                  {role !== 'sales' ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Modal Produk (Rp)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={item.modalProduk || ''}
+                          placeholder="0"
+                          onChange={(e) => updateItem(item.id, { modalProduk: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                      Modal Logo (Rp)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={item.modalLogo || ''}
-                      placeholder="0"
-                      onChange={(e) => updateItem(item.id, { modalLogo: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Modal Logo (Rp)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={item.modalLogo || ''}
+                          placeholder="0"
+                          onChange={(e) => updateItem(item.id, { modalLogo: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                        />
+                      </div>
 
-                  {/* Margin Type + Value */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                      Tipe Margin
-                    </label>
-                    <select
-                      value={item.marginType}
-                      onChange={(e) => updateItem(item.id, { marginType: e.target.value as 'multiplier' | 'persen' })}
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
-                    >
-                      <option value="multiplier">Multiplier (×1.70)</option>
-                      <option value="persen">Persen (35%)</option>
-                    </select>
-                  </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Tipe Margin
+                        </label>
+                        <select
+                          value={item.marginType}
+                          onChange={(e) => updateItem(item.id, { marginType: e.target.value as 'multiplier' | 'persen' })}
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                        >
+                          <option value="multiplier">Multiplier (×1.70)</option>
+                          <option value="persen">Persen (35%)</option>
+                        </select>
+                      </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                      {item.marginType === 'multiplier' ? 'Nilai Multiplier (×)' : 'Margin (%)'}
-                    </label>
-                    <input
-                      type="number"
-                      step={item.marginType === 'multiplier' ? 0.01 : 1}
-                      min={item.marginType === 'multiplier' ? 1.01 : 1}
-                      max={item.marginType === 'multiplier' ? 10 : 99}
-                      value={item.marginValue}
-                      onChange={(e) => updateItem(item.id, { marginValue: parseFloat(e.target.value) || (item.marginType === 'multiplier' ? 1.5 : 25) })}
-                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                          {item.marginType === 'multiplier' ? 'Nilai Multiplier (×)' : 'Margin (%)'}
+                        </label>
+                        <input
+                          type="number"
+                          step={item.marginType === 'multiplier' ? 0.01 : 1}
+                          min={item.marginType === 'multiplier' ? 1.01 : 1}
+                          max={item.marginType === 'multiplier' ? 10 : 99}
+                          value={item.marginValue}
+                          onChange={(e) => updateItem(item.id, { marginValue: parseFloat(e.target.value) || (item.marginType === 'multiplier' ? 1.5 : 25) })}
+                          className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                        Harga Jual Net (Rp)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.manualHargaJual || ''}
+                        placeholder="0"
+                        onChange={(e) => updateItem(item.id, { manualHargaJual: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
@@ -297,64 +331,52 @@ export const ManualKalkulator: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Quick Tier + Diskon */}
-                <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/40">
-                  <span className="text-[11px] font-medium text-slate-400 mr-1">Quick Tier:</span>
-                  {TIER_QUICK.map(tier => (
-                    <button
-                      key={tier}
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); updateItem(item.id, { qty: tier }); }}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-                        item.qty === tier
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {tier} pcs
-                    </button>
-                  ))}
-
-                  <div className="ml-auto flex items-center gap-2">
-                    <label className="text-[11px] font-medium text-slate-500">Diskon (%):</label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={item.diskonPersen || 0}
-                      onChange={(e) => updateItem(item.id, { diskonPersen: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })}
-                      className="w-16 px-2 py-1 text-xs text-right font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
+                {/* Quick Tier */}
+                {role !== 'sales' && (
+                  <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/40">
+                    <span className="text-[11px] font-medium text-slate-400 mr-1">Quick Tier:</span>
+                    {TIER_QUICK.map(tier => (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); updateItem(item.id, { qty: tier }); }}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                          item.qty === tier
+                            ? 'bg-amber-500 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {tier} pcs
+                      </button>
+                    ))}
                   </div>
-                </div>
+                )}
 
                 {/* Live Result Badges */}
                 {(item.totalModal !== undefined) && (
                   <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-xs">
+                    {role !== 'sales' && (
+                      <>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Total Modal:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                            {formatRupiah(item.totalModal || 0)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">
+                            {item.marginType === 'multiplier' ? `Multiplier ×${item.marginValue}:` : `Margin ${item.marginValue}%:`}
+                          </span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400">
+                            {item.marginPersen?.toFixed(1)}% margin
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Total Modal:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                        {formatRupiah(item.totalModal || 0)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">
-                        {item.marginType === 'multiplier' ? `Multiplier ×${item.marginValue}:` : `Margin ${item.marginValue}%:`}
-                      </span>
-                      <span className="font-bold text-amber-600 dark:text-amber-400">
-                        {item.marginPersen?.toFixed(1)}% margin
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Harga Jual Kotor:</span>
+                      <span className="text-[10px] text-slate-400 block">Harga Jual / Pcs:</span>
                       <span className="font-bold text-slate-900 dark:text-white font-mono">
                         {formatRupiah(item.hargaJualUnit || 0)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Harga Jual Net/Pcs:</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
-                        {formatRupiah(item.hargaJualNetUnit || 0)}
                       </span>
                     </div>
                     <div>
@@ -548,6 +570,17 @@ export const ManualKalkulator: React.FC = () => {
             brand,
             items: sphLineItems,
           }}
+        />
+      )}
+
+      {isSavePreviewModalOpen && (
+        <SavePreviewModal
+          isOpen={isSavePreviewModalOpen}
+          onClose={() => setIsSavePreviewModalOpen(false)}
+          onSave={executeSaveAll}
+          items={items}
+          totalKotor={orderSummary.totalHargaJualKotor}
+          isSaving={isCreatingBatch}
         />
       )}
     </div>

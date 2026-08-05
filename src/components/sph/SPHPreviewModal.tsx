@@ -44,6 +44,9 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       ? `Paket Pengadaan Multi-Item (${defaultData.items.length} macam produk)`
       : 'Pengadaan Merchandise & Apparel Promosi Resmi'
   );
+  const [globalDiskon, setGlobalDiskon] = useState<number>(
+    defaultData?.items?.reduce((acc, it) => acc + (it.diskon || 0), 0) || 0
+  );
   const [salesName, setSalesName] = useState(defaultData?.sales || users[0]?.nama || 'Ahmad Pratama');
   const [keteranganTambahan, setKeteranganTambahan] = useState(keterangan[0]?.isi_keterangan || '');
 
@@ -71,8 +74,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
 
   const totalQtyPcs = lineItems.reduce((acc, it) => acc + it.qty, 0);
   const subtotalGross = lineItems.reduce((acc, it) => acc + (it.hargaJualUnit * it.qty), 0);
-  const totalDiskon = lineItems.reduce((acc, it) => acc + (it.hargaJualUnit * it.qty * (it.diskon || 0) / 100), 0);
-  const grandTotal = subtotalGross - totalDiskon;
+  const grandTotal = Math.max(0, subtotalGross - globalDiskon);
 
   const handlePrint = () => {
     window.print();
@@ -95,7 +97,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         sales: salesName,
         status_sph: 'Draft',
         keterangan: keteranganTambahan,
-        diskon: totalDiskon > 0 ? Math.round((totalDiskon / subtotalGross) * 100) : 0,
+        diskon: globalDiskon, // save the nominal total discount
         harga_jual_akhir: grandTotal,
         items: lineItems,
       });
@@ -160,6 +162,21 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             options={users.map(u => ({ label: u.nama, value: u.nama }))}
             value={salesName}
             onChange={(e) => setSalesName(e.target.value)}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs mt-[-1rem]">
+          <Input
+            label="Diskon Global SPH (Rp)"
+            type="number"
+            min={0}
+            max={subtotalGross}
+            value={globalDiskon || ''}
+            onChange={(e) => setGlobalDiskon(parseInt(e.target.value) || 0)}
+          />
+          <Input
+            label="Deskripsi Tambahan (Tampil di SPH)"
+            value={deskripsi}
+            onChange={(e) => setDeskripsi(e.target.value)}
           />
         </div>
 
@@ -227,6 +244,24 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 ))}
 
                 <tr className="bg-slate-100 font-bold">
+                  <td colSpan={4} className="py-2 px-3 text-right border-r border-slate-300 text-xs">
+                    Subtotal:
+                  </td>
+                  <td className="py-2 px-3 text-right font-mono text-sm">
+                    {formatRupiah(subtotalGross)}
+                  </td>
+                </tr>
+                {globalDiskon > 0 && (
+                  <tr className="bg-rose-50/50 font-bold text-rose-600">
+                    <td colSpan={4} className="py-2 px-3 text-right border-r border-slate-300 text-xs">
+                      Diskon:
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono text-sm">
+                      - {formatRupiah(globalDiskon)}
+                    </td>
+                  </tr>
+                )}
+                <tr className="bg-slate-200 font-bold">
                   <td colSpan={4} className="py-3 px-3 text-right border-r border-slate-300 text-xs uppercase">
                     Grand Total Penawaran Akhir:
                   </td>
@@ -237,6 +272,13 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               </tbody>
             </table>
           </div>
+
+          {deskripsi && (
+            <div className="mb-6 text-sm text-slate-800 leading-relaxed border-l-4 border-slate-400 pl-4 py-2 bg-slate-50">
+              <p className="font-semibold text-slate-900 mb-1">Catatan Tambahan / Deskripsi Project:</p>
+              <p className="whitespace-pre-wrap">{deskripsi}</p>
+            </div>
+          )}
 
           <div className="mt-4 mb-6 text-sm text-slate-800 leading-relaxed">
             <p>Demikian surat penawaran yang dapat kami sampaikan saat ini dan semoga harga dan modelnya cocok. Atas perhatiannya kami ucapkan terima kasih.</p>

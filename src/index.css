@@ -10,6 +10,10 @@
 
 /* Custom Printable Styles for SPH */
 @media print {
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
   body * {
     visibility: hidden;
   }
@@ -22,8 +26,13 @@
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     border: none !important;
     box-shadow: none !important;
+    overflow: visible !important;
+  }
+  html, body {
+    height: auto;
+    overflow: visible !important;
   }
 }
