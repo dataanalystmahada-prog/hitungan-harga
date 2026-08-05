@@ -158,7 +158,7 @@ export class SPHRepository extends BaseRepository {
         .limit(1);
       
       if (!error && data && data.length > 0) {
-        const parts = data[0].no_sph.split('/');
+        const parts = (data[0].no_sph || '').split('/');
         if (parts.length > 0) {
           const seqPart = parts[0].replace('SPH ', '').trim();
           const parsed = parseInt(seqPart, 10);
@@ -170,8 +170,8 @@ export class SPHRepository extends BaseRepository {
       const regex = new RegExp(`^SPH (\\d{4})/${brandCode}/${romanMonth}/${year}$`);
       const matches = mock.filter(m => m.no_sph && regex.test(m.no_sph));
       if (matches.length > 0) {
-        matches.sort((a, b) => b.no_sph.localeCompare(a.no_sph));
-        const parts = matches[0].no_sph.split('/');
+        matches.sort((a, b) => (b.no_sph || '').localeCompare(a.no_sph || ''));
+        const parts = (matches[0].no_sph || '').split('/');
         const seqPart = parts[0].replace('SPH ', '').trim();
         const parsed = parseInt(seqPart, 10);
         if (!isNaN(parsed)) lastSeq = parsed;
