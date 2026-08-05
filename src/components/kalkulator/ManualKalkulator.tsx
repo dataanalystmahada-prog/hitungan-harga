@@ -14,7 +14,7 @@ import { SPHPreviewModal } from '../sph/SPHPreviewModal';
 import { SavePreviewModal } from './SavePreviewModal';
 
 export const ManualKalkulator: React.FC = () => {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const {
     items,
     orderSummary,
@@ -35,60 +35,11 @@ export const ManualKalkulator: React.FC = () => {
     brands,
   } = useManualKalkulator();
 
-  const { createBatchCalculations, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
+  const { createCalculation, isCreating, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
+  const isSaving = isCreating || Boolean(isCreatingBatch);
   const { success, error } = useToast();
   const [isSPHModalOpen, setIsSPHModalOpen] = useState(false);
   const [isSavePreviewModalOpen, setIsSavePreviewModalOpen] = useState(false);
-
-  // Open save preview modal
-  const handleSaveAll = () => {
-    if (items.length === 0 || !items[0].namaProduk) {
-      error('Item Belum Lengkap', 'Silakan isi nama produk terlebih dahulu.');
-      return;
-    }
-    setIsSavePreviewModalOpen(true);
-  };
-
-  // Actual save logic
-  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
-    try {
-      const now = new Date();
-      const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-      
-      const totalKotorAll = orderSummary.totalHargaJualKotor;
-
-      const payloads = items.map((it, idx) => {
-        const totalKotorItem = it.totalHargaJualKotor || 0;
-        
-        // Distribute proportional discount to this item
-        const itemDiskon = totalKotorAll > 0 
-          ? Math.round(globalDiskon * (totalKotorItem / totalKotorAll))
-          : 0;
-
-        return {
-          id: `MANUAL-${Date.now()}-${idx + 1}`,
-          tanggal: dateFormatted,
-          sales: sales || 'Sales Admin',
-          produk: it.namaProduk || '-',
-          kode: it.kode || '',
-          proses_logo: it.prosesLogo || '-',
-          qty: it.qty,
-          modal_produk: it.modalProduk || 0,
-          modal_logo: it.modalLogo || 0,
-          margin: it.marginPersen || 0,
-          harga_jual: it.hargaJualUnit || 0,
-          total_harga_jual: totalKotorItem,
-          harga_jual_net: it.hargaJualUnit ? (it.hargaJualUnit - Math.round(itemDiskon / it.qty)) : 0,
-          diskon: itemDiskon,
-        };
-      });
-
-      await createBatchCalculations(payloads);
-      success('Berhasil Disimpan', `${items.length} item perhitungan manual berhasil disimpan ke database.`);
-    } catch (err: any) {
-      error('Gagal Menyimpan', err.message || 'Terjadi kesalahan saat menyimpan.');
-    }
-  };
 
   // Prepare SPH line items
   const sphLineItems = items.map(it => ({
@@ -102,6 +53,58 @@ export const ManualKalkulator: React.FC = () => {
     diskon: (it.totalHargaJualKotor || 0) - (it.totalHargaJualNet || 0),
   }));
 
+  // Open save preview modal
+  const handleSaveAll = () => {
+    if (items.length === 0 || !items[0].namaProduk) {
+      error('Item Belum Lengkap', 'Silakan isi nama produk terlebih dahulu.');
+      return;
+    }
+    setIsSavePreviewModalOpen(true);
+  };
+
+  // Actual save logic (Single Unified Record for 1 or More Products)
+  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
+    try {
+      const now = new Date();
+      const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+      
+      const totalPcs = orderSummary.totalPcs || 1;
+      const totalGross = orderSummary.totalHargaJualKotor;
+      const totalModalProd = items.reduce((acc, it) => acc + ((it.modalProduk || 0) * it.qty), 0);
+      const totalModalLogo = items.reduce((acc, it) => acc + ((it.modalLogo || 0) * it.qty), 0);
+
+      const summaryProduk = items.length === 1 
+        ? (items[0].namaProduk || '-')
+        : items.map(it => `${it.namaProduk || '-'} (${it.qty} pcs)`).join(', ');
+
+      const summaryKode = items.map(it => it.kode).filter(Boolean).join(', ') || '-';
+      const summaryLogo = items.map(it => it.prosesLogo).filter(Boolean).join(', ') || '-';
+
+      const payload = {
+        id: `MANUAL-${Date.now()}`,
+        tanggal: dateFormatted,
+        sales: (user?.nama || sales || 'Sales Admin').trim(),
+        produk: summaryProduk,
+        kode: summaryKode,
+        proses_logo: summaryLogo,
+        qty: totalPcs,
+        modal_produk: Math.round(totalModalProd / totalPcs),
+        modal_logo: Math.round(totalModalLogo / totalPcs),
+        margin: orderSummary.avgMarginPersen,
+        harga_jual: Math.round(totalGross / totalPcs),
+        total_harga_jual: totalGross,
+        harga_jual_net: Math.max(0, totalGross - globalDiskon),
+        diskon: globalDiskon,
+        items: sphLineItems,
+      };
+
+      await createCalculation(payload);
+      success('Berhasil Disimpan', `Perhitungan manual ${summaryProduk} (${totalPcs} pcs) berhasil disimpan sebagai 1 data perhitungan.`);
+    } catch (err: any) {
+      error('Gagal Menyimpan', err.message || 'Terjadi kesalahan saat menyimpan.');
+    }
+  };
+
   const TIER_QUICK = [12, 24, 50, 75, 100, 150, 200, 300, 500] as const;
 
   return (
@@ -109,38 +112,43 @@ export const ManualKalkulator: React.FC = () => {
       {/* 1. Header Info */}
       <Card className="p-5">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25">
-              <PenSquare className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Kalkulator Manual — Input Harga Bebas
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Isi modal produk, modal logo, dan margin secara manual. Cocok untuk produk khusus / luar database.
-              </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20">
+                <PenSquare className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Kalkulator Harga Manual & Custom
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Hitung cepat produk custom atau item non-matriks dengan input manual modal & margin target.
+                </p>
+              </div>
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={addItem}
-            leftIcon={<Plus className="w-4 h-4 text-amber-500" />}
-            className="flex-shrink-0 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-          >
-            + Tambah Item
-          </Button>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addItem}
+              leftIcon={<Plus className="w-4 h-4 text-amber-500" />}
+              className="flex-1 md:flex-none border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+            >
+              + Tambah Item Manual
+            </Button>
+          </div>
         </div>
 
         {/* Sales, Klien, Brand */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-xs">
           <Select
             label="Sales In-Charge (PIC)"
-            options={users.map(u => ({ label: `${u.nama}`, value: u.nama }))}
+            options={users.map(u => ({ label: u.nama === user?.nama ? `${u.nama} (Akun Anda)` : `${u.nama}`, value: u.nama }))}
             value={sales}
             onChange={(e) => setSales(e.target.value)}
+            disabled={role === 'sales'}
           />
           <Input
             label="Nama Klien / Perusahaan"
@@ -415,19 +423,23 @@ export const ManualKalkulator: React.FC = () => {
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
-              <span className="text-sm font-semibold text-slate-300 font-mono">
-                {formatRupiah(orderSummary.totalModal)}
-              </span>
-            </div>
+            {role !== 'sales' && (
+              <>
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
+                  <span className="text-sm font-semibold text-slate-300 font-mono">
+                    {formatRupiah(orderSummary.totalModal)}
+                  </span>
+                </div>
 
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
-              <span className="text-sm font-bold text-amber-300">
-                {orderSummary.avgMarginPersen}%
-              </span>
-            </div>
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
+                  <span className="text-sm font-bold text-amber-300">
+                    {orderSummary.avgMarginPersen}%
+                  </span>
+                </div>
+              </>
+            )}
 
             {role !== 'sales' && (
               <div>
@@ -458,7 +470,7 @@ export const ManualKalkulator: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                isLoading={isCreatingBatch}
+                isLoading={isSaving}
                 onClick={handleSaveAll}
                 leftIcon={<Save className="w-4 h-4" />}
                 title="Simpan ke Database"
@@ -571,7 +583,11 @@ export const ManualKalkulator: React.FC = () => {
             sales,
             namaPt,
             brand,
+            diskon: orderSummary.totalDiskon,
             items: sphLineItems,
+          }}
+          onSavePerhitunganBeforePrint={async (modalDeskripsi, modalDiskon) => {
+            await executeSaveAll(modalDiskon !== undefined ? modalDiskon : orderSummary.totalDiskon, modalDeskripsi);
           }}
         />
       )}
@@ -583,7 +599,7 @@ export const ManualKalkulator: React.FC = () => {
           onSave={executeSaveAll}
           items={items}
           totalKotor={orderSummary.totalHargaJualKotor}
-          isSaving={isCreatingBatch}
+          isSaving={isSaving}
         />
       )}
     </div>

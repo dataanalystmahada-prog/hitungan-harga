@@ -66,6 +66,13 @@ export class CalculationService {
   }
 
   /**
+   * Update calculation record in database
+   */
+  public static async updateCalculation(id: string, updates: Partial<Perhitungan>): Promise<Perhitungan> {
+    return PerhitunganRepository.update(id, updates);
+  }
+
+  /**
    * Delete calculation record
    */
   public static async deleteCalculation(id: string): Promise<boolean> {

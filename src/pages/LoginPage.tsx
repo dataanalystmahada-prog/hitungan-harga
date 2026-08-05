@@ -1,32 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useMasterData } from '../hooks/useMasterData';
+import { MOCK_USERS } from '../services/mockData';
 import { Zap, Lock, User } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { users, isLoading } = useMasterData();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const effectiveUsers = users && users.length > 0 ? users : MOCK_USERS;
+
+  const [selectedUserId, setSelectedUserId] = useState(effectiveUsers[0]?.id || '');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
 
   const from = location.state?.from?.pathname || '/';
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
+
+  useEffect(() => {
+    if (!selectedUserId && effectiveUsers.length > 0) {
+      setSelectedUserId(effectiveUsers[0].id);
+    }
+  }, [effectiveUsers, selectedUserId]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const user = users.find(u => u.id === selectedUserId);
-    if (!user) {
+    const targetUser = effectiveUsers.find(u => u.id === selectedUserId);
+    if (!targetUser) {
       setError('Silakan pilih nama Anda terlebih dahulu.');
       return;
     }
 
-    const success = login(user, pin);
+    const success = login(targetUser, pin);
     if (success) {
       navigate(from, { replace: true });
     } else {
@@ -69,7 +84,7 @@ export const LoginPage: React.FC = () => {
                   disabled={isLoading}
                 >
                   <option value="" disabled>-- Pilih Nama Anda --</option>
-                  {users.map((u) => (
+                  {effectiveUsers.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.nama} {u.role ? `(${u.role})` : ''}
                     </option>

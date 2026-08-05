@@ -6,6 +6,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -31,31 +32,33 @@ const queryClient = new QueryClient({
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <ToastProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                
-                <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="kalkulator" element={<KalkulatorPage />} />
-                  <Route path="kalkulator-manual" element={<KalkulatorManualPage />} />
-                  <Route path="perhitungan" element={<PerhitunganPage />} />
-                  <Route path="sph" element={<SPHPage />} />
-                  <Route path="master-data" element={<MasterDataPage />} />
-                  <Route path="sync-monitor" element={<SyncMonitorPage />} />
-                  <Route path="prompts" element={<PromptLibraryPage />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </ToastProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  
+                  <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="kalkulator" element={<KalkulatorPage />} />
+                    <Route path="kalkulator-manual" element={<KalkulatorManualPage />} />
+                    <Route path="perhitungan" element={<PerhitunganPage />} />
+                    <Route path="sph" element={<SPHPage />} />
+                    <Route path="master-data" element={<MasterDataPage />} />
+                    <Route path="sync-monitor" element={<SyncMonitorPage />} />
+                    <Route path="prompts" element={<PromptLibraryPage />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Route>
+                </Routes>
+              </BrowserRouter>
+            </ToastProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -33,6 +33,15 @@ export function usePerhitungan(params: QueryParams) {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Perhitungan> }) =>
+      CalculationService.updateCalculation(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PERHITUNGAN_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard_metrics'] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => CalculationService.deleteCalculation(id),
     onSuccess: () => {
@@ -50,6 +59,8 @@ export function usePerhitungan(params: QueryParams) {
     isCreating: createMutation.isPending,
     createBatchCalculations: createBatchMutation.mutateAsync,
     isCreatingBatch: createBatchMutation.isPending,
+    updateCalculation: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
     deleteCalculation: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
   };

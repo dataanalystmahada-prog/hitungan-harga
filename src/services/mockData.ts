@@ -115,11 +115,13 @@ export const MOCK_MARGIN: Margin[] = [
 ];
 
 export const MOCK_USERS: UserSales[] = [
-  { id: 'USR-001', nama: 'Ahmad Pratama', email: 'ahmad.pratama@company.com' },
-  { id: 'USR-002', nama: 'Siti Rahmawati', email: 'siti.rahmawati@company.com' },
-  { id: 'USR-003', nama: 'Budi Santoso', email: 'budi.santoso@company.com' },
-  { id: 'USR-004', nama: 'Dian Anggraini', email: 'dian.anggraini@company.com' },
-  { id: 'USR-005', nama: 'Rizky Kurniawan', email: 'rizky.kurniawan@company.com' }
+  { id: 'USR-001', nama: 'Ahmad Pratama', email: 'ahmad.pratama@company.com', role: 'sales', pin: '123456' },
+  { id: 'USR-002', nama: 'Siti Rahmawati', email: 'siti.rahmawati@company.com', role: 'sales', pin: '123456' },
+  { id: 'USR-003', nama: 'Budi Santoso', email: 'budi.santoso@company.com', role: 'purchasing', pin: '123456' },
+  { id: 'USR-004', nama: 'Dian Anggraini', email: 'dian.anggraini@company.com', role: 'sales', pin: '123456' },
+  { id: 'USR-005', nama: 'Rizky Kurniawan', email: 'rizky.kurniawan@company.com', role: 'sales', pin: '123456' },
+  { id: 'USR-006', nama: 'Monica Esa', email: 'monica.esa@helloswag.id', role: 'sales', pin: '123456' },
+  { id: 'USR-ADMIN', nama: 'Administrator', email: 'admin@helloswag.id', role: 'admin', pin: '123456' }
 ];
 
 export const MOCK_DIVISI: Divisi[] = [
@@ -131,6 +133,21 @@ export const MOCK_DIVISI: Divisi[] = [
 export const MOCK_BRANDS: Brand[] = [
   { 
     id: 'BRD-001', 
+    nama_brand: 'HELLOSWAG', 
+    singkatan: 'MH', 
+    alamat: 'Jl. Kiara Sari I No.2, Sekejati, Kec. Buahbatu, Kota Bandung, Jawa Barat 40289', 
+    email: 'joy@helloswag.id', 
+    website: 'https://helloswag.id', 
+    no_telp_kantor: '(022) 3209 3670', 
+    no_telp_wa: '628112079792', 
+    sosial_media: '@helloswag.id', 
+    rating_google_maps: '5.0 (500 Review)', 
+    bank: 'BCA Syariah', 
+    no_rekening: '590043923', 
+    atas_nama: 'Elis Maidah' 
+  },
+  { 
+    id: 'BRD-002', 
     nama_brand: 'Amanah Apparel Indonesia', 
     singkatan: 'AAI', 
     alamat: 'Jl. Industri Kreatif No. 88, Bandung', 
@@ -145,7 +162,7 @@ export const MOCK_BRANDS: Brand[] = [
     atas_nama: 'PT AMANAH APPAREL INDONESIA' 
   },
   { 
-    id: 'BRD-002', 
+    id: 'BRD-003', 
     nama_brand: 'Nusantara Garment Enterprise', 
     singkatan: 'NGE', 
     alamat: 'Kawasan Niaga Terpadu Blok C3, Jakarta Selatan', 
@@ -192,8 +209,11 @@ export const generateMockPerhitungan = (): Perhitungan[] => {
     const totalModal = p.modalP + p.modalL;
     const hargaJualUnit = Math.round(totalModal / (1 - (p.margin / 100)));
     const totalHarga = hargaJualUnit * qty;
-    const diskon = i % 7 === 0 ? 5 : 0;
-    const net = Math.round(totalHarga * (1 - diskon / 100));
+    const diskonNominal = i % 5 === 0 ? 500000 : (i % 7 === 0 ? 250000 : 0);
+    const net = Math.max(0, totalHarga - diskonNominal);
+
+    // Group every pair of rows (e.g. 1 & 2, 3 & 4) under a shared ref_id
+    const batchGroup = Math.ceil(i / 2);
 
     list.push({
       id: `CALC-MOCK-${1000 + i}`,
@@ -209,7 +229,8 @@ export const generateMockPerhitungan = (): Perhitungan[] => {
       harga_jual: hargaJualUnit,
       total_harga_jual: totalHarga,
       harga_jual_net: net,
-      diskon: diskon,
+      diskon: diskonNominal,
+      ref_id: `BATCH-${batchGroup}`,
       created_at: new Date(Date.now() - i * 3600000 * 8).toISOString()
     });
   }
@@ -218,8 +239,10 @@ export const generateMockPerhitungan = (): Perhitungan[] => {
 
 export const generateMockSPH = (): SPH[] => {
   const list: SPH[] = [];
-  const sales = ['Ahmad Pratama', 'Siti Rahmawati', 'Budi Santoso', 'Dian Anggraini', 'Rizky Kurniawan'];
+  const sales = ['Monica Esa', 'Ahmad Pratama', 'Siti Rahmawati', 'Budi Santoso', 'Dian Anggraini', 'Rizky Kurniawan'];
+  const brands = ['HELLOSWAG', 'Amanah Apparel Indonesia', 'Nusantara Garment Enterprise'];
   const companies = [
+    'PT Solusi Mitra Nusantara',
     'PT Bank Central Asia Tbk',
     'PT Telkom Indonesia (Persero) Tbk',
     'PT Astra International Tbk',
@@ -228,46 +251,69 @@ export const generateMockSPH = (): SPH[] => {
     'PT Shopee International Indonesia',
     'Kementerian Keuangan RI'
   ];
-  const products = ['Paket Souvenir Powerbank + Agenda', 'Payung Ready Promosi', 'Tas Ready Kanvas A2', 'Polo Shirt CVC Custom', 'Paket Merchandise Event'];
+  const products = [
+    { prod: 'Payung_Ready', kode: 'P STD J', logo: 'Makmur Deddy (Sablon 1 D)', unit: 55800, qty: 900, diskonNominal: 9000000 },
+    { prod: 'Paket Souvenir Powerbank + Agenda', kode: 'PB-AG-01', logo: 'Laser Engrave + Hotprint Gold', unit: 125000, qty: 200, diskonNominal: 2500000 },
+    { prod: 'Tas Ready Kanvas A2', kode: 'TAS-KNV-A2', logo: 'Sablon 2 Warna Presisi', unit: 48000, qty: 500, diskonNominal: 1200000 },
+    { prod: 'Polo Shirt CVC Custom', kode: 'POLO-CVC-24', logo: 'Bordir Komputer Dada & Punggung', unit: 85000, qty: 300, diskonNominal: 0 },
+    { prod: 'Paket Merchandise Event', kode: 'EVNT-PKG-09', logo: 'Full Color UV DTF Print', unit: 92000, qty: 100, diskonNominal: 500000 }
+  ];
   const statuses = ['Deal', 'Dikirim', 'Negosiasi', 'Draft', 'Disetujui', 'Ditolak'];
 
   for (let i = 1; i <= 60; i++) {
     const comp = companies[i % companies.length];
     const s = sales[i % sales.length];
-    const prod = products[i % products.length];
-    const qty = [50, 100, 200, 300, 500, 1000][i % 6];
-    const unitPrice = [65000, 125000, 185000, 48000, 92000][i % 5];
-    const totalGross = unitPrice * qty;
-    const diskon = i % 4 === 0 ? 5 : 0;
-    const totalAkhir = Math.round(totalGross * (1 - diskon / 100));
+    const brand = brands[i % brands.length];
+    const pItem = products[i % products.length];
+    const isMultiItem = i % 3 === 0; // Every 3rd SPH is a 2-product bundle
+
+    const item1 = {
+      produk: pItem.prod,
+      kode: pItem.kode,
+      qty: pItem.qty,
+      hargaJualUnit: pItem.unit,
+      totalHargaJual: pItem.unit * pItem.qty,
+      diskon: isMultiItem ? 0 : pItem.diskonNominal,
+      proses_logo: pItem.logo
+    };
+
+    const item2 = isMultiItem ? {
+      produk: 'Tas Ready Kanvas A2',
+      kode: 'TAS-KNV-A2',
+      qty: 100,
+      hargaJualUnit: 48000,
+      totalHargaJual: 4800000,
+      diskon: 0,
+      proses_logo: 'Sablon 1 Sisi 1 Warna'
+    } : null;
+
+    const items = item2 ? [item1, item2] : [item1];
+    const totalGross = items.reduce((acc, it) => acc + it.totalHargaJual, 0);
+    const totalQty = items.reduce((acc, it) => acc + it.qty, 0);
+    const diskonNominal = pItem.diskonNominal;
+    const totalAkhir = Math.max(0, totalGross - diskonNominal);
     const status = statuses[i % statuses.length];
+    const brandCode = brand === 'HELLOSWAG' ? 'MH' : (brand.includes('Amanah') ? 'AAI' : 'NGE');
 
     list.push({
       id: `SPH-MOCK-${1000 + i}`,
       tanggal: `${(28 - (i % 25)).toString().padStart(2, '0')}/08/2026`,
-      brand: i % 2 === 0 ? 'Amanah Apparel Indonesia' : 'Nusantara Garment Enterprise',
-      no_sph: `SPH/AAI/2026/08/${String(100 + i).padStart(4, '0')}`,
+      brand: brand,
+      no_sph: `SPH ${String(i).padStart(4, '0')}/${brandCode}/VIII/2026`,
       nama_pt: comp,
-      deskripsi: `Pengadaan ${prod} pesanan resmi ${qty} pcs`,
-      produk: prod,
-      qty: qty,
-      harga_jual: unitPrice,
-      ref_id: `CALC-MOCK-${1000 + i}`,
+      deskripsi: isMultiItem
+        ? `Paket Penawaran Khusus (${items.length} Macam Produk)`
+        : `Pengadaan Merchandise & Apparel Promosi Resmi`,
+      produk: items.map(it => `${it.produk} (${it.qty} pcs)`).join(', '),
+      qty: totalQty,
+      harga_jual: Math.round(totalGross / totalQty),
+      ref_id: `BATCH-${Math.ceil(i / 2)}`,
       sales: s,
       status_sph: status,
-      keterangan: 'Harga sudah termasuk custom logo dan packing rapi.',
-      diskon: diskon,
+      keterangan: 'Harga penawaran ini berlaku selama 14 hari kalender sejak tanggal diterbitkan.',
+      diskon: diskonNominal,
       harga_jual_akhir: totalAkhir,
-      items: [
-        {
-          produk: prod,
-          qty: qty,
-          hargaJualUnit: unitPrice,
-          totalHargaJual: totalGross,
-          diskon: diskon,
-          proses_logo: 'Sablon 1 Warna 1 Sisi'
-        }
-      ],
+      items: items,
       created_at: new Date(Date.now() - i * 3600000 * 12).toISOString()
     });
   }

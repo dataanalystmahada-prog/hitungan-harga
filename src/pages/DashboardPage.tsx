@@ -94,23 +94,23 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <StatsCard
           title="Total Nilai Kalkulasi"
-          value={formatRupiah(metrics?.totalPerhitunganRevenue || 148500000)}
+          value={formatRupiah(metrics?.totalPerhitunganRevenue ?? 0)}
           icon={<DollarSign className="w-6 h-6" />}
-          trend={{ value: '+18.4% bln ini', isPositive: true }}
+          subtitle={salesFilter ? `Filter: ${salesFilter}` : 'Akumulasi seluruh hitungan'}
           iconBgColor="bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
         />
 
         <StatsCard
           title="Total Hitungan Harga"
-          value={`${formatNumber(metrics?.totalPerhitunganCount || 150)} Order`}
+          value={`${formatNumber(metrics?.totalPerhitunganCount ?? 0)} Order`}
           icon={<Calculator className="w-6 h-6" />}
-          trend={{ value: '+12 order baru', isPositive: true }}
+          subtitle="Tersimpan di Supabase"
           iconBgColor="bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
         />
 
         <StatsCard
           title="Rata-rata Margin"
-          value={formatPercent(metrics?.avgOverallMargin || 29.5)}
+          value={formatPercent(metrics?.avgOverallMargin ?? 0)}
           subtitle="Target standard: 25% - 35%"
           icon={<TrendingUp className="w-6 h-6" />}
           iconBgColor="bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
@@ -118,8 +118,9 @@ export const DashboardPage: React.FC = () => {
 
         <StatsCard
           title="Surat Penawaran (SPH)"
-          value={`${formatNumber(metrics?.totalSPHCount || 60)} Dokumen`}
-          badgeText={`${metrics?.totalSPHDeal || 27} Deal`}
+          value={`${formatNumber(metrics?.totalSPHCount ?? 0)} Dokumen`}
+          badgeText={`${metrics?.totalSPHDeal ?? 0} Deal`}
+          subtitle={`Total Nilai: ${formatRupiah(metrics?.totalSPHValue ?? 0)}`}
           icon={<FileCheck2 className="w-6 h-6" />}
           iconBgColor="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
         />

@@ -3,11 +3,13 @@ import { MultiProductItem, MultiProductOrderSummary, QuantityTier } from '../typ
 import { calculateMultiProductOrder } from '../utils/calcEngine';
 import { useMasterData } from './useMasterData';
 import { ModalProduk, ModalLogo } from '../types/database.types';
+import { useAuth } from '../contexts/AuthContext';
 
 export function useMultiKalkulator() {
   const { masterProduk, modalProduk, modalLogo, margin, users, brands } = useMasterData();
+  const { user } = useAuth();
 
-  const [sales, setSales] = useState<string>('');
+  const [sales, setSales] = useState<string>(user?.nama || '');
   const [namaPt, setNamaPt] = useState<string>('');
   const [brand, setBrand] = useState<string>('');
   const [focusedItemId, setFocusedItemId] = useState<string>('item-1');
@@ -24,50 +26,56 @@ export function useMultiKalkulator() {
     }
   ]);
 
-  // Set default initial values when master data is loaded
+  // Set default initial values when master data is loaded or user changes
   useEffect(() => {
+    if (user?.nama) {
+      setSales(user.nama);
+    } else if (!sales && users.length > 0) {
+      setSales(users[0]?.nama || '');
+    }
+
     if (masterProduk.length > 0 && (!items[0]?.produk || items[0].produk === '')) {
-      const defaultProd = masterProduk[0].nama_produk;
-      const kodes = modalProduk.filter(m => m.produk.toLowerCase() === defaultProd.toLowerCase());
-      const logos = modalLogo.filter(l => l.produk.toLowerCase() === defaultProd.toLowerCase());
+      const defaultProd = masterProduk[0]?.nama_produk || '';
+      const prodNorm = (defaultProd || '').toLowerCase().trim();
+      const kodes = modalProduk.filter(m => (m.produk || '').toLowerCase().trim() === prodNorm);
+      const logos = modalLogo.filter(l => (l.produk || '').toLowerCase().trim() === prodNorm);
 
       setItems([
         {
           id: 'item-1',
           produk: defaultProd,
           kode: kodes.length > 0 ? (kodes[0].kode || '') : '',
-          proses_logo: logos.length > 0 ? logos[0].proses_logo : '',
+          proses_logo: logos.length > 0 ? (logos[0].proses_logo || '') : '',
           qty: 0,
           diskonPersen: 0,
         }
       ]);
     }
 
-    if (!sales && users.length > 0) {
-      setSales(users[0].nama);
-    }
-
     if (!brand && brands.length > 0) {
-      setBrand(brands[0].nama_brand);
+      setBrand(brands[0]?.nama_brand || '');
     }
-  }, [masterProduk, modalProduk, modalLogo, users, brands]);
+  }, [user, masterProduk, modalProduk, modalLogo, users, brands]);
 
   // Helper: Get available Kodes for a product
   const getAvailableKodes = (productName: string): { kode: string; harga: number }[] => {
     if (!productName) return [];
+    const prodNorm = (productName || '').toLowerCase().trim();
     return modalProduk
-      .filter(m => m.produk.toLowerCase() === productName.toLowerCase())
+      .filter(m => (m.produk || '').toLowerCase().trim() === prodNorm)
       .map(m => ({ kode: m.kode || m.id, harga: Number(m.harga_modal) || 0 }));
   };
 
   // Helper: Get available Logos for a product
   const getAvailableLogos = (productName: string): string[] => {
     if (!productName) return [];
+    const prodNorm = (productName || '').toLowerCase().trim();
     return Array.from(
       new Set(
         modalLogo
-          .filter(l => l.produk.toLowerCase() === productName.toLowerCase())
+          .filter(l => (l.produk || '').toLowerCase().trim() === prodNorm)
           .map(l => l.proses_logo)
+          .filter(Boolean)
       )
     );
   };

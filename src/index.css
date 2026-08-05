@@ -8,31 +8,109 @@
   }
 }
 
-/* Custom Printable Styles for SPH */
+/* Custom Printable Styles for SPH & Enterprise Documents */
 @media print {
   @page {
-    size: A4;
-    margin: 2cm;
+    size: A4 portrait;
+    margin: 20mm; /* 2 cm top, bottom, left, right */
   }
+
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset all modal containers and fixed overlays during print */
+  #root,
+  .fixed,
+  [class*="fixed"],
+  [class*="overflow-"],
+  [class*="max-h-"] {
+    position: static !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    transform: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide everything on page by default */
   body * {
     visibility: hidden;
   }
-  .printable-doc, .printable-doc * {
-    visibility: visible;
+
+  /* Show only printable document and its descendants */
+  .printable-doc,
+  .printable-doc * {
+    visibility: visible !important;
   }
+
   .printable-doc {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
     border: none !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
     overflow: visible !important;
+    page-break-after: auto;
   }
-  html, body {
-    height: auto;
-    overflow: visible !important;
+
+  /* Hide non-printable elements */
+  .print\\:hidden,
+  .print-hidden,
+  button,
+  input,
+  select,
+  textarea,
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+
+  /* Multi-page table and section break controls */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .sph-keep-together {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .sph-signature-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }

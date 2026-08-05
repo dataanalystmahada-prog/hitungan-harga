@@ -30,7 +30,7 @@ import { SPHPreviewModal } from '../sph/SPHPreviewModal';
 import { SavePreviewModal } from './SavePreviewModal';
 
 export const InteractiveKalkulator: React.FC = () => {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const {
     items,
     orderSummary,
@@ -60,75 +60,14 @@ export const InteractiveKalkulator: React.FC = () => {
     return Array.from(new Set(modalProduk.map(m => m.produk))).filter(Boolean).sort();
   }, [modalProduk]);
 
-  const { createBatchCalculations, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
+  const { createCalculation, isCreating, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
+  const isSaving = isCreating || Boolean(isCreatingBatch);
   const { success, error } = useToast();
 
   const [isSPHModalOpen, setIsSPHModalOpen] = useState(false);
   const [isSavePreviewModalOpen, setIsSavePreviewModalOpen] = useState(false);
 
-  // Open save preview modal
-  const handleSaveAllCalculations = () => {
-    if (items.length === 0 || !items[0].produk) {
-      error('Item Belum Lengkap', 'Silakan pilih produk terlebih dahulu.');
-      return;
-    }
-    setIsSavePreviewModalOpen(true);
-  };
-
-  // Actual save logic
-  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
-    try {
-      const now = new Date();
-      const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-      
-      const totalKotorAll = orderSummary.totalHargaJualKotor;
-
-      const payloads = items.map((it, idx) => {
-        const calc = it.calculation;
-        const totalKotorItem = calc ? calc.totalHargaJualKotor : 0;
-        
-        // Distribute proportional discount to this item
-        const itemDiskon = totalKotorAll > 0 
-          ? Math.round(globalDiskon * (totalKotorItem / totalKotorAll))
-          : 0;
-
-        return {
-          id: `CALC-${Date.now()}-${idx + 1}`,
-          tanggal: dateFormatted,
-          sales: sales || 'Sales Admin',
-          produk: it.produk,
-          kode: it.kode || '',
-          proses_logo: it.proses_logo || '-',
-          qty: it.qty,
-          modal_produk: calc ? calc.modalProdukUnit : 0,
-          modal_logo: calc ? calc.modalLogoUnit : 0,
-          margin: calc ? calc.marginPersen : 25,
-          harga_jual: calc ? calc.hargaJualKotorUnit : 0,
-          total_harga_jual: totalKotorItem,
-          harga_jual_net: calc ? (calc.hargaJualKotorUnit - Math.round(itemDiskon / it.qty)) : 0,
-          diskon: itemDiskon,
-          // We can optionally add deskripsi if we add it to the schema, but per user request, deskripsi is mainly for SPH.
-          // The user said: "di tabel data perhitungan ada ikon edit... atau deskrispi dan diskon."
-          // But since the DB schema doesn't have it yet, we just pass the deskripsi to the SPH modal state if they open SPH next.
-        };
-      });
-
-      await createBatchCalculations(payloads);
-      success(
-        'Berhasil Disimpan ke Database',
-        `${items.length} item perhitungan berhasil disimpan ke tabel Supabase.`
-      );
-    } catch (err: any) {
-      error('Gagal Menyimpan Hitungan', err.message || 'Terjadi kesalahan saat menyimpan.');
-    }
-  };
-
-  // Open Multi-Item SPH Modal
-  const handleOpenSPH = () => {
-    setIsSPHModalOpen(true);
-  };
-
-  // Prepare line items for SPH modal
+  // Prepare line items for SPH modal & unified storage
   const sphLineItems = items.map(it => {
     const calc = it.calculation;
     return {
@@ -141,6 +80,66 @@ export const InteractiveKalkulator: React.FC = () => {
       diskon: calc ? (calc.diskonNominalUnit * it.qty) : 0,
     };
   });
+
+  // Open save preview modal
+  const handleSaveAllCalculations = () => {
+    if (items.length === 0 || !items[0].produk) {
+      error('Item Belum Lengkap', 'Silakan pilih produk terlebih dahulu.');
+      return;
+    }
+    setIsSavePreviewModalOpen(true);
+  };
+
+  // Actual save logic (Single Unified Record for 1 or More Products)
+  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
+    try {
+      const now = new Date();
+      const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+      
+      const totalPcs = orderSummary.totalPcs || 1;
+      const totalGross = orderSummary.totalHargaJualKotor;
+      const totalModalProd = items.reduce((acc, it) => acc + ((it.calculation?.modalProdukUnit || 0) * it.qty), 0);
+      const totalModalLogo = items.reduce((acc, it) => acc + ((it.calculation?.modalLogoUnit || 0) * it.qty), 0);
+
+      const summaryProduk = items.length === 1 
+        ? items[0].produk 
+        : items.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
+
+      const summaryKode = items.map(it => it.kode).filter(Boolean).join(', ') || '-';
+      const summaryLogo = items.map(it => it.proses_logo).filter(Boolean).join(', ') || '-';
+
+      const payload = {
+        id: `CALC-${Date.now()}`,
+        tanggal: dateFormatted,
+        sales: (user?.nama || sales || 'Sales Admin').trim(),
+        produk: summaryProduk,
+        kode: summaryKode,
+        proses_logo: summaryLogo,
+        qty: totalPcs,
+        modal_produk: Math.round(totalModalProd / totalPcs),
+        modal_logo: Math.round(totalModalLogo / totalPcs),
+        margin: orderSummary.avgMarginPersen,
+        harga_jual: Math.round(totalGross / totalPcs),
+        total_harga_jual: totalGross,
+        harga_jual_net: Math.max(0, totalGross - globalDiskon),
+        diskon: globalDiskon,
+        items: sphLineItems,
+      };
+
+      await createCalculation(payload);
+      success(
+        'Berhasil Disimpan',
+        `Perhitungan ${summaryProduk} (${totalPcs} pcs) berhasil disimpan sebagai 1 data perhitungan.`
+      );
+    } catch (err: any) {
+      error('Gagal Menyimpan Hitungan', err.message || 'Terjadi kesalahan saat menyimpan.');
+    }
+  };
+
+  // Open Multi-Item SPH Modal
+  const handleOpenSPH = () => {
+    setIsSPHModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -180,9 +179,10 @@ export const InteractiveKalkulator: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-xs">
           <Select
             label="Sales In-Charge (PIC)"
-            options={users.map(u => ({ label: `${u.nama} (${u.email})`, value: u.nama }))}
+            options={users.map(u => ({ label: u.nama === user?.nama ? `${u.nama} (Akun Anda)` : `${u.nama} (${u.email})`, value: u.nama }))}
             value={sales}
             onChange={(e) => setSales(e.target.value)}
+            disabled={role === 'sales'}
           />
           <Input
             label="Nama Klien / Perusahaan (Draft SPH)"
@@ -329,26 +329,28 @@ export const InteractiveKalkulator: React.FC = () => {
                 </div>
 
                 {/* Quick Quantity Tier Buttons */}
-                <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/40">
-                  <span className="text-[11px] font-medium text-slate-400 mr-1">Quick Tier:</span>
-                  {QUANTITY_TIERS.map(tier => (
-                    <button
-                      key={tier}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateItem(item.id, { qty: tier });
-                      }}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-                        item.qty === tier
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {tier} pcs
-                    </button>
-                  ))}
-                </div>
+                {role !== 'sales' && (
+                  <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/40">
+                    <span className="text-[11px] font-medium text-slate-400 mr-1">Quick Tier:</span>
+                    {QUANTITY_TIERS.map(tier => (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateItem(item.id, { qty: tier });
+                        }}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                          item.qty === tier
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {tier} pcs
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Live Item Calculation Badges */}
                 {calc && (
@@ -414,19 +416,23 @@ export const InteractiveKalkulator: React.FC = () => {
               </span>
             </div>
 
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
-              <span className="text-sm font-semibold text-slate-300 font-mono">
-                {formatRupiah(orderSummary.totalModal)}
-              </span>
-            </div>
+            {role !== 'sales' && (
+              <>
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
+                  <span className="text-sm font-semibold text-slate-300 font-mono">
+                    {formatRupiah(orderSummary.totalModal)}
+                  </span>
+                </div>
 
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
-              <span className="text-sm font-bold text-indigo-300">
-                {orderSummary.avgMarginPersen}%
-              </span>
-            </div>
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
+                  <span className="text-sm font-bold text-indigo-300">
+                    {orderSummary.avgMarginPersen}%
+                  </span>
+                </div>
+              </>
+            )}
 
             {role !== 'sales' && (
               <div>
@@ -457,7 +463,7 @@ export const InteractiveKalkulator: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                isLoading={isCreatingBatch}
+                isLoading={isSaving}
                 onClick={handleSaveAllCalculations}
                 leftIcon={<Save className="w-4 h-4" />}
                 title="Simpan Semua Item ke Database"
@@ -501,21 +507,25 @@ export const InteractiveKalkulator: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
                 {QUANTITY_TIERS.map(tier => {
                   const tierKey = getTierKey(tier);
-                  const isCurrent = findClosestTier(focusedItem.qty) === tier;
+                  const isCurrent = findClosestTier(focusedItem?.qty || 0) === tier;
+
+                  const focusedProd = (focusedItem?.produk || '').toLowerCase().trim();
+                  const focusedKode = (focusedItem?.kode || '').toLowerCase().trim();
+                  const focusedLogo = (focusedItem?.proses_logo || '').toLowerCase().trim();
 
                   // Modal Produk
                   let modalP = 0;
                   const foundP = modalProduk.find(
-                    m => m.produk.toLowerCase() === focusedItem.produk.toLowerCase() &&
-                         (focusedItem.kode ? (m.kode || '').toLowerCase() === focusedItem.kode.toLowerCase() : true)
+                    m => (m.produk || '').toLowerCase().trim() === focusedProd &&
+                         (focusedKode ? (m.kode || '').toLowerCase().trim() === focusedKode : true)
                   );
                   if (foundP) modalP = parseSpreadsheetNumber(foundP.harga_modal);
 
                   // Modal Logo
                   let modalL = 0;
                   const foundL = modalLogo.find(
-                    l => l.produk.toLowerCase() === focusedItem.produk.toLowerCase() &&
-                         (focusedItem.proses_logo ? l.proses_logo.toLowerCase() === focusedItem.proses_logo.toLowerCase() : true)
+                    l => (l.produk || '').toLowerCase().trim() === focusedProd &&
+                         (focusedLogo ? (l.proses_logo || '').toLowerCase().trim() === focusedLogo : true)
                   );
                   if (foundL && foundL[tierKey] !== undefined) {
                     modalL = parseSpreadsheetNumber(foundL[tierKey]);
@@ -523,7 +533,7 @@ export const InteractiveKalkulator: React.FC = () => {
 
                   // Margin Multiplier / %
                   let marginVal = 25;
-                  const foundM = margin.find(m => m.produk.toLowerCase() === focusedItem.produk.toLowerCase());
+                  const foundM = margin.find(m => (m.produk || '').toLowerCase().trim() === focusedProd);
                   if (foundM && foundM[tierKey] !== undefined) {
                     marginVal = parseSpreadsheetNumber(foundM[tierKey]);
                   }
@@ -596,7 +606,11 @@ export const InteractiveKalkulator: React.FC = () => {
             sales: sales,
             namaPt: namaPt,
             brand: brand,
+            diskon: orderSummary.totalDiskonNominal,
             items: sphLineItems,
+          }}
+          onSavePerhitunganBeforePrint={async (modalDeskripsi, modalDiskon) => {
+            await executeSaveAll(modalDiskon !== undefined ? modalDiskon : orderSummary.totalDiskonNominal, modalDeskripsi);
           }}
         />
       )}
@@ -608,7 +622,7 @@ export const InteractiveKalkulator: React.FC = () => {
           onSave={executeSaveAll}
           items={items}
           totalKotor={orderSummary.totalHargaJualKotor}
-          isSaving={isCreatingBatch}
+          isSaving={isSaving}
         />
       )}
     </div>

@@ -10,10 +10,12 @@ import { Button } from '../components/common/Button';
 import { Plus, Printer, Trash2 } from 'lucide-react';
 import { SPHPreviewModal } from '../components/sph/SPHPreviewModal';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const ALL_STATUSES: SPHStatus[] = ['Draft', 'Dikirim', 'Negosiasi', 'Deal', 'Disetujui', 'Ditolak'];
 
 export const SPHPage: React.FC = () => {
+  const { role } = useAuth();
   const {
     page,
     setPage,
@@ -195,17 +197,19 @@ export const SPHPage: React.FC = () => {
           >
             <Printer className="w-4 h-4 text-brand-600" />
           </button>
-          <button
-            onClick={(e) => handleDelete(e, row.id)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-            title="Hapus SPH"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {role !== 'sales' && (
+            <button
+              onClick={(e) => handleDelete(e, row.id)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              title="Hapus SPH"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       ),
     },
-  ], []);
+  ], [role]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -259,6 +263,12 @@ export const SPHPage: React.FC = () => {
           defaultData={
             previewModal.row
               ? {
+                  no_sph: previewModal.row.no_sph,
+                  tanggal: previewModal.row.tanggal,
+                  brand: previewModal.row.brand,
+                  namaPt: previewModal.row.nama_pt,
+                  deskripsi: previewModal.row.deskripsi,
+                  keterangan: previewModal.row.keterangan,
                   produk: previewModal.row.produk,
                   qty: previewModal.row.qty,
                   hargaJualUnit: previewModal.row.harga_jual,

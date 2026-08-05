@@ -43,7 +43,7 @@ export class PerhitunganRepository extends BaseRepository {
         if (params.search && params.search.trim()) {
           const s = params.search.toLowerCase().trim();
           list = list.filter(item => 
-            item.produk.toLowerCase().includes(s) ||
+            (item.produk && item.produk.toLowerCase().includes(s)) ||
             (item.kode && item.kode.toLowerCase().includes(s)) ||
             (item.sales && item.sales.toLowerCase().includes(s)) ||
             (item.proses_logo && item.proses_logo.toLowerCase().includes(s))
@@ -101,11 +101,44 @@ export class PerhitunganRepository extends BaseRepository {
   }
 
   /**
+   * Filter and sanitize payload so only valid table columns are sent to Supabase
+   */
+  private static sanitize(record: any): Partial<Perhitungan> {
+    const allowedKeys: (keyof Perhitungan)[] = [
+      'id',
+      'tanggal',
+      'sales',
+      'produk',
+      'kode',
+      'proses_logo',
+      'qty',
+      'modal_produk',
+      'modal_logo',
+      'margin',
+      'harga_jual',
+      'total_harga_jual',
+      'harga_jual_net',
+      'diskon',
+      'created_at',
+      'updated_at',
+      'synced_at',
+    ];
+
+    const clean: any = {};
+    for (const key of allowedKeys) {
+      if (record[key] !== undefined) {
+        clean[key] = record[key];
+      }
+    }
+    return clean;
+  }
+
+  /**
    * Save a single calculation
    */
   public static async create(record: Omit<Perhitungan, 'created_at' | 'updated_at' | 'synced_at'>): Promise<Perhitungan> {
     const newRecord: Perhitungan = {
-      ...record,
+      ...(this.sanitize(record) as any),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       synced_at: new Date().toISOString(),
@@ -128,7 +161,7 @@ export class PerhitunganRepository extends BaseRepository {
    */
   public static async createBatch(records: Omit<Perhitungan, 'created_at' | 'updated_at' | 'synced_at'>[]): Promise<Perhitungan[]> {
     const prepared = records.map(r => ({
-      ...r,
+      ...(this.sanitize(r) as any),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       synced_at: new Date().toISOString(),
@@ -143,6 +176,39 @@ export class PerhitunganRepository extends BaseRepository {
     const mock = this.getMockData();
     mock.unshift(...prepared);
     return prepared;
+  }
+
+  /**
+   * Update calculation record
+   */
+  public static async update(id: string, updates: Partial<Perhitungan>): Promise<Perhitungan> {
+    const cleanUpdates = this.sanitize(updates);
+    const updatedPayload = {
+      ...cleanUpdates,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (isConfigured) {
+      const { data, error } = await supabase
+        .from('perhitungan')
+        .update(updatedPayload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    const mock = this.getMockData();
+    const idx = mock.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      mock[idx] = {
+        ...mock[idx],
+        ...updatedPayload,
+      };
+      return mock[idx];
+    }
+    throw new Error('Data perhitungan tidak ditemukan');
   }
 
   /**

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { calculateMultiProductOrder } from '../utils/calcEngine';
 import { MultiProductItem, MultiProductOrderSummary } from '../types/pricing.types';
 import { useMasterData } from './useMasterData';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Manual Calculator Item — semua nilai modal & margin diisi manual
@@ -71,8 +72,9 @@ function calcItem(item: ManualItem): ManualItem {
 
 export function useManualKalkulator() {
   const { users, brands } = useMasterData();
+  const { user } = useAuth();
 
-  const [sales, setSales] = useState<string>('');
+  const [sales, setSales] = useState<string>(user?.nama || '');
   const [namaPt, setNamaPt] = useState<string>('');
   const [brand, setBrand] = useState<string>('');
   const [focusedItemId, setFocusedItemId] = useState<string>('mitem-1');
@@ -105,11 +107,15 @@ export function useManualKalkulator() {
     }
   ]);
 
-  // Auto-set defaults when master loads
+  // Auto-set defaults when master loads or user changes
   useEffect(() => {
-    if (!sales && users.length > 0) setSales(users[0].nama);
+    if (user?.nama) {
+      setSales(user.nama);
+    } else if (!sales && users.length > 0) {
+      setSales(users[0].nama);
+    }
     if (!brand && brands.length > 0) setBrand(brands[0].nama_brand);
-  }, [users, brands]);
+  }, [user, users, brands]);
 
   // Calculated items (live)
   const calculatedItems = useMemo(() => items.map(it => calcItem(it)), [items]);

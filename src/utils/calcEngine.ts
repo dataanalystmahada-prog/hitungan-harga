@@ -59,15 +59,17 @@ export function calculatePricingEngine(
   // 1. Resolve Modal Produk (matching by produk and optional kode)
   let modalProdukUnit = input.customModalProduk !== undefined ? input.customModalProduk : 0;
   if (modalProdukUnit === 0 && input.produk) {
+    const inputProd = (input.produk || '').toLowerCase().trim();
+    const inputKode = (input.kode || '').toLowerCase().trim();
     let found: ModalProduk | undefined;
-    if (input.kode) {
+    if (inputKode) {
       found = modalProdukList.find(
-        m => m.produk.toLowerCase() === input.produk.toLowerCase() && 
-             (m.kode || '').toLowerCase() === (input.kode || '').toLowerCase()
+        m => (m.produk || '').toLowerCase().trim() === inputProd && 
+             (m.kode || '').toLowerCase().trim() === inputKode
       );
     }
     if (!found) {
-      found = modalProdukList.find(m => m.produk.toLowerCase() === input.produk.toLowerCase());
+      found = modalProdukList.find(m => (m.produk || '').toLowerCase().trim() === inputProd);
     }
     if (found) {
       modalProdukUnit = parseSpreadsheetNumber(found.harga_modal);
@@ -77,9 +79,11 @@ export function calculatePricingEngine(
   // 2. Resolve Modal Logo from Matrix
   let modalLogoUnit = input.customModalLogo !== undefined ? input.customModalLogo : 0;
   if (modalLogoUnit === 0 && input.produk && input.proses_logo) {
+    const inputProd = (input.produk || '').toLowerCase().trim();
+    const inputLogo = (input.proses_logo || '').toLowerCase().trim();
     const foundLogo = modalLogoList.find(
-      l => l.produk.toLowerCase() === input.produk.toLowerCase() &&
-           l.proses_logo.toLowerCase() === input.proses_logo.toLowerCase()
+      l => (l.produk || '').toLowerCase().trim() === inputProd &&
+           (l.proses_logo || '').toLowerCase().trim() === inputLogo
     );
     if (foundLogo && foundLogo[tierKey] !== undefined) {
       modalLogoUnit = parseSpreadsheetNumber(foundLogo[tierKey]);
@@ -89,13 +93,15 @@ export function calculatePricingEngine(
   // 3. Resolve Margin % / Multiplier from Matrix
   let marginRawValue = input.customMargin !== undefined ? input.customMargin : 0;
   if (marginRawValue === 0 && input.produk) {
+    const inputProd = (input.produk || '').toLowerCase().trim();
+    const inputLogo = (input.proses_logo || '').toLowerCase().trim();
     // Try matching product & logo, or fallback to product only
     let foundMargin = marginList.find(
-      m => m.produk.toLowerCase() === input.produk.toLowerCase() &&
-           (m.proses_logo ? m.proses_logo.toLowerCase() === (input.proses_logo || '').toLowerCase() : true)
+      m => (m.produk || '').toLowerCase().trim() === inputProd &&
+           (m.proses_logo ? (m.proses_logo || '').toLowerCase().trim() === inputLogo : true)
     );
     if (!foundMargin) {
-      foundMargin = marginList.find(m => m.produk.toLowerCase() === input.produk.toLowerCase());
+      foundMargin = marginList.find(m => (m.produk || '').toLowerCase().trim() === inputProd);
     }
     if (foundMargin && foundMargin[tierKey] !== undefined) {
       marginRawValue = parseSpreadsheetNumber(foundMargin[tierKey]);
