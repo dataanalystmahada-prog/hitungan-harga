@@ -287,14 +287,14 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             />
             <div className="w-full flex flex-col gap-1">
               <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                Deskripsi / Nama Project (khusus SPH)
+                Catatan / Deskripsi Project (Opsional)
               </label>
               <textarea
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}
-                placeholder="Harus di ISI"
+                placeholder="Tambahkan catatan atau keterangan project bila diperlukan..."
                 rows={2}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-rose-500 placeholder:font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all duration-150 resize-none"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all duration-150 resize-none"
               />
             </div>
           </div>
@@ -336,7 +336,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
           <div className="mb-4 text-xs text-slate-800 leading-relaxed">
             <p>Dengan hormat,</p>
             <p className="mt-1.5">
-              Pada kesempatan kali ini, kami <strong className="font-bold text-slate-900 uppercase">{activeBrand?.nama_brand || 'HELLOSWAG'}</strong> bermaksud memberikan penawaran harga{deskripsi ? ` untuk ${deskripsi}` : ''}. Berikut spesifikasi tawaran yang dimaksud :
+              Pada kesempatan kali ini, kami <strong className="font-bold text-slate-900 uppercase">{activeBrand?.nama_brand || 'HELLOSWAG'}</strong> bermaksud memberikan penawaran harga. Berikut spesifikasi tawaran yang dimaksud :
             </p>
           </div>
 

@@ -215,9 +215,6 @@ export const PerhitunganPage: React.FC = () => {
         diskon: totalDiskon,
         items: sphLineItems,
         sourceCalculationIds: selectedIdsArray,
-        deskripsi: sphLineItems.length > 1
-          ? `Paket Penawaran Khusus (${sphLineItems.length} Macam Produk)`
-          : undefined,
       },
     });
   };
@@ -241,9 +238,6 @@ export const PerhitunganPage: React.FC = () => {
         hargaJualUnit: row.harga_jual,
         totalHargaJual: row.total_harga_jual,
         sourceCalculationIds: [row.id],
-        deskripsi: sphLineItems.length > 1
-          ? `Paket Penawaran Khusus (${sphLineItems.length} Macam Produk)`
-          : undefined,
       },
     });
   };
