@@ -11,6 +11,7 @@ import { Printer, Save } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SPHItemDetail } from '../../types/pricing.types';
+import { calculateMaxDiskon } from '../../utils/discountEngine';
 
 export interface SPHPreviewModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   onSaveSuccess,
 }) => {
   const { user, role } = useAuth();
-  const { brands, users } = useMasterData();
+  const { brands, users, keterangan } = useMasterData();
   const { createSPH, isCreating, getNextSPHNumber } = useSPH({ page: 1, limit: 1 });
   const { success, error } = useToast();
 
@@ -220,6 +221,13 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   const ongkirNominal = Math.max(0, ongkir || 0);
   const grandTotal = subtotalAfterDiskon + ppnNominal + ongkirNominal;
 
+  const maxDiskonInfo = calculateMaxDiskon(subtotalAfterDiskon, totalQtyPcs);
+
+  const pesanDiskonObj = keterangan.find(
+    k => k.id === 'PESAN_DISKON' || (k.isi_keterangan && k.isi_keterangan.toLowerCase().includes('sayangi diskon'))
+  );
+  const pesanDiskon = pesanDiskonObj?.isi_keterangan || 'Sayangi diskonnya seperti menyayangi gaji di tanggal 25. Jangan habis di awal bulan. 🤣';
+
   // Split manual terms into clean lines
   const manualTermsLines = (keteranganManual || '')
     .split('\n')
@@ -361,6 +369,21 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 <input type="checkbox" checked={showDiskon} onChange={(e) => setShowDiskon(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
                 <span>Tampilkan Diskon di SPH</span>
               </label>
+              {role === 'sales' && (
+                <div className="mt-1 p-2 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-500/30 text-[11px]">
+                  <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-amber-200">
+                    <span className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold">
+                      Max Diskon (Kategori A - {maxDiskonInfo.persentase}%):
+                    </span>
+                    <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
+                      {formatRupiah(maxDiskonInfo.maxNominal)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] italic text-slate-600 dark:text-slate-300 mt-0.5">
+                    "{pesanDiskon}"
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">

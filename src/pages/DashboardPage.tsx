@@ -19,10 +19,16 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMasterData } from '../hooks/useMasterData';
+import { useAuth } from '../contexts/AuthContext';
 
 export const DashboardPage: React.FC = () => {
-  const [salesFilter, setSalesFilter] = useState<string>('');
+  const { user, role } = useAuth();
   const { users } = useMasterData();
+
+  // Default filter: sales role sees their own data, admin sees all
+  const [salesFilter, setSalesFilter] = useState<string>(
+    role === 'sales' && user?.nama ? user.nama : ''
+  );
 
   const { data: metrics } = useQuery({
     queryKey: ['dashboard_metrics', salesFilter],
@@ -81,11 +87,12 @@ export const DashboardPage: React.FC = () => {
         <select
           value={salesFilter}
           onChange={(e) => setSalesFilter(e.target.value)}
-          className="w-full sm:w-56 rounded-lg border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-xs px-3 py-1.5"
+          disabled={role === 'sales'}
+          className="w-full sm:w-56 rounded-lg border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-xs px-3 py-1.5 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <option value="">Semua Sales</option>
+          {role !== 'sales' && <option value="">Semua Sales</option>}
           {users.map((u) => (
-            <option key={u.id} value={u.nama}>{u.nama}</option>
+            <option key={u.id} value={u.nama}>{u.nama}{role === 'sales' && u.nama === user?.nama ? ' (Akun Anda)' : ''}</option>
           ))}
         </select>
       </div>

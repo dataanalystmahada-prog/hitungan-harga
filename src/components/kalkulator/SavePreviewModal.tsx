@@ -4,6 +4,9 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { formatRupiah } from '../../utils/formatters';
 import { Save, Building2 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useMasterData } from '../../hooks/useMasterData';
+import { calculateMaxDiskon } from '../../utils/discountEngine';
 
 interface SavePreviewModalProps {
   isOpen: boolean;
@@ -24,6 +27,8 @@ export const SavePreviewModal: React.FC<SavePreviewModalProps> = ({
   isSaving,
   defaultNamaPt = '',
 }) => {
+  const { role } = useAuth();
+  const { keterangan } = useMasterData();
   const [diskon, setDiskon] = useState<number>(0);
   const [deskripsi, setDeskripsi] = useState<string>('');
   const [namaPt, setNamaPt] = useState<string>(defaultNamaPt);
@@ -35,6 +40,13 @@ export const SavePreviewModal: React.FC<SavePreviewModalProps> = ({
   }, [isOpen, defaultNamaPt]);
 
   const totalBersih = totalKotor - diskon;
+  const totalPcs = items.reduce((acc, it) => acc + (it.qty || 0), 0);
+  const maxDiskonInfo = calculateMaxDiskon(totalBersih, totalPcs);
+
+  const pesanDiskonObj = keterangan.find(
+    k => k.id === 'PESAN_DISKON' || (k.isi_keterangan && k.isi_keterangan.toLowerCase().includes('sayangi diskon'))
+  );
+  const pesanDiskon = pesanDiskonObj?.isi_keterangan || 'Sayangi diskonnya seperti menyayangi gaji di tanggal 25. Jangan habis di awal bulan. 🤣';
 
   const handleSave = async () => {
     await onSave(diskon, deskripsi, namaPt);
@@ -117,6 +129,21 @@ export const SavePreviewModal: React.FC<SavePreviewModalProps> = ({
               placeholder="Contoh: 50000"
               className="w-full px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 font-mono"
             />
+            {role === 'sales' && (
+              <div className="mt-1.5 p-2.5 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-500/30 text-xs">
+                <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-amber-200">
+                  <span className="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold">
+                    Max Diskon (Kategori A - {maxDiskonInfo.persentase}%):
+                  </span>
+                  <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
+                    {formatRupiah(maxDiskonInfo.maxNominal)}
+                  </span>
+                </div>
+                <p className="text-[11px] italic text-slate-600 dark:text-slate-300 mt-1">
+                  "{pesanDiskon}"
+                </p>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">

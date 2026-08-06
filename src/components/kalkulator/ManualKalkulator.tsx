@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useManualKalkulator, ManualItem } from '../../hooks/useManualKalkulator';
 import { QUANTITY_TIERS } from '../../utils/calcEngine';
+import { calculateMaxDiskon } from '../../utils/discountEngine';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -9,6 +10,7 @@ import { formatRupiah, formatNumber } from '../../utils/formatters';
 import { Calculator, Save, FileText, CheckCircle, Trash2, Plus, ArrowRight, TrendingUp, Copy, Layers, PenSquare } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerhitungan } from '../../hooks/usePerhitungan';
+import { useMasterData } from '../../hooks/useMasterData';
 import { useToast } from '../../contexts/ToastContext';
 import { SPHPreviewModal } from '../sph/SPHPreviewModal';
 import { SavePreviewModal } from './SavePreviewModal';
@@ -34,6 +36,18 @@ export const ManualKalkulator: React.FC = () => {
     users,
     brands,
   } = useManualKalkulator();
+
+  const { keterangan } = useMasterData();
+
+  // Rekomendasi Diskon Maksimal (Kategori A) untuk User Sales
+  const pesanDiskonObj = keterangan.find(
+    k => k.id === 'PESAN_DISKON' || (k.isi_keterangan && k.isi_keterangan.toLowerCase().includes('sayangi diskon'))
+  );
+  const pesanDiskon = pesanDiskonObj?.isi_keterangan || 'Sayangi diskonnya seperti menyayangi gaji di tanggal 25. Jangan habis di awal bulan. 🤣';
+
+  const maxDiskonInfo = React.useMemo(() => {
+    return calculateMaxDiskon(orderSummary.totalHargaJualNet, orderSummary.totalPcs);
+  }, [orderSummary.totalHargaJualNet, orderSummary.totalPcs]);
 
   const { createCalculation, isCreating, isCreatingBatch } = usePerhitungan({ page: 1, limit: 1 });
   const isSaving = isCreating || Boolean(isCreatingBatch);
@@ -444,7 +458,26 @@ export const ManualKalkulator: React.FC = () => {
       </div>
 
       {/* 3. Sticky Bottom Summary Bar */}
-      <div className="sticky bottom-3 z-20">
+      <div className="sticky bottom-3 z-20 space-y-2">
+        {/* Rekomendasi Maksimal Diskon Khusus Sales */}
+        {role === 'sales' && (
+          <div className="p-3 sm:p-3.5 rounded-xl bg-amber-50/95 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-500/30 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-amber-500 text-white shadow-sm">
+                  Kategori A ({maxDiskonInfo.persentase}%)
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-amber-200">
+                  Max Diskon : <span className="font-extrabold font-mono text-amber-600 dark:text-amber-300 text-sm sm:text-base">{formatRupiah(maxDiskonInfo.maxNominal)}</span>
+                </span>
+              </div>
+            </div>
+            <p className="text-xs italic text-slate-600 dark:text-slate-300 mt-1">
+              "{pesanDiskon}"
+            </p>
+          </div>
+        )}
+
         <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white shadow-xl border border-amber-500/30 backdrop-blur-md">
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 items-center">
             <div>

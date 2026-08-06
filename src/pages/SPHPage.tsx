@@ -15,7 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 const ALL_STATUSES: SPHStatus[] = ['Draft', 'Dikirim', 'Negosiasi', 'Deal', 'Disetujui', 'Ditolak'];
 
 export const SPHPage: React.FC = () => {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const {
     page,
     setPage,
@@ -29,7 +29,13 @@ export const SPHPage: React.FC = () => {
     setFilter,
     clearFilters,
     queryParams,
-  } = useDataTable({ initialLimit: 20, initialSortBy: 'created_at', initialSortOrder: 'DESC' });
+  } = useDataTable({ 
+    initialLimit: 20, 
+    initialSortBy: 'created_at', 
+    initialSortOrder: 'DESC',
+    // Default filter: user sales langsung lihat SPH miliknya sendiri
+    initialFilters: role === 'sales' && user?.nama ? { sales: user.nama } : {},
+  });
 
   const { dataList, pagination, isLoading, refetch, updateStatus, deleteSPH } = useSPH(queryParams);
   const { brands, users } = useMasterData();

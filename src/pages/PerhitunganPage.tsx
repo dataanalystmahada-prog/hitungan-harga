@@ -32,7 +32,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 
 export const PerhitunganPage: React.FC = () => {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const {
     page,
     setPage,
@@ -46,7 +46,13 @@ export const PerhitunganPage: React.FC = () => {
     setFilter,
     clearFilters,
     queryParams,
-  } = useDataTable({ initialLimit: 20, initialSortBy: 'created_at', initialSortOrder: 'DESC' });
+  } = useDataTable({ 
+    initialLimit: 20, 
+    initialSortBy: 'created_at', 
+    initialSortOrder: 'DESC',
+    // Default filter: user sales langsung lihat data miliknya sendiri
+    initialFilters: role === 'sales' && user?.nama ? { sales: user.nama } : {},
+  });
 
   const {
     dataList,

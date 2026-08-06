@@ -182,7 +182,8 @@ export const MOCK_KETERANGAN: Keterangan[] = [
   { id: 'KET-001', isi_keterangan: 'Harga sudah termasuk biaya produksi, sablon/bordir/laser, dan packing rapi individual polybag.' },
   { id: 'KET-002', isi_keterangan: 'Pembayaran DP minimal 50% saat PO diterbitkan, pelunasan 50% sebelum barang dikirim.' },
   { id: 'KET-003', isi_keterangan: 'Waktu pengerjaan 10-14 hari kerja terhitung setelah persetujuan sampel mockup digital.' },
-  { id: 'KET-004', isi_keterangan: 'Pengiriman gratis area Jadetabek untuk pemesanan di atas 100 pcs.' }
+  { id: 'KET-004', isi_keterangan: 'Pengiriman gratis area Jadetabek untuk pemesanan di atas 100 pcs.' },
+  { id: 'PESAN_DISKON', isi_keterangan: 'Sayangi diskonnya seperti menyayangi gaji di tanggal 25. Jangan habis di awal bulan. 🤣' }
 ];
 
 export const MOCK_PROMPT_LIBRARY: PromptLibrary[] = [
