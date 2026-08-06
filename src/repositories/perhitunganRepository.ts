@@ -215,6 +215,8 @@ export class PerhitunganRepository extends BaseRepository {
       'show_ongkir',
       'show_keterangan',
       'ref_id',
+      'deskripsi',
+      'brand',
       'keterangan',
       'items',
       'created_at',
@@ -239,6 +241,8 @@ export class PerhitunganRepository extends BaseRepository {
     delete fallback.nama_pt;
     delete fallback.items;
     delete fallback.ref_id;
+    delete fallback.deskripsi;
+    delete fallback.brand;
     delete fallback.keterangan;
     delete fallback.ongkir;
     delete fallback.ppn;
