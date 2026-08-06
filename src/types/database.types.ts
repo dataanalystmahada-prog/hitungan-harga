@@ -76,6 +76,7 @@ export interface Perhitungan {
   show_ongkir?: boolean;
   show_keterangan?: boolean;
   ref_id?: string;
+  keterangan?: string;
   items?: any[];
   created_at?: string;
   updated_at?: string;

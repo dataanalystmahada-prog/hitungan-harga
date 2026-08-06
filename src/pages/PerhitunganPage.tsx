@@ -83,6 +83,13 @@ export const PerhitunganPage: React.FC = () => {
       totalHargaJual?: number;
       sales?: string;
       diskon?: number;
+      ongkir?: number;
+      is_ppn?: boolean;
+      ppn?: number;
+      show_diskon?: boolean;
+      show_ppn?: boolean;
+      show_ongkir?: boolean;
+      show_keterangan?: boolean;
       namaPt?: string;
       brand?: string;
       items?: SPHItemDetail[];
@@ -209,7 +216,7 @@ export const PerhitunganPage: React.FC = () => {
     const showPpn = selectedRows.some(row => row.show_ppn !== false);
     const showOngkir = selectedRows.some(row => row.show_ongkir !== false);
     const showKeterangan = selectedRows.some(row => row.show_keterangan !== false);
-    const commonKeterangan = selectedRows.find(r => (r as any).keterangan)?.keterangan || '';
+    const commonKeterangan = selectedRows.find(r => r.keterangan)?.keterangan || '';
 
     const commonSales = selectedRows[0]?.sales || '';
     const commonNamaPt = selectedRows.find(r => r.nama_pt)?.nama_pt || '';
@@ -256,7 +263,7 @@ export const PerhitunganPage: React.FC = () => {
         show_ppn: row.show_ppn !== undefined ? row.show_ppn : true,
         show_ongkir: row.show_ongkir !== undefined ? row.show_ongkir : true,
         show_keterangan: row.show_keterangan !== undefined ? row.show_keterangan : true,
-        keterangan: (row as any).keterangan || '',
+        keterangan: row.keterangan || '',
         items: sphLineItems,
         produk: row.produk,
         qty: row.qty,
