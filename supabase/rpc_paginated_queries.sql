@@ -244,7 +244,7 @@ END;
 $$;
 
 
--- 3. GOOGLE APPS SCRIPT CHUNKED BATCH UPSERT ENGINE
+-- 3. GOOGLE APPS SCRIPT FULL MIRROR SYNC ENGINE
 CREATE OR REPLACE FUNCTION public.fn_batch_upsert_from_sheet(
     p_table_name TEXT,
     p_records JSONB,
@@ -257,228 +257,134 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_start_ts TIMESTAMPTZ := clock_timestamp();
-    v_count INT := jsonb_array_length(p_records);
+    v_count INT := COALESCE(jsonb_array_length(p_records), 0);
     v_duration INT;
+    v_deleted INT := 0;
     v_inserted INT := 0;
-    v_updated INT := 0;
 BEGIN
     IF p_table_name = 'modal_produk' THEN
-        INSERT INTO public.modal_produk (id, produk, kode, harga_modal, updated_at, synced_at)
-        SELECT 
-            elem->>'id',
-            elem->>'produk',
-            elem->>'kode',
-            COALESCE((elem->>'harga_modal')::NUMERIC, 0),
-            now(),
-            now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET
-            produk = EXCLUDED.produk,
-            kode = EXCLUDED.kode,
-            harga_modal = EXCLUDED.harga_modal,
-            updated_at = now(),
-            synced_at = now();
+        -- 1. Upsert current records from spreadsheet
+        IF v_count > 0 THEN
+            INSERT INTO public.modal_produk (id, produk, kode, harga_modal, updated_at, synced_at)
+            SELECT 
+                elem->>'id',
+                COALESCE(elem->>'produk', ''),
+                COALESCE(elem->>'kode', ''),
+                COALESCE((elem->>'harga_modal')::NUMERIC, 0),
+                now(),
+                now()
+            FROM jsonb_array_elements(p_records) AS elem
+            ON CONFLICT (id) DO UPDATE SET
+                produk = EXCLUDED.produk,
+                kode = EXCLUDED.kode,
+                harga_modal = EXCLUDED.harga_modal,
+                updated_at = now(),
+                synced_at = now();
+
+            -- 2. Full Sync Mirror: Delete records in Supabase that no longer exist in the Spreadsheet
+            DELETE FROM public.modal_produk
+            WHERE id NOT IN (
+                SELECT elem->>'id' 
+                FROM jsonb_array_elements(p_records) AS elem
+            );
+            GET DIAGNOSTICS v_deleted = ROW_COUNT;
+        ELSE
+            -- If sheet is empty, clear table
+            DELETE FROM public.modal_produk;
+            GET DIAGNOSTICS v_deleted = ROW_COUNT;
+        END IF;
 
     ELSIF p_table_name = 'modal_logo' THEN
-        INSERT INTO public.modal_logo (id, produk, proses_logo, qty_12, qty_24, qty_50, qty_75, qty_100, qty_150, qty_200, qty_300, qty_500, updated_at, synced_at)
-        SELECT 
-            elem->>'id',
-            elem->>'produk',
-            elem->>'proses_logo',
-            COALESCE((elem->>'qty_12')::NUMERIC, 0),
-            COALESCE((elem->>'qty_24')::NUMERIC, 0),
-            COALESCE((elem->>'qty_50')::NUMERIC, 0),
-            COALESCE((elem->>'qty_75')::NUMERIC, 0),
-            COALESCE((elem->>'qty_100')::NUMERIC, 0),
-            COALESCE((elem->>'qty_150')::NUMERIC, 0),
-            COALESCE((elem->>'qty_200')::NUMERIC, 0),
-            COALESCE((elem->>'qty_300')::NUMERIC, 0),
-            COALESCE((elem->>'qty_500')::NUMERIC, 0),
-            now(),
-            now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET
-            produk = EXCLUDED.produk,
-            proses_logo = EXCLUDED.proses_logo,
-            qty_12 = EXCLUDED.qty_12,
-            qty_24 = EXCLUDED.qty_24,
-            qty_50 = EXCLUDED.qty_50,
-            qty_75 = EXCLUDED.qty_75,
-            qty_100 = EXCLUDED.qty_100,
-            qty_150 = EXCLUDED.qty_150,
-            qty_200 = EXCLUDED.qty_200,
-            qty_300 = EXCLUDED.qty_300,
-            qty_500 = EXCLUDED.qty_500,
-            updated_at = now(),
-            synced_at = now();
+        IF v_count > 0 THEN
+            INSERT INTO public.modal_logo (id, produk, proses_logo, qty_12, qty_24, qty_50, qty_75, qty_100, qty_150, qty_200, qty_300, qty_500, updated_at, synced_at)
+            SELECT 
+                elem->>'id',
+                COALESCE(elem->>'produk', ''),
+                COALESCE(elem->>'proses_logo', ''),
+                COALESCE((elem->>'qty_12')::NUMERIC, 0),
+                COALESCE((elem->>'qty_24')::NUMERIC, 0),
+                COALESCE((elem->>'qty_50')::NUMERIC, 0),
+                COALESCE((elem->>'qty_75')::NUMERIC, 0),
+                COALESCE((elem->>'qty_100')::NUMERIC, 0),
+                COALESCE((elem->>'qty_150')::NUMERIC, 0),
+                COALESCE((elem->>'qty_200')::NUMERIC, 0),
+                COALESCE((elem->>'qty_300')::NUMERIC, 0),
+                COALESCE((elem->>'qty_500')::NUMERIC, 0),
+                now(),
+                now()
+            FROM jsonb_array_elements(p_records) AS elem
+            ON CONFLICT (id) DO UPDATE SET
+                produk = EXCLUDED.produk,
+                proses_logo = EXCLUDED.proses_logo,
+                qty_12 = EXCLUDED.qty_12,
+                qty_24 = EXCLUDED.qty_24,
+                qty_50 = EXCLUDED.qty_50,
+                qty_75 = EXCLUDED.qty_75,
+                qty_100 = EXCLUDED.qty_100,
+                qty_150 = EXCLUDED.qty_150,
+                qty_200 = EXCLUDED.qty_200,
+                qty_300 = EXCLUDED.qty_300,
+                qty_500 = EXCLUDED.qty_500,
+                updated_at = now(),
+                synced_at = now();
+
+            -- Full Sync Mirror: Delete records in Supabase that no longer exist in the Spreadsheet
+            DELETE FROM public.modal_logo
+            WHERE id NOT IN (
+                SELECT elem->>'id' 
+                FROM jsonb_array_elements(p_records) AS elem
+            );
+            GET DIAGNOSTICS v_deleted = ROW_COUNT;
+        ELSE
+            DELETE FROM public.modal_logo;
+            GET DIAGNOSTICS v_deleted = ROW_COUNT;
+        END IF;
 
     ELSIF p_table_name = 'margin' THEN
-        INSERT INTO public.margin (id, produk, proses_logo, qty_12, qty_24, qty_50, qty_75, qty_100, qty_150, qty_200, qty_300, qty_500, updated_at, synced_at)
-        SELECT 
-            elem->>'id',
-            elem->>'produk',
-            elem->>'proses_logo',
-            COALESCE((elem->>'qty_12')::NUMERIC, 0),
-            COALESCE((elem->>'qty_24')::NUMERIC, 0),
-            COALESCE((elem->>'qty_50')::NUMERIC, 0),
-            COALESCE((elem->>'qty_75')::NUMERIC, 0),
-            COALESCE((elem->>'qty_100')::NUMERIC, 0),
-            COALESCE((elem->>'qty_150')::NUMERIC, 0),
-            COALESCE((elem->>'qty_200')::NUMERIC, 0),
-            COALESCE((elem->>'qty_300')::NUMERIC, 0),
-            COALESCE((elem->>'qty_500')::NUMERIC, 0),
-            now(),
-            now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET
-            produk = EXCLUDED.produk,
-            proses_logo = EXCLUDED.proses_logo,
-            qty_12 = EXCLUDED.qty_12,
-            qty_24 = EXCLUDED.qty_24,
-            qty_50 = EXCLUDED.qty_50,
-            qty_75 = EXCLUDED.qty_75,
-            qty_100 = EXCLUDED.qty_100,
-            qty_150 = EXCLUDED.qty_150,
-            qty_200 = EXCLUDED.qty_200,
-            qty_300 = EXCLUDED.qty_300,
-            qty_500 = EXCLUDED.qty_500,
-            updated_at = now(),
-            synced_at = now();
+        IF v_count > 0 THEN
+            INSERT INTO public.margin (id, produk, proses_logo, qty_12, qty_24, qty_50, qty_75, qty_100, qty_150, qty_200, qty_300, qty_500, updated_at, synced_at)
+            SELECT 
+                elem->>'id',
+                COALESCE(elem->>'produk', ''),
+                COALESCE(elem->>'proses_logo', ''),
+                COALESCE((elem->>'qty_12')::NUMERIC, 0),
+                COALESCE((elem->>'qty_24')::NUMERIC, 0),
+                COALESCE((elem->>'qty_50')::NUMERIC, 0),
+                COALESCE((elem->>'qty_75')::NUMERIC, 0),
+                COALESCE((elem->>'qty_100')::NUMERIC, 0),
+                COALESCE((elem->>'qty_150')::NUMERIC, 0),
+                COALESCE((elem->>'qty_200')::NUMERIC, 0),
+                COALESCE((elem->>'qty_300')::NUMERIC, 0),
+                COALESCE((elem->>'qty_500')::NUMERIC, 0),
+                now(),
+                now()
+            FROM jsonb_array_elements(p_records) AS elem
+            ON CONFLICT (id) DO UPDATE SET
+                produk = EXCLUDED.produk,
+                proses_logo = EXCLUDED.proses_logo,
+                qty_12 = EXCLUDED.qty_12,
+                qty_24 = EXCLUDED.qty_24,
+                qty_50 = EXCLUDED.qty_50,
+                qty_75 = EXCLUDED.qty_75,
+                qty_100 = EXCLUDED.qty_100,
+                qty_150 = EXCLUDED.qty_150,
+                qty_200 = EXCLUDED.qty_200,
+                qty_300 = EXCLUDED.qty_300,
+                qty_500 = EXCLUDED.qty_500,
+                updated_at = now(),
+                synced_at = now();
 
-    ELSIF p_table_name = 'perhitungan' THEN
-        INSERT INTO public.perhitungan (id, tanggal, sales, produk, kode, proses_logo, qty, modal_produk, modal_logo, margin, harga_jual, total_harga_jual, harga_jual_net, diskon, updated_at, synced_at)
-        SELECT 
-            elem->>'id',
-            elem->>'tanggal',
-            elem->>'sales',
-            elem->>'produk',
-            elem->>'kode',
-            elem->>'proses_logo',
-            COALESCE((elem->>'qty')::NUMERIC, 0),
-            COALESCE((elem->>'modal_produk')::NUMERIC, 0),
-            COALESCE((elem->>'modal_logo')::NUMERIC, 0),
-            COALESCE((elem->>'margin')::NUMERIC, 0),
-            COALESCE((elem->>'harga_jual')::NUMERIC, 0),
-            COALESCE((elem->>'total_harga_jual')::NUMERIC, 0),
-            COALESCE((elem->>'harga_jual_net')::NUMERIC, 0),
-            COALESCE((elem->>'diskon')::NUMERIC, 0),
-            now(),
-            now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET
-            tanggal = EXCLUDED.tanggal,
-            sales = EXCLUDED.sales,
-            produk = EXCLUDED.produk,
-            kode = EXCLUDED.kode,
-            proses_logo = EXCLUDED.proses_logo,
-            qty = EXCLUDED.qty,
-            modal_produk = EXCLUDED.modal_produk,
-            modal_logo = EXCLUDED.modal_logo,
-            margin = EXCLUDED.margin,
-            harga_jual = EXCLUDED.harga_jual,
-            total_harga_jual = EXCLUDED.total_harga_jual,
-            harga_jual_net = EXCLUDED.harga_jual_net,
-            diskon = EXCLUDED.diskon,
-            updated_at = now(),
-            synced_at = now();
-
-    ELSIF p_table_name = 'sph' THEN
-        INSERT INTO public.sph (id, tanggal, brand, no_sph, nama_pt, deskripsi, produk, qty, harga_jual, ref_id, sales, status_sph, keterangan, diskon, harga_jual_akhir, updated_at, synced_at)
-        SELECT 
-            elem->>'id',
-            elem->>'tanggal',
-            elem->>'brand',
-            elem->>'no_sph',
-            elem->>'nama_pt',
-            elem->>'deskripsi',
-            elem->>'produk',
-            COALESCE((elem->>'qty')::NUMERIC, 0),
-            COALESCE((elem->>'harga_jual')::NUMERIC, 0),
-            elem->>'ref_id',
-            elem->>'sales',
-            COALESCE(elem->>'status_sph', 'Draft'),
-            elem->>'keterangan',
-            COALESCE((elem->>'diskon')::NUMERIC, 0),
-            COALESCE((elem->>'harga_jual_akhir')::NUMERIC, 0),
-            now(),
-            now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET
-            tanggal = EXCLUDED.tanggal,
-            brand = EXCLUDED.brand,
-            no_sph = EXCLUDED.no_sph,
-            nama_pt = EXCLUDED.nama_pt,
-            deskripsi = EXCLUDED.deskripsi,
-            produk = EXCLUDED.produk,
-            qty = EXCLUDED.qty,
-            harga_jual = EXCLUDED.harga_jual,
-            ref_id = EXCLUDED.ref_id,
-            sales = EXCLUDED.sales,
-            status_sph = EXCLUDED.status_sph,
-            keterangan = EXCLUDED.keterangan,
-            diskon = EXCLUDED.diskon,
-            harga_jual_akhir = EXCLUDED.harga_jual_akhir,
-            updated_at = now(),
-            synced_at = now();
-
-    ELSIF p_table_name = 'brands' THEN
-        INSERT INTO public.brands (id, nama_brand, singkatan, alamat, email, website, no_telp_kantor, no_telp_wa, sosial_media, rating_google_maps, bank, no_rekening, atas_nama, updated_at, synced_at)
-        SELECT 
-            elem->>'id',
-            elem->>'nama_brand',
-            elem->>'singkatan',
-            elem->>'alamat',
-            elem->>'email',
-            elem->>'website',
-            elem->>'no_telp_kantor',
-            elem->>'no_telp_wa',
-            elem->>'sosial_media',
-            elem->>'rating_google_maps',
-            elem->>'bank',
-            elem->>'no_rekening',
-            elem->>'atas_nama',
-            now(),
-            now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET
-            nama_brand = EXCLUDED.nama_brand,
-            singkatan = EXCLUDED.singkatan,
-            alamat = EXCLUDED.alamat,
-            email = EXCLUDED.email,
-            website = EXCLUDED.website,
-            no_telp_kantor = EXCLUDED.no_telp_kantor,
-            no_telp_wa = EXCLUDED.no_telp_wa,
-            sosial_media = EXCLUDED.sosial_media,
-            rating_google_maps = EXCLUDED.rating_google_maps,
-            bank = EXCLUDED.bank,
-            no_rekening = EXCLUDED.no_rekening,
-            atas_nama = EXCLUDED.atas_nama,
-            updated_at = now(),
-            synced_at = now();
-
-    ELSIF p_table_name = 'users' THEN
-        INSERT INTO public.users (id, nama, email, updated_at, synced_at)
-        SELECT elem->>'id', elem->>'nama', elem->>'email', now(), now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET nama = EXCLUDED.nama, email = EXCLUDED.email, updated_at = now(), synced_at = now();
-
-    ELSIF p_table_name = 'divisi' THEN
-        INSERT INTO public.divisi (id, nama_divisi, updated_at, synced_at)
-        SELECT elem->>'id', elem->>'nama_divisi', now(), now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET nama_divisi = EXCLUDED.nama_divisi, updated_at = now(), synced_at = now();
-
-    ELSIF p_table_name = 'produk' THEN
-        INSERT INTO public.produk (id, nama_produk, updated_at, synced_at)
-        SELECT elem->>'id', elem->>'nama_produk', now(), now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET nama_produk = EXCLUDED.nama_produk, updated_at = now(), synced_at = now();
-
-    ELSIF p_table_name = 'keterangan' THEN
-        INSERT INTO public.keterangan (id, isi_keterangan, updated_at, synced_at)
-        SELECT elem->>'id', elem->>'isi_keterangan', now(), now()
-        FROM jsonb_array_elements(p_records) AS elem
-        ON CONFLICT (id) DO UPDATE SET isi_keterangan = EXCLUDED.isi_keterangan, updated_at = now(), synced_at = now();
+            -- Full Sync Mirror: Delete records in Supabase that no longer exist in the Spreadsheet
+            DELETE FROM public.margin
+            WHERE id NOT IN (
+                SELECT elem->>'id' 
+                FROM jsonb_array_elements(p_records) AS elem
+            );
+            GET DIAGNOSTICS v_deleted = ROW_COUNT;
+        ELSE
+            DELETE FROM public.margin;
+            GET DIAGNOSTICS v_deleted = ROW_COUNT;
+        END IF;
 
     END IF;
 
@@ -487,15 +393,16 @@ BEGIN
 
     -- Insert Audit Sync Log
     INSERT INTO public.sync_logs (
-        sheet_name, sync_type, status, records_processed, records_inserted, records_updated, duration_ms, triggered_by
+        sheet_name, sync_type, status, records_processed, records_inserted, records_updated, records_failed, duration_ms, triggered_by
     ) VALUES (
-        p_table_name, p_sync_type, 'SUCCESS', v_count, v_count, 0, v_duration, p_triggered_by
+        p_table_name, p_sync_type, 'SUCCESS', v_count, v_count, v_deleted, 0, v_duration, p_triggered_by
     );
 
     RETURN json_build_object(
         'success', true,
         'table', p_table_name,
         'recordsProcessed', v_count,
+        'recordsDeleted', v_deleted,
         'durationMs', v_duration
     );
 

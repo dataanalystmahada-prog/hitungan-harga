@@ -2,53 +2,39 @@
  * ====================================================================
  * ENTERPRISE SUPABASE SYNC ENGINE - GOOGLE APPS SCRIPT
  * ====================================================================
- * Author: Antigravity Enterprise Engine
  * Architecture: Google Spreadsheet -> GAS Sync Engine -> Supabase Core
- *
- * Capabilities:
- * - Chunked batch upsert (avoids GAS 6-minute timeout)
- * - Automatic data type parsing (numbers, currency strings, dates)
- * - Automated time-driven sync triggers
- * - Manual UI menu sync with real-time toast/alert feedback
- * - Enterprise audit logging directly recorded to Supabase sync_logs table
- * - Secure script properties storage for API credentials
+ * 
+ * KETENTUAN SINKRONISASI (3 TAB MASTER):
+ * 1. Hanya menyinkronkan 3 tab:
+ *    - ModalProduk -> modal_produk
+ *    - ModalLogo   -> modal_logo
+ *    - Margin      -> margin
+ * 
+ * 2. Full Sync (Mirroring):
+ *    - Data baru -> Ditambahkan ke Supabase
+ *    - Data berubah -> Diperbarui di Supabase
+ *    - Data yang dihapus di Spreadsheet -> Otomatis dihapus dari Supabase
+ * 
+ * Tab lain (Perhitungan, SPH, dll.) dikelola langsung di aplikasi React
+ * dan tidak di-overwrite dari Spreadsheet.
  * ====================================================================
  */
 
 // 1. CONFIGURATION & SHEET MAPPING
 const CONFIG = {
-  BATCH_CHUNK_SIZE: 300, // Rows per batch request
   DEFAULT_SUPABASE_URL: 'https://your-project-id.supabase.co',
   DEFAULT_API_KEY: 'your-anon-or-service-role-key',
   
-  // Sheet names matching the active Google Spreadsheet (Master Data only)
-  // Perhitungan & SPH dikelola langsung oleh aplikasi web React dan tidak di-overwrite dari Spreadsheet
-  SHEETS: {
-    MODAL_PRODUK: 'ModalProduk',
-    MODAL_LOGO: 'ModalLogo',
-    MARGIN: 'Margin',
-    USERS: 'Users',
-    DIVISI: 'Divisi',
-    BRANDS: 'Brands',
-    PRODUK: 'Produk',
-    KETERANGAN: 'Keterangan'
-  },
-  
-  // Table mapping in Supabase
-  TABLE_MAP: {
-    'ModalProduk': 'modal_produk',
-    'ModalLogo': 'modal_logo',
-    'Margin': 'margin',
-    'Users': 'users',
-    'Divisi': 'divisi',
-    'Brands': 'brands',
-    'Produk': 'produk',
-    'Keterangan': 'keterangan'
-  }
+  // 3 Target Tab yang disinkronkan
+  TARGET_SHEETS: [
+    { key: 'MODAL_PRODUK', name: 'ModalProduk', table: 'modal_produk' },
+    { key: 'MODAL_LOGO',   name: 'ModalLogo',   table: 'modal_logo' },
+    { key: 'MARGIN',       name: 'Margin',      table: 'margin' }
+  ]
 };
 
 /**
- * Get credentials from ScriptProperties or fallback
+ * Mendapatkan kredensial Supabase dari Script Properties
  */
 function getCredentials() {
   const props = PropertiesService.getScriptProperties();
@@ -63,7 +49,7 @@ function getCredentials() {
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 Supabase Sync Engine')
-    .addItem('⚡ Sync Semua Sheet (Full Sync)', 'menuSyncAll')
+    .addItem('⚡ Full Sync 3 Tab (ModalProduk, ModalLogo, Margin)', 'menuSyncAll')
     .addItem('📄 Sync Sheet Aktif Saat Ini', 'menuSyncActiveSheet')
     .addSeparator()
     .addItem('⚙️ Setup Supabase Credentials (URL & Key)', 'menuConfigureCredentials')
@@ -85,20 +71,32 @@ function menuSyncAll() {
 
 function menuSyncActiveSheet() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const sheetName = sheet.getName();
+  const currentSheetName = sheet.getName();
   const ui = SpreadsheetApp.getUi();
   
-  const tableName = CONFIG.TABLE_MAP[sheetName];
-  if (!tableName) {
-    ui.alert('Sheet Tidak Terdaftar', `Sheet "${sheetName}" tidak termasuk sheet master yang disinkronkan ke Supabase.`, ui.ButtonSet.OK);
+  // Cek apakah sheet aktif termasuk dalam 3 target tab
+  const matchedTarget = findMatchingTarget(currentSheetName);
+  if (!matchedTarget) {
+    ui.alert(
+      'Sheet Dilewati',
+      `Sheet "${currentSheetName}" tidak termasuk dalam 3 tab master yang disinkronkan.\n\nTab yang disinkronkan hanya:\n1. ModalProduk\n2. ModalLogo\n3. Margin`,
+      ui.ButtonSet.OK
+    );
     return;
   }
   
-  const result = syncSingleSheet(sheetName, 'MANUAL');
+  const result = syncSingleSheet(matchedTarget, 'MANUAL');
   if (result.success) {
-    ui.alert('Sukses', `Sheet "${sheetName}" berhasil disinkronkan!\nTotal baris: ${result.recordsProcessed}\nWaktu: ${result.durationMs}ms`, ui.ButtonSet.OK);
+    ui.alert(
+      '🟢 Sinkronisasi Sukses (Mirror)',
+      `Sheet: ${sheet.getName()}\nTabel Supabase: ${result.table}\n` +
+      `• Data aktif di Supabase: ${result.recordsProcessed} baris\n` +
+      `• Data lama terhapus: ${result.recordsDeleted || 0} baris\n` +
+      `• Waktu eksekusi: ${result.durationMs}ms`,
+      ui.ButtonSet.OK
+    );
   } else {
-    ui.alert('Gagal', `Sinkronisasi gagal untuk sheet "${sheetName}":\n${result.error}`, ui.ButtonSet.OK);
+    ui.alert('🔴 Sinkronisasi Gagal', `Gagal sinkronisasi sheet "${sheet.getName()}":\n${result.error}`, ui.ButtonSet.OK);
   }
 }
 
@@ -106,7 +104,7 @@ function menuConfigureCredentials() {
   const ui = SpreadsheetApp.getUi();
   const creds = getCredentials();
   
-  const promptUrl = ui.prompt('1. Konfigurasi Supabase URL', `Masukkan URL Supabase Anda:\n(Saat ini: ${creds.url})`, ui.ButtonSet.OK_CANCEL);
+  const promptUrl = ui.prompt('1. Konfigurasi Supabase URL', `Masukkan URL Supabase Project Anda:\n(Saat ini: ${creds.url})`, ui.ButtonSet.OK_CANCEL);
   if (promptUrl.getSelectedButton() !== ui.Button.OK) return;
   const newUrl = promptUrl.getResponseText().trim();
   
@@ -123,38 +121,46 @@ function menuConfigureCredentials() {
 }
 
 /**
- * 4. SYNC ALL SHEETS ENGINE
+ * 4. SYNC ALL 3 TARGET SHEETS (FULL MIRROR SYNC)
  */
 function syncAllSheets(syncType = 'AUTO') {
   const startTime = new Date().getTime();
   const results = [];
   let totalProcessed = 0;
+  let totalDeleted = 0;
   let totalErrors = 0;
   
-  const sheetList = Object.values(CONFIG.SHEETS);
-  for (let i = 0; i < sheetList.length; i++) {
-    const sheetName = sheetList[i];
+  const targets = CONFIG.TARGET_SHEETS;
+  for (let i = 0; i < targets.length; i++) {
+    const target = targets[i];
     try {
-      const res = syncSingleSheet(sheetName, syncType);
+      const res = syncSingleSheet(target, syncType);
       results.push(res);
       if (res.success) {
         totalProcessed += (res.recordsProcessed || 0);
+        totalDeleted += (res.recordsDeleted || 0);
       } else {
         totalErrors++;
       }
     } catch (err) {
-      results.push({ sheet: sheetName, success: false, error: err.message });
+      results.push({ sheet: target.name, success: false, error: err.message });
       totalErrors++;
     }
   }
   
   const totalDuration = new Date().getTime() - startTime;
-  const summary = `📊 Total Record Disinkronkan: ${totalProcessed}\n✅ Sheet Berhasil: ${sheetList.length - totalErrors}\n❌ Sheet Gagal: ${totalErrors}\n⏱️ Durasi: ${totalDuration} ms`;
+  const summary = `📊 Full Mirror Sync Selesai (3 Tab Master)\n\n` +
+    `✅ Tab Berhasil: ${targets.length - totalErrors}/${targets.length}\n` +
+    `📦 Total Data Aktif: ${totalProcessed} baris\n` +
+    `🗑️ Total Data Dihapus (Mirror): ${totalDeleted} baris\n` +
+    `⏱️ Total Waktu: ${totalDuration} ms` +
+    (totalErrors > 0 ? `\n❌ Tab Gagal: ${totalErrors}` : '');
   
   Logger.log(summary);
   return {
     success: totalErrors === 0,
     totalProcessed: totalProcessed,
+    totalDeleted: totalDeleted,
     totalErrors: totalErrors,
     durationMs: totalDuration,
     summary: summary,
@@ -163,20 +169,29 @@ function syncAllSheets(syncType = 'AUTO') {
 }
 
 /**
- * 5. SYNC SINGLE SHEET FUNCTION
+ * 5. SYNC SINGLE SHEET FUNCTION (EXACT MIRROR)
  */
-function syncSingleSheet(sheetName, syncType = 'MANUAL') {
+function syncSingleSheet(target, syncType = 'MANUAL') {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(sheetName);
-  const tableName = CONFIG.TABLE_MAP[sheetName];
+  const sheet = findSheetInSpreadsheet(ss, target.name);
   
-  if (!sheet || !tableName) {
-    return { sheet: sheetName, success: true, recordsProcessed: 0, message: 'Sheet tidak ada atau dilewati' };
+  if (!sheet) {
+    return { sheet: target.name, success: true, recordsProcessed: 0, message: `Sheet "${target.name}" tidak ditemukan di file ini` };
   }
   
   const dataRange = sheet.getDataRange().getValues();
   if (dataRange.length <= 1) {
-    return { sheet: sheetName, success: true, recordsProcessed: 0, message: 'Sheet kosong' };
+    // Sheet kosong (hanya header atau tanpa baris), mirror sync akan mengosongkan tabel Supabase
+    const creds = getCredentials();
+    const result = sendBatchToSupabase(creds, target.table, [], syncType);
+    return {
+      sheet: sheet.getName(),
+      table: target.table,
+      success: true,
+      recordsProcessed: 0,
+      recordsDeleted: result.recordsDeleted || 0,
+      durationMs: result.durationMs || 0
+    };
   }
   
   const rawHeaders = dataRange[0];
@@ -184,12 +199,11 @@ function syncSingleSheet(sheetName, syncType = 'MANUAL') {
   const rows = dataRange.slice(1);
   
   const sanitizedRecords = [];
-  const nowStr = new Date().toISOString();
   
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
     // Abaikan baris kosong
-    if (!row[0] && !row[1]) continue;
+    if (isEmptyRow(row)) continue;
     
     const record = {};
     for (let c = 0; c < headers.length; c++) {
@@ -205,7 +219,7 @@ function syncSingleSheet(sheetName, syncType = 'MANUAL') {
         record[key] = Utilities.formatDate(val, Session.getScriptTimeZone(), 'dd/MM/yyyy');
       } else if (typeof val === 'string') {
         val = val.trim();
-        // Cek format angka/currency (contoh: "Rp 35.000" atau "35000")
+        // Cek format angka/currency (contoh: "Rp 35.000", "45%", atau "35000")
         if (isNumericField(key) && val !== '') {
           const cleanNum = val.replace(/[^0-9.-]+/g, '');
           record[key] = cleanNum ? parseFloat(cleanNum) : 0;
@@ -217,44 +231,32 @@ function syncSingleSheet(sheetName, syncType = 'MANUAL') {
       }
     }
     
-    // Pastikan record memiliki ID unik yang KONSISTEN (mencegah duplikasi saat sinkronisasi berulang)
+    // Pastikan record memiliki ID deterministik yang konsisten
     if (!record.id) {
-      // Gunakan kombinasi field utama sebagai ID unik yang konsisten agar saat di-sync ulang, data hanya di-update (bukan ganda)
-      const baseKey = (record.produk || record.nama_produk || record.nama_brand || record.nama_divisi || record.isi_keterangan || record.judul || record.nama || `ROW${r + 1}`).toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      const subKey = (record.kode || record.proses_logo || '').toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      record.id = `${sheetName.toUpperCase()}-${baseKey}${subKey ? '-' + subKey : ''}`;
+      record.id = generateConsistentId(target.name, record, r + 1);
     }
     
     sanitizedRecords.push(record);
   }
   
-  if (sanitizedRecords.length === 0) {
-    return { sheet: sheetName, success: true, recordsProcessed: 0 };
-  }
-  
-  // Chunking and Batch Upsert to Supabase
+  // Kirim seluruh dataset sheet ke Supabase untuk Full Mirror Sync
   const creds = getCredentials();
-  const chunkSize = CONFIG.BATCH_CHUNK_SIZE;
-  let chunkCount = Math.ceil(sanitizedRecords.length / chunkSize);
   const startTs = new Date().getTime();
-  
-  for (let c = 0; c < chunkCount; c++) {
-    const chunk = sanitizedRecords.slice(c * chunkSize, (c + 1) * chunkSize);
-    sendBatchToSupabase(creds, tableName, chunk, syncType);
-  }
-  
+  const response = sendBatchToSupabase(creds, target.table, sanitizedRecords, syncType);
   const durationMs = new Date().getTime() - startTs;
+  
   return {
-    sheet: sheetName,
-    table: tableName,
+    sheet: sheet.getName(),
+    table: target.table,
     success: true,
     recordsProcessed: sanitizedRecords.length,
+    recordsDeleted: response.recordsDeleted || 0,
     durationMs: durationMs
   };
 }
 
 /**
- * 6. SUPABASE API DISPATCHER (RPC BATCH UPSERT)
+ * 6. SUPABASE API DISPATCHER (RPC FULL MIRROR UPSERT)
  */
 function sendBatchToSupabase(creds, tableName, records, syncType) {
   const rpcUrl = `${creds.url}/rest/v1/rpc/fn_batch_upsert_from_sheet`;
@@ -290,24 +292,78 @@ function sendBatchToSupabase(creds, tableName, records, syncType) {
 }
 
 /**
- * 7. FIELD HELPER UTILITIES
+ * 7. HELPER UTILITIES
  */
+function findMatchingTarget(sheetName) {
+  if (!sheetName) return null;
+  const cleanName = sheetName.toLowerCase().replace(/[\s_-]/g, '');
+  return CONFIG.TARGET_SHEETS.find(t => {
+    const targetClean = t.name.toLowerCase().replace(/[\s_-]/g, '');
+    return cleanName === targetClean;
+  }) || null;
+}
+
+function findSheetInSpreadsheet(ss, targetName) {
+  const cleanTarget = targetName.toLowerCase().replace(/[\s_-]/g, '');
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const sName = sheets[i].getName().toLowerCase().replace(/[\s_-]/g, '');
+    if (sName === cleanTarget) {
+      return sheets[i];
+    }
+  }
+  return null;
+}
+
+function isEmptyRow(row) {
+  if (!row || row.length === 0) return true;
+  for (let i = 0; i < row.length; i++) {
+    if (row[i] !== '' && row[i] !== null && row[i] !== undefined) return false;
+  }
+  return true;
+}
+
 function formatColumnHeader(header) {
   if (!header) return '';
-  return String(header)
+  let clean = String(header)
     .trim()
     .toLowerCase()
     .replace(/[\s\/\-]+/g, '_')
     .replace(/[^a-z0-9_]/g, '');
+  
+  // Format qty angka (contoh: "12", "24", "50" -> "qty_12", "qty_24", "qty_50")
+  if (/^\d+$/.test(clean)) {
+    clean = 'qty_' + clean;
+  }
+  return clean;
 }
 
 function isNumericField(key) {
   const numericKeys = [
     'harga_modal', 'qty', 'margin', 'harga_jual', 'total_harga_jual',
-    'harga_jual_net', 'diskon', 'harga_jual_akhir',
     'qty_12', 'qty_24', 'qty_50', 'qty_75', 'qty_100', 'qty_150', 'qty_200', 'qty_300', 'qty_500'
   ];
   return numericKeys.includes(key);
+}
+
+function generateConsistentId(sheetName, record, rowNumber) {
+  const cleanStr = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  
+  if (sheetName.toLowerCase().includes('modalproduk')) {
+    const prod = cleanStr(record.produk || record.nama_produk);
+    const kode = cleanStr(record.kode);
+    return `MOD-${prod}${kode ? '-' + kode : ''}`;
+  } else if (sheetName.toLowerCase().includes('modallogo')) {
+    const prod = cleanStr(record.produk || record.nama_produk);
+    const logo = cleanStr(record.proses_logo);
+    return `MLG-${prod}${logo ? '-' + logo : ''}`;
+  } else if (sheetName.toLowerCase().includes('margin')) {
+    const prod = cleanStr(record.produk || record.nama_produk);
+    const logo = cleanStr(record.proses_logo);
+    return `MRG-${prod}${logo ? '-' + logo : ''}`;
+  }
+  
+  return `${sheetName.toUpperCase()}-ROW${rowNumber}`;
 }
 
 /**
@@ -322,16 +378,23 @@ function setupAutoSyncTrigger() {
     .create();
     
   const ui = SpreadsheetApp.getUi();
-  ui.alert('Auto-Sync Aktif', 'Trigger otomatis berhasil dibuat. Data spreadsheet akan disinkronkan ke Supabase setiap 15 menit.', ui.ButtonSet.OK);
+  ui.alert(
+    'Auto-Sync Aktif',
+    'Trigger otomatis berhasil dibuat.\n\n3 Tab master (ModalProduk, ModalLogo, Margin) akan disinkronkan secara full mirror ke Supabase setiap 15 menit.',
+    ui.ButtonSet.OK
+  );
 }
 
 function clearAutoSyncTriggers() {
   const triggers = ScriptApp.getProjectTriggers();
+  let count = 0;
   for (let i = 0; i < triggers.length; i++) {
     if (triggers[i].getHandlerFunction() === 'autoSyncTrigger') {
       ScriptApp.deleteTrigger(triggers[i]);
+      count++;
     }
   }
+  return count;
 }
 
 function autoSyncTrigger() {
@@ -346,7 +409,7 @@ function checkConnectionStatus() {
   const creds = getCredentials();
   
   try {
-    const testUrl = `${creds.url}/rest/v1/sync_logs?select=id,created_at,status&limit=3&order=created_at.desc`;
+    const testUrl = `${creds.url}/rest/v1/sync_logs?select=id,created_at,sheet_name,status,records_processed,records_updated&limit=5&order=created_at.desc`;
     const options = {
       method: 'get',
       headers: {
@@ -361,9 +424,9 @@ function checkConnectionStatus() {
     
     if (code === 200) {
       const logs = JSON.parse(response.getContentText());
-      let logSummary = '3 Log Sinkronisasi Terakhir:\n';
+      let logSummary = '5 Log Sinkronisasi Terakhir di Supabase:\n';
       logs.forEach(l => {
-        logSummary += `- ${l.created_at}: [${l.status}]\n`;
+        logSummary += `• [${l.sheet_name || 'SYNC'}] ${l.status} (${l.records_processed} data aktif, ${l.records_updated || 0} dihapus)\n`;
       });
       
       ui.alert('🟢 Koneksi Supabase Berhasil', `Koneksi ke ${creds.url} AKTIF dan terverifikasi!\n\n${logSummary}`, ui.ButtonSet.OK);

@@ -13,18 +13,10 @@ export interface SyncMonitorModalProps {
 }
 
 const SHEET_NAMES = [
-  { label: 'Semua Sheet (Full Sync)', value: 'ALL_SHEETS' },
+  { label: 'Semua Sheet (Full Sync: 3 Tab Master)', value: 'ALL_SHEETS' },
   { label: 'ModalProduk', value: 'ModalProduk' },
   { label: 'ModalLogo', value: 'ModalLogo' },
   { label: 'Margin', value: 'Margin' },
-  { label: 'Produk', value: 'Produk' },
-  { label: 'Brands', value: 'Brands' },
-  { label: 'Users', value: 'Users' },
-  { label: 'Divisi', value: 'Divisi' },
-  { label: 'Keterangan', value: 'Keterangan' },
-  { label: 'PromptLibrary', value: 'PromptLibrary' },
-  { label: 'Perhitungan', value: 'Perhitungan' },
-  { label: 'SPH', value: 'SPH' },
 ];
 
 export const SyncMonitorModal: React.FC<SyncMonitorModalProps> = ({ isOpen, onClose }) => {
