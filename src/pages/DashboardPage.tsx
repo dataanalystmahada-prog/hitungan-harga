@@ -40,31 +40,31 @@ export const DashboardPage: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-900 via-slate-900 to-slate-950 p-6 sm:p-8 text-white shadow-xl border border-brand-800/40">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-900 via-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-lg border border-brand-800/40">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-emerald-300 border border-brand-500/30 mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-500/20 text-emerald-300 border border-brand-500/30 mb-2">
+              <Sparkles className="w-3 h-3" />
               <span>Enterprise Cloud Engine Active</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">
               Selamat Datang di Portal Pricing & SPH Enterprise
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
               Sistem hitungan harga terintegrasi <b>Google Spreadsheet ➔ Supabase ➔ React</b>. Perhitungan margin akurat, multi-tier quantity, dan pembuatan Surat Penawaran resmi dalam hitungan detik.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Link to="/kalkulator">
-              <Button variant="primary" size="md" leftIcon={<Calculator className="w-4 h-4" />}>
+              <Button variant="primary" size="sm" leftIcon={<Calculator className="w-3.5 h-3.5" />}>
                 Mulai Kalkulasi
               </Button>
             </Link>
             <Link to="/perhitungan">
-              <Button variant="glass" size="md" rightIcon={<ArrowRight className="w-4 h-4" />}>
+              <Button variant="glass" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
                 Lihat Database
               </Button>
             </Link>
@@ -76,12 +76,12 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Filter Section */}
-      <div className="flex items-center gap-3">
-        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Filter Sales:</label>
+      <div className="flex items-center gap-2">
+        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Filter Sales:</label>
         <select
           value={salesFilter}
           onChange={(e) => setSalesFilter(e.target.value)}
-          className="w-full sm:w-64 rounded-xl border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm px-4 py-2.5"
+          className="w-full sm:w-56 rounded-lg border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-xs px-3 py-1.5"
         >
           <option value="">Semua Sales</option>
           {users.map((u) => (
@@ -91,11 +91,11 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
         <StatsCard
           title="Total Nilai Kalkulasi"
           value={formatRupiah(metrics?.totalPerhitunganRevenue ?? 0)}
-          icon={<DollarSign className="w-6 h-6" />}
+          icon={<DollarSign className="w-5 h-5" />}
           subtitle={salesFilter ? `Filter: ${salesFilter}` : 'Akumulasi seluruh hitungan'}
           iconBgColor="bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
         />
@@ -103,7 +103,7 @@ export const DashboardPage: React.FC = () => {
         <StatsCard
           title="Total Hitungan Harga"
           value={`${formatNumber(metrics?.totalPerhitunganCount ?? 0)} Order`}
-          icon={<Calculator className="w-6 h-6" />}
+          icon={<Calculator className="w-5 h-5" />}
           subtitle="Tersimpan di Supabase"
           iconBgColor="bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
         />
@@ -112,7 +112,7 @@ export const DashboardPage: React.FC = () => {
           title="Rata-rata Margin"
           value={formatPercent(metrics?.avgOverallMargin ?? 0)}
           subtitle="Target standard: 25% - 35%"
-          icon={<TrendingUp className="w-6 h-6" />}
+          icon={<TrendingUp className="w-5 h-5" />}
           iconBgColor="bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
         />
 
@@ -121,22 +121,22 @@ export const DashboardPage: React.FC = () => {
           value={`${formatNumber(metrics?.totalSPHCount ?? 0)} Dokumen`}
           badgeText={`${metrics?.totalSPHDeal ?? 0} Deal`}
           subtitle={`Total Nilai: ${formatRupiah(metrics?.totalSPHValue ?? 0)}`}
-          icon={<FileCheck2 className="w-6 h-6" />}
+          icon={<FileCheck2 className="w-5 h-5" />}
           iconBgColor="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
         />
       </div>
 
       {/* Analytics Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <Card className="lg:col-span-7 p-5 sm:p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <Card className="lg:col-span-7 p-4 sm:p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-3">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                 Tren Nilai Penjualan & Kalkulasi (2026)
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Pertumbuhan total kalkulasi harga bulanan.</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Pertumbuhan total kalkulasi harga bulanan.</p>
             </div>
-            <span className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
               Pertumbuhan Stabil
             </span>
           </div>
@@ -144,15 +144,15 @@ export const DashboardPage: React.FC = () => {
           <RevenueTrendChart data={trends} />
         </Card>
 
-        <Card className="lg:col-span-5 p-5 sm:p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+        <Card className="lg:col-span-5 p-4 sm:p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-3">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                 Sales Leaderboard
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Peringkat kontribusi nilai pesanan per sales.</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Peringkat kontribusi nilai pesanan per sales.</p>
             </div>
-            <Link to="/sph" className="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline">
+            <Link to="/sph" className="text-[11px] text-brand-600 dark:text-brand-400 font-semibold hover:underline">
               Lihat SPH
             </Link>
           </div>
@@ -162,17 +162,17 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Quick Architecture Info Footer Card */}
-      <Card className="p-5 sm:p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-850">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-brand-600 text-white shadow-md">
-              <Zap className="w-5 h-5" />
+      <Card className="p-4 sm:p-4.5 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-850">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-brand-600 text-white shadow-sm">
+              <Zap className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                 Arsitektur Enterprise: Skala Jutaan Record
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Semua query difilter di server Supabase via PostgreSQL RPC dan diindeks secara otomatis.
               </p>
             </div>

@@ -34,6 +34,7 @@ export interface TableColumn<T> {
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
   width?: string | number;
+  minWidth?: string | number;
   render?: (row: T, index: number) => React.ReactNode;
   exportValue?: (row: T) => string | number;
   hideable?: boolean;

@@ -282,6 +282,7 @@ export const PerhitunganPage: React.FC = () => {
         </div>
       ),
       width: 44,
+      minWidth: 44,
       align: 'center',
       sortable: false,
       hideable: false,
@@ -300,9 +301,10 @@ export const PerhitunganPage: React.FC = () => {
     {
       key: 'tanggal',
       title: 'Tanggal',
-      width: 105,
+      width: 115,
+      minWidth: 110,
       render: (row: Perhitungan) => (
-        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono whitespace-nowrap">
           <Calendar className="w-3.5 h-3.5 opacity-60 flex-shrink-0" />
           <span>{row.tanggal || '-'}</span>
         </div>
@@ -311,7 +313,8 @@ export const PerhitunganPage: React.FC = () => {
     {
       key: 'nama_pt',
       title: 'Nama Klien',
-      width: 175,
+      width: 200,
+      minWidth: 180,
       render: (row: Perhitungan) => (
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex-shrink-0">
@@ -328,13 +331,14 @@ export const PerhitunganPage: React.FC = () => {
     {
       key: 'sales',
       title: 'Sales PIC',
-      width: 130,
+      width: 140,
+      minWidth: 130,
       render: (row: Perhitungan) => (
-        <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300">
+        <div className="flex items-center gap-1.5 whitespace-nowrap">
+          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300 flex-shrink-0">
             {(row.sales || 'S').charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate max-w-[90px]">
+          <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate max-w-[100px]">
             {row.sales || '-'}
           </span>
         </div>
@@ -343,7 +347,8 @@ export const PerhitunganPage: React.FC = () => {
     {
       key: 'produk',
       title: 'Produk & Model',
-      width: 220,
+      width: 230,
+      minWidth: 200,
       render: (row: Perhitungan) => (
         <div className="flex flex-col gap-0.5">
           <p className="font-semibold text-slate-900 dark:text-slate-100 text-xs sm:text-sm line-clamp-1" title={row.produk}>
@@ -360,9 +365,10 @@ export const PerhitunganPage: React.FC = () => {
     {
       key: 'proses_logo',
       title: 'Proses Logo',
-      width: 170,
+      width: 220,
+      minWidth: 190,
       render: (row: Perhitungan) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/40">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 shadow-xs">
           {row.proses_logo || '-'}
         </span>
       ),
@@ -371,9 +377,10 @@ export const PerhitunganPage: React.FC = () => {
       key: 'qty',
       title: 'Qty',
       align: 'center',
-      width: 85,
+      width: 95,
+      minWidth: 85,
       render: (row: Perhitungan) => (
-        <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+        <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
           {formatNumber(row.qty)} <span className="text-[10px] font-normal text-slate-400">pcs</span>
         </div>
       ),
@@ -383,22 +390,25 @@ export const PerhitunganPage: React.FC = () => {
         key: 'modal_produk',
         title: 'Modal Unit',
         align: 'right',
-        width: 110,
-        render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500">{formatRupiah(row.modal_produk)}</span>,
+        width: 120,
+        minWidth: 110,
+        render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500 whitespace-nowrap">{formatRupiah(row.modal_produk)}</span>,
       },
       {
         key: 'modal_logo',
         title: 'Modal Logo',
         align: 'right',
-        width: 110,
-        render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500">{formatRupiah(row.modal_logo)}</span>,
+        width: 120,
+        minWidth: 110,
+        render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-500 whitespace-nowrap">{formatRupiah(row.modal_logo)}</span>,
       },
     ] as TableColumn<Perhitungan>[]) : []),
     {
       key: 'margin',
       title: 'Margin',
       align: 'center',
-      width: 90,
+      width: 95,
+      minWidth: 90,
       render: (row: Perhitungan) => {
         const m = row.margin || 0;
         const colorClass = m >= 30 
@@ -407,7 +417,7 @@ export const PerhitunganPage: React.FC = () => {
           ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/60'
           : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200/60';
         return (
-          <span className={`inline-block px-2 py-0.5 rounded-md font-mono text-xs font-bold border ${colorClass}`}>
+          <span className={`inline-block px-2 py-0.5 rounded-md font-mono text-xs font-bold border whitespace-nowrap ${colorClass}`}>
             {formatPercent(m)}
           </span>
         );
@@ -417,16 +427,18 @@ export const PerhitunganPage: React.FC = () => {
       key: 'total_harga_jual',
       title: 'Total Kotor',
       align: 'right',
-      width: 125,
-      render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-600 dark:text-slate-400">{formatRupiah(row.total_harga_jual)}</span>,
+      width: 135,
+      minWidth: 125,
+      render: (row: Perhitungan) => <span className="font-mono text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">{formatRupiah(row.total_harga_jual)}</span>,
     },
     {
       key: 'diskon',
       title: 'Diskon',
       align: 'right',
-      width: 95,
+      width: 105,
+      minWidth: 95,
       render: (row: Perhitungan) => (
-        <span className={`font-mono text-xs ${row.diskon > 0 ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
+        <span className={`font-mono text-xs whitespace-nowrap ${row.diskon > 0 ? 'text-rose-500 font-bold' : 'text-slate-400'}`}>
           {row.diskon > 0 ? `-${formatRupiah(row.diskon)}` : '-'}
         </span>
       ),
@@ -435,9 +447,10 @@ export const PerhitunganPage: React.FC = () => {
       key: 'harga_jual_net',
       title: 'Total Net Jual',
       align: 'right',
-      width: 140,
+      width: 145,
+      minWidth: 135,
       render: (row: Perhitungan) => (
-        <span className="font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+        <span className="font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
           {formatRupiah(row.harga_jual_net)}
         </span>
       ),
@@ -448,7 +461,8 @@ export const PerhitunganPage: React.FC = () => {
       align: 'center',
       sortable: false,
       hideable: false,
-      width: 125,
+      width: 130,
+      minWidth: 120,
       render: (row: Perhitungan) => (
         <div className="flex items-center justify-center gap-1">
           <button
@@ -478,15 +492,15 @@ export const PerhitunganPage: React.FC = () => {
   ], [role, selectedIds, dataList]);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3.5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Calculator className="w-6 h-6 text-brand-600" />
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-brand-600" />
             Database Perhitungan Harga
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             Daftar kalkulasi harga aktif. Centang baris untuk membuat SPH, data akan otomatis dipindahkan ke SPH setelah disimpan.
           </p>
         </div>
@@ -497,13 +511,13 @@ export const PerhitunganPage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={handleOpenSPHSelected}
-              leftIcon={<Layers className="w-4 h-4" />}
+              leftIcon={<Layers className="w-3.5 h-3.5" />}
             >
-              Buat SPH ({selectedIds.size} Item Terpilih)
+              Buat SPH ({selectedIds.size} Item)
             </Button>
           )}
           <Link to="/kalkulator">
-            <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
+            <Button variant="primary" size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>
               Hitung Harga Baru
             </Button>
           </Link>
@@ -511,59 +525,59 @@ export const PerhitunganPage: React.FC = () => {
       </div>
 
       {/* KPI Metric Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <Card className="p-3.5 flex items-center gap-3 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
-          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
-            <ShoppingBag className="w-5 h-5" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <ShoppingBag className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[11px] font-medium text-slate-400">Total Hitungan Aktif</p>
-            <p className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
+            <p className="text-[10px] font-medium text-slate-400">Total Hitungan Aktif</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-slate-900 dark:text-slate-100">
               {formatNumber(pagination?.totalRecords || dataList.length)}
             </p>
           </div>
         </Card>
 
-        <Card className="p-3.5 flex items-center gap-3 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
-          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-            <DollarSign className="w-5 h-5" />
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+            <DollarSign className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[11px] font-medium text-slate-400">Total Estimasi Net</p>
-            <p className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+            <p className="text-[10px] font-medium text-slate-400">Total Estimasi Net</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-emerald-600 dark:text-emerald-400">
               {formatRupiah(metrics?.totalRevenue || dataList.reduce((acc, c) => acc + (c.harga_jual_net || c.total_harga_jual || 0), 0))}
             </p>
           </div>
         </Card>
 
-        <Card className="p-3.5 flex items-center gap-3 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
-          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-            <TrendingUp className="w-5 h-5" />
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+            <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[11px] font-medium text-slate-400">Rata-rata Margin</p>
-            <p className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
+            <p className="text-[10px] font-medium text-slate-400">Rata-rata Margin</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-amber-600 dark:text-amber-400">
               {formatPercent(metrics?.avgMargin || (dataList.length > 0 ? dataList.reduce((a, b) => a + (b.margin || 0), 0) / dataList.length : 0))}
             </p>
           </div>
         </Card>
 
-        <Card className={`p-3.5 flex items-center gap-3 border transition-colors ${
+        <Card className={`p-2.5 sm:p-3 flex items-center gap-2.5 border transition-colors ${
           selectedIds.size > 0 
             ? 'bg-brand-50/80 dark:bg-brand-950/50 border-brand-300 dark:border-brand-800' 
             : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
         }`}>
-          <div className={`p-2.5 rounded-xl ${
+          <div className={`p-2 rounded-lg ${
             selectedIds.size > 0 
-              ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' 
+              ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20' 
               : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
           }`}>
-            <CheckSquare className="w-5 h-5" />
+            <CheckSquare className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[11px] font-medium text-slate-400">Item Terpilih SPH</p>
-            <p className={`text-lg font-bold font-mono ${selectedIds.size > 0 ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>
-              {selectedIds.size} <span className="text-xs font-normal">item</span>
+            <p className="text-[10px] font-medium text-slate-400">Item Terpilih SPH</p>
+            <p className={`text-sm sm:text-base font-bold font-mono ${selectedIds.size > 0 ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>
+              {selectedIds.size} <span className="text-[10px] font-normal">item</span>
             </p>
           </div>
         </Card>

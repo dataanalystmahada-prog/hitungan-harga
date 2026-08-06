@@ -16,8 +16,8 @@ export const AppLayout: React.FC = () => {
         <Navbar />
 
         {/* Dynamic Page Outlet with Custom Scrollbar */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 bg-slate-50 dark:bg-slate-950 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800">
+          <div className="max-w-7xl mx-auto space-y-4">
             <Outlet />
           </div>
         </main>

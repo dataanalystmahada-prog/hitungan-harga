@@ -11,15 +11,21 @@
 /* Custom Printable Styles for SPH & Enterprise Documents */
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 20mm; /* 2 cm top, bottom, left, right */
+    size: 210mm 297mm; /* Standard A4 size: 21.0 x 29.7 cm */
+    margin: 20mm;      /* Exact 2.0 cm margin on top, right, bottom, left */
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box !important;
   }
 
   html,
   body {
     width: 100% !important;
     height: auto !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -29,19 +35,46 @@
     print-color-adjust: exact !important;
   }
 
-  /* Reset all modal containers and fixed overlays during print */
+  /* Completely remove interactive app chrome, navigation, headers, sidebars and hidden elements */
+  nav,
+  header,
+  aside,
+  footer,
+  button,
+  input,
+  select,
+  textarea,
+  .print\\:hidden,
+  .print-hidden,
+  [data-print-hidden="true"],
+  [class*="backdrop"] {
+    display: none !important;
+  }
+
+  /* Reset all modal containers and parent wrappers so they don't introduce offset or flex alignment */
   #root,
+  #root > div,
+  main,
+  main > div,
   .fixed,
   [class*="fixed"],
   [class*="overflow-"],
   [class*="max-h-"] {
     position: static !important;
-    overflow: visible !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
     max-height: none !important;
     height: auto !important;
+    min-height: 0 !important;
     transform: none !important;
     filter: none !important;
-    box-shadow: none !important;
+    overflow: visible !important;
+    background: transparent !important;
   }
 
   /* Hide everything on page by default */
@@ -49,18 +82,19 @@
     visibility: hidden;
   }
 
-  /* Show only printable document and its descendants */
+  /* Show only printable document and its descendants positioned at the very top (0,0) of the A4 print area */
   .printable-doc,
   .printable-doc * {
     visibility: visible !important;
   }
 
   .printable-doc {
-    position: static !important;
-    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     border-radius: 0 !important;
@@ -68,38 +102,24 @@
     background: #ffffff !important;
     color: #0f172a !important;
     overflow: visible !important;
-    page-break-after: auto;
-  }
-
-  /* Hide non-printable elements */
-  .print\\:hidden,
-  .print-hidden,
-  button,
-  input,
-  select,
-  textarea,
-  nav,
-  header,
-  aside {
-    display: none !important;
   }
 
   /* Multi-page table and section break controls */
-  table {
+  .printable-doc table {
     width: 100% !important;
     border-collapse: collapse !important;
     page-break-inside: auto;
   }
 
-  thead {
+  .printable-doc thead {
     display: table-header-group;
   }
 
-  tfoot {
+  .printable-doc tfoot {
     display: table-footer-group;
   }
 
-  tr {
+  .printable-doc tr {
     page-break-inside: avoid;
     break-inside: avoid;
   }

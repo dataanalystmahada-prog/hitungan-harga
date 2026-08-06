@@ -91,8 +91,13 @@ export const InteractiveKalkulator: React.FC = () => {
   };
 
   // Actual save logic (Single Unified Record for 1 or More Products)
-  const executeSaveAll = async (globalDiskon: number, deskripsi: string) => {
+  const executeSaveAll = async (globalDiskon: number, deskripsi: string, modalNamaPt?: string) => {
     try {
+      const finalNamaPt = (modalNamaPt !== undefined ? modalNamaPt : (namaPt || '')).trim();
+      if (modalNamaPt !== undefined && modalNamaPt !== namaPt) {
+        setNamaPt(modalNamaPt);
+      }
+
       const now = new Date();
       const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
       
@@ -112,7 +117,7 @@ export const InteractiveKalkulator: React.FC = () => {
         id: `CALC-${Date.now()}`,
         tanggal: dateFormatted,
         sales: (user?.nama || sales || 'Sales Admin').trim(),
-        nama_pt: (namaPt || '').trim(),
+        nama_pt: finalNamaPt,
         produk: summaryProduk,
         kode: summaryKode,
         proses_logo: summaryLogo,
@@ -130,7 +135,7 @@ export const InteractiveKalkulator: React.FC = () => {
       await createCalculation(payload);
       success(
         'Berhasil Disimpan',
-        `Perhitungan ${summaryProduk} (${totalPcs} pcs) berhasil disimpan sebagai 1 data perhitungan.`
+        `Perhitungan ${summaryProduk} (${totalPcs} pcs) untuk ${finalNamaPt || 'Klien'} berhasil disimpan.`
       );
     } catch (err: any) {
       error('Gagal Menyimpan Hitungan', err.message || 'Terjadi kesalahan saat menyimpan.');
@@ -143,20 +148,20 @@ export const InteractiveKalkulator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* 1. Header Order Information Card */}
-      <Card className="p-5">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <Card className="p-3.5 sm:p-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
-                <Layers className="w-5 h-5" />
+              <div className="p-1.5 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
+                <Layers className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Kalkulator Harga & Margin Multi-Produk
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Hitung beberapa produk sekaligus dalam 1 pesanan, auto-lookup matriks harga modal, logo & margin.
                 </p>
               </div>
@@ -168,16 +173,16 @@ export const InteractiveKalkulator: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={addItem}
-              leftIcon={<Plus className="w-4 h-4 text-indigo-500" />}
+              leftIcon={<Plus className="w-3.5 h-3.5 text-indigo-500" />}
               className="flex-1 md:flex-none border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
             >
-              + Tambah Item Produk
+              + Tambah Item
             </Button>
           </div>
         </div>
 
         {/* Client & Sales Order Meta */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 text-xs">
           <Select
             label="Sales In-Charge (PIC)"
             options={users.map(u => ({ label: u.nama === user?.nama ? `${u.nama} (Akun Anda)` : `${u.nama} (${u.email})`, value: u.nama }))}
@@ -186,7 +191,7 @@ export const InteractiveKalkulator: React.FC = () => {
             disabled={role === 'sales'}
           />
           <Input
-            label="Nama Klien / Perusahaan (Draft SPH)"
+            label="Nama Klien / Perusahaan"
             placeholder="Contoh: PT Bank Central Asia Tbk"
             value={namaPt}
             onChange={(e) => setNamaPt(e.target.value)}
@@ -201,7 +206,7 @@ export const InteractiveKalkulator: React.FC = () => {
       </Card>
 
       {/* 2. List of Multi-Product Items */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {items.map((item, index) => {
           const calc = item.calculation;
           const kodes = getAvailableKodes(item.produk);
@@ -212,28 +217,28 @@ export const InteractiveKalkulator: React.FC = () => {
             <div
               key={item.id}
               onClick={() => setFocusedItemId(item.id)}
-              className={`rounded-2xl border transition-all duration-200 ${
+              className={`rounded-xl border transition-all duration-150 ${
                 isFocused
-                  ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-lg'
+                  ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
                   : 'bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
             >
               {/* Item Card Header */}
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-800/30 rounded-t-2xl">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+              <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-800/30 rounded-t-xl">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">
                     {index + 1}
                   </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
                     {item.produk || `Item Produk #${index + 1}`}
                   </span>
                   {item.kode && (
-                    <span className="px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+                    <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[10px]">
                       {item.kode}
                     </span>
                   )}
                   {isFocused && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                    <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
                       Aktif di Matriks
                     </span>
                   )}
@@ -248,7 +253,7 @@ export const InteractiveKalkulator: React.FC = () => {
                       duplicateItem(item.id);
                     }}
                     title="Duplikat Item"
-                    leftIcon={<Copy className="w-3.5 h-3.5" />}
+                    leftIcon={<Copy className="w-3 h-3" />}
                   >
                     Duplikat
                   </Button>
@@ -262,7 +267,7 @@ export const InteractiveKalkulator: React.FC = () => {
                       }}
                       title="Hapus Item"
                       className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                      leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                      leftIcon={<Trash2 className="w-3 h-3" />}
                     >
                       Hapus
                     </Button>
@@ -271,8 +276,8 @@ export const InteractiveKalkulator: React.FC = () => {
               </div>
 
               {/* Item Card Body */}
-              <div className="p-5">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="p-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   {/* Select Produk */}
                   <div className="md:col-span-4">
                     <Select
@@ -355,24 +360,24 @@ export const InteractiveKalkulator: React.FC = () => {
 
                 {/* Live Item Calculation Badges */}
                 {calc && (
-                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs">
                     {role !== 'sales' && (
                       <>
                         <div>
                           <span className="text-[10px] text-slate-400 block">Modal Produk:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-xs">
                             {formatRupiah(calc.modalProdukUnit)}
                           </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-400 block">Modal Logo:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-xs">
                             {formatRupiah(calc.modalLogoUnit)}
                           </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-400 block">Margin Target:</span>
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">
                             {calc.marginPersen}%
                           </span>
                         </div>
@@ -380,20 +385,20 @@ export const InteractiveKalkulator: React.FC = () => {
                     )}
                     <div>
                       <span className="text-[10px] text-slate-400 block">Harga Jual / Pcs:</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
+                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
                         {formatRupiah(calc.hargaJualNetUnit)}
                       </span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 block">Subtotal ({item.qty} pcs):</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
+                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
                         {formatRupiah(calc.totalHargaJualNet)}
                       </span>
                     </div>
                     {role !== 'sales' && (
                       <div>
                         <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-xs">
                           +{formatRupiah(calc.keuntunganTotal)}
                         </span>
                       </div>
@@ -407,12 +412,12 @@ export const InteractiveKalkulator: React.FC = () => {
       </div>
 
       {/* 3. Grand Total Aggregate Order Sticky Summary */}
-      <div className="sticky bottom-4 z-20">
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl border border-indigo-500/30 backdrop-blur-md">
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+      <div className="sticky bottom-3 z-20">
+        <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl border border-indigo-500/30 backdrop-blur-md">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 items-center">
             <div>
-              <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Total Produk:</span>
-              <span className="text-base font-extrabold text-white">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Produk:</span>
+              <span className="text-xs sm:text-sm font-extrabold text-white">
                 {orderSummary.totalItems} Macam ({formatNumber(orderSummary.totalPcs)} Pcs)
               </span>
             </div>
@@ -420,15 +425,15 @@ export const InteractiveKalkulator: React.FC = () => {
             {role !== 'sales' && (
               <>
                 <div>
-                  <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
-                  <span className="text-sm font-semibold text-slate-300 font-mono">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
+                  <span className="text-xs font-semibold text-slate-300 font-mono">
                     {formatRupiah(orderSummary.totalModal)}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
-                  <span className="text-sm font-bold text-indigo-300">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
+                  <span className="text-xs font-bold text-indigo-300">
                     {orderSummary.avgMarginPersen}%
                   </span>
                 </div>
@@ -437,16 +442,16 @@ export const InteractiveKalkulator: React.FC = () => {
 
             {role !== 'sales' && (
               <div>
-                <span className="text-[11px] text-emerald-400 uppercase tracking-wider block">Est. Laba Bersih:</span>
-                <span className="text-sm font-extrabold text-emerald-400 font-mono">
+                <span className="text-[10px] text-emerald-400 uppercase tracking-wider block">Est. Laba Bersih:</span>
+                <span className="text-xs font-extrabold text-emerald-400 font-mono">
                   +{formatRupiah(orderSummary.totalKeuntungan)}
                 </span>
               </div>
             )}
 
             <div>
-              <span className="text-[11px] text-indigo-300 uppercase tracking-wider block">Grand Total Net:</span>
-              <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-white font-mono">
+              <span className="text-[10px] text-indigo-300 uppercase tracking-wider block">Grand Total Net:</span>
+              <span className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-white font-mono">
                 {formatRupiah(orderSummary.totalHargaJualNet)}
               </span>
             </div>
@@ -456,7 +461,7 @@ export const InteractiveKalkulator: React.FC = () => {
                 variant="primary"
                 size="sm"
                 onClick={handleOpenSPH}
-                leftIcon={<FileText className="w-4 h-4" />}
+                leftIcon={<FileText className="w-3.5 h-3.5" />}
                 className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md shadow-indigo-500/25"
               >
                 Buat SPH
@@ -466,7 +471,7 @@ export const InteractiveKalkulator: React.FC = () => {
                 size="sm"
                 isLoading={isSaving}
                 onClick={handleSaveAllCalculations}
-                leftIcon={<Save className="w-4 h-4" />}
+                leftIcon={<Save className="w-3.5 h-3.5" />}
                 title="Simpan Semua Item ke Database"
               >
                 Simpan
@@ -478,31 +483,31 @@ export const InteractiveKalkulator: React.FC = () => {
 
       {/* 4. Active Item Tier Matrix Simulation Table (12 - 500 Pcs) */}
       {focusedItem && role !== 'sales' && (
-        <Card className="p-5">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+        <Card className="p-3.5 sm:p-4">
+          <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-indigo-500" />
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
                 Simulasi Matriks Skala Quantity (12 - 500 Pcs) untuk: <span className="text-indigo-600 dark:text-indigo-400 underline">{focusedItem.produk}</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Membandingkan harga jual satuan dan keuntungan pada seluruh tier kuantiti dari master database spreadsheet.
               </p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
+            <table className="w-full text-[11px] text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-2.5 px-3">Tier Qty</th>
-                  <th className="py-2.5 px-3">Modal Produk</th>
-                  <th className="py-2.5 px-3">Modal Logo</th>
-                  <th className="py-2.5 px-3">Total Modal/Pcs</th>
-                  <th className="py-2.5 px-3">Margin / Multiplier</th>
-                  <th className="py-2.5 px-3 text-right">Harga Jual/Pcs</th>
-                  <th className="py-2.5 px-3 text-right">Total Nilai Order</th>
-                  <th className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">Est. Keuntungan</th>
+                  <th className="py-2 px-2.5">Tier Qty</th>
+                  <th className="py-2 px-2.5">Modal Produk</th>
+                  <th className="py-2 px-2.5">Modal Logo</th>
+                  <th className="py-2 px-2.5">Total Modal/Pcs</th>
+                  <th className="py-2 px-2.5">Margin / Multiplier</th>
+                  <th className="py-2 px-2.5 text-right">Harga Jual/Pcs</th>
+                  <th className="py-2 px-2.5 text-right">Total Order</th>
+                  <th className="py-2 px-2.5 text-right text-emerald-600 dark:text-emerald-400">Est. Keuntungan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
@@ -568,25 +573,25 @@ export const InteractiveKalkulator: React.FC = () => {
                           : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30 text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      <td className="py-2.5 px-3 font-semibold">
+                      <td className="py-2 px-2.5 font-semibold">
                         <span className="flex items-center gap-1.5">
                           {tier} pcs
                           {isCurrent && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-600 text-white">
+                            <span className="px-1 py-0.2 rounded text-[9px] bg-indigo-600 text-white">
                               Pilihan Anda
                             </span>
                           )}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3">{formatRupiah(modalP)}</td>
-                      <td className="py-2.5 px-3">{formatRupiah(modalL)}</td>
-                      <td className="py-2.5 px-3 font-semibold">{formatRupiah(totalM)}</td>
-                      <td className="py-2.5 px-3 font-sans">{marginVal >= 1.05 ? `${marginVal}x (${marginPct}%)` : `${marginPct}%`}</td>
-                      <td className="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white">
+                      <td className="py-2 px-2.5">{formatRupiah(modalP)}</td>
+                      <td className="py-2 px-2.5">{formatRupiah(modalL)}</td>
+                      <td className="py-2 px-2.5 font-semibold">{formatRupiah(totalM)}</td>
+                      <td className="py-2 px-2.5 font-sans">{marginVal >= 1.05 ? `${marginVal}x (${marginPct}%)` : `${marginPct}%`}</td>
+                      <td className="py-2 px-2.5 text-right font-bold text-slate-900 dark:text-white">
                         {formatRupiah(unitPrice)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-bold">{formatRupiah(subtotal)}</td>
-                      <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-bold">
+                      <td className="py-2 px-2.5 text-right font-bold">{formatRupiah(subtotal)}</td>
+                      <td className="py-2 px-2.5 text-right text-emerald-600 dark:text-emerald-400 font-bold">
                         +{formatRupiah(profit)}
                       </td>
                     </tr>
@@ -610,8 +615,8 @@ export const InteractiveKalkulator: React.FC = () => {
             diskon: orderSummary.totalDiskonNominal,
             items: sphLineItems,
           }}
-          onSavePerhitunganBeforePrint={async (modalDeskripsi, modalDiskon) => {
-            await executeSaveAll(modalDiskon !== undefined ? modalDiskon : orderSummary.totalDiskonNominal, modalDeskripsi);
+          onSavePerhitunganBeforePrint={async (modalDeskripsi, modalDiskon, modalNamaPt) => {
+            await executeSaveAll(modalDiskon !== undefined ? modalDiskon : orderSummary.totalDiskonNominal, modalDeskripsi, modalNamaPt);
           }}
         />
       )}
@@ -624,6 +629,7 @@ export const InteractiveKalkulator: React.FC = () => {
           items={items}
           totalKotor={orderSummary.totalHargaJualKotor}
           isSaving={isSaving}
+          defaultNamaPt={namaPt}
         />
       )}
     </div>

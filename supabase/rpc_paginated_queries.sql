@@ -41,6 +41,7 @@ BEGIN
             p.id,
             p.tanggal,
             p.sales,
+            p.nama_pt,
             p.produk,
             p.kode,
             p.proses_logo,
@@ -52,12 +53,14 @@ BEGIN
             p.total_harga_jual,
             p.harga_jual_net,
             p.diskon,
+            p.items,
             p.created_at,
             p.updated_at,
             p.synced_at
         FROM public.perhitungan p
         WHERE 
             (p_search IS NULL OR (
+                p.nama_pt ILIKE '%' || p_search || '%' OR
                 p.produk ILIKE '%' || p_search || '%' OR
                 p.kode ILIKE '%' || p_search || '%' OR
                 p.sales ILIKE '%' || p_search || '%' OR
@@ -82,6 +85,8 @@ BEGIN
         ORDER BY
             CASE WHEN p_sort_by = 'tanggal' AND p_sort_order ILIKE 'ASC' THEN tanggal END ASC,
             CASE WHEN p_sort_by = 'tanggal' AND p_sort_order ILIKE 'DESC' THEN tanggal END DESC,
+            CASE WHEN p_sort_by = 'nama_pt' AND p_sort_order ILIKE 'ASC' THEN nama_pt END ASC,
+            CASE WHEN p_sort_by = 'nama_pt' AND p_sort_order ILIKE 'DESC' THEN nama_pt END DESC,
             CASE WHEN p_sort_by = 'produk' AND p_sort_order ILIKE 'ASC' THEN produk END ASC,
             CASE WHEN p_sort_by = 'produk' AND p_sort_order ILIKE 'DESC' THEN produk END DESC,
             CASE WHEN p_sort_by = 'sales' AND p_sort_order ILIKE 'ASC' THEN sales END ASC,

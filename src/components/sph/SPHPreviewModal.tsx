@@ -34,7 +34,7 @@ export interface SPHPreviewModalProps {
     sourceCalculationIds?: string[];
   };
   sourceCalculationIds?: string[];
-  onSavePerhitunganBeforePrint?: (deskripsi: string, diskon: number) => Promise<void> | void;
+  onSavePerhitunganBeforePrint?: (deskripsi: string, diskon: number, namaPt?: string) => Promise<void> | void;
   onSaveSuccess?: () => void;
 }
 
@@ -54,7 +54,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   const [selectedBrandName, setSelectedBrandName] = useState(
     defaultData?.brand || brands[0]?.nama_brand || 'Amanah Apparel Indonesia'
   );
-  const [namaPt, setNamaPt] = useState(defaultData?.namaPt || 'PT Solusi Mitra Nusantara');
+  const [namaPt, setNamaPt] = useState(defaultData?.namaPt || '');
   const [deskripsi, setDeskripsi] = useState(defaultData?.deskripsi || '');
   const [globalDiskon, setGlobalDiskon] = useState<number>(
     defaultData?.diskon !== undefined
@@ -73,6 +73,26 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       setSalesName(user.nama);
     }
   }, [user, role]);
+
+  useEffect(() => {
+    if (isOpen && defaultData) {
+      if (defaultData.namaPt !== undefined) {
+        setNamaPt(defaultData.namaPt);
+      }
+      if (defaultData.brand) {
+        setSelectedBrandName(defaultData.brand);
+      }
+      if (defaultData.deskripsi !== undefined) {
+        setDeskripsi(defaultData.deskripsi);
+      }
+      if (defaultData.diskon !== undefined) {
+        setGlobalDiskon(defaultData.diskon);
+      }
+      if (defaultData.sales) {
+        setSalesName(defaultData.sales);
+      }
+    }
+  }, [isOpen, defaultData]);
 
   const activeBrand = brands.find(b => b.nama_brand === selectedBrandName) || brands[0];
 
@@ -139,7 +159,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   const handlePrint = async () => {
     if (onSavePerhitunganBeforePrint) {
       try {
-        await onSavePerhitunganBeforePrint(deskripsi, globalDiskon);
+        await onSavePerhitunganBeforePrint(deskripsi, globalDiskon, (namaPt || '').trim());
       } catch (err) {
         console.error('Auto-save calculation on print error:', err);
       }
@@ -158,7 +178,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         tanggal: dateFormatted,
         brand: selectedBrandName,
         no_sph: noSPH,
-        nama_pt: namaPt,
+        nama_pt: (namaPt || '').trim(),
         deskripsi: deskripsi,
         produk: summaryProduk,
         qty: totalQtyPcs,
@@ -212,7 +232,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             variant="outline"
             size="sm"
             onClick={handlePrint}
-            leftIcon={<Printer className="w-4 h-4" />}
+            leftIcon={<Printer className="w-3.5 h-3.5" />}
           >
             Cetak / Export PDF
           </Button>
@@ -225,7 +245,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               size="sm"
               isLoading={isCreating}
               onClick={handleSaveToDatabase}
-              leftIcon={<Save className="w-4 h-4" />}
+              leftIcon={<Save className="w-3.5 h-3.5" />}
             >
               Simpan SPH
             </Button>
@@ -233,10 +253,10 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         </div>
       }
     >
-      <div className="flex flex-col gap-6 print:gap-0 print:block">
+      <div className="flex flex-col gap-4 print:gap-0 print:block">
         {/* Form Controls (Hidden in Print) */}
-        <div className="print:hidden flex flex-col gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs">
+        <div className="print:hidden flex flex-col gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs">
             <Select
               label="Kop Brand Perusahaan"
               options={brands.map(b => ({ label: b.nama_brand, value: b.nama_brand }))}
@@ -256,7 +276,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               disabled={role === 'sales'}
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs">
             <Input
               label="Diskon Global SPH (Rp)"
               type="number"
@@ -265,16 +285,16 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               value={globalDiskon || ''}
               onChange={(e) => setGlobalDiskon(parseInt(e.target.value) || 0)}
             />
-            <div className="w-full flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <div className="w-full flex flex-col gap-1">
+              <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Deskripsi / Nama Project (khusus SPH)
               </label>
               <textarea
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}
                 placeholder="Harus di ISI"
-                rows={3}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-rose-500 placeholder:font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all duration-150 resize-none"
+                rows={2}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-rose-500 placeholder:font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all duration-150 resize-none"
               />
             </div>
           </div>
@@ -309,7 +329,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
           {/* Recipient */}
           <div className="mb-5 print:mb-4">
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-wider mb-1">Kepada Yth:</p>
-            <p className="text-sm font-bold text-slate-900">{namaPt}</p>
+            <p className="text-sm font-bold text-slate-900">{namaPt || 'Klien / Perusahaan Rekanan'}</p>
             <p className="text-slate-600 text-xs mt-0.5">Up. Bagian Pengadaan / Procurement</p>
           </div>
 

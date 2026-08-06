@@ -215,10 +215,21 @@ export const generateMockPerhitungan = (): Perhitungan[] => {
     // Group every pair of rows (e.g. 1 & 2, 3 & 4) under a shared ref_id
     const batchGroup = Math.ceil(i / 2);
 
+    const companies = [
+      'PT Bank Central Asia Tbk',
+      'PT Telkom Indonesia',
+      'PT Astra International Tbk',
+      'PT GoTo Gojek Tokopedia',
+      'PT Shopee International Indonesia',
+      'PT Tokopedia Mitra Digital',
+      'PT Solusi Mitra Nusantara'
+    ];
+
     list.push({
       id: `CALC-MOCK-${1000 + i}`,
       tanggal: `${(28 - (i % 25)).toString().padStart(2, '0')}/08/2026`,
       sales: s,
+      nama_pt: companies[i % companies.length],
       produk: p.name,
       kode: p.code,
       proses_logo: p.logo,

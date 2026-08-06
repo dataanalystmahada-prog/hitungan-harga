@@ -63,15 +63,24 @@ export class BaseRepository {
       // Apply search filter if provided
       if (queryParams.search && queryParams.search.trim()) {
         const s = queryParams.search.trim();
-        // Uses textSearch or ilike
-        query = query.or(`produk.ilike.%${s}%,kode.ilike.%${s}%,sales.ilike.%${s}%`);
+        if (tableName === 'sph') {
+          query = query.or(`no_sph.ilike.%${s}%,nama_pt.ilike.%${s}%,brand.ilike.%${s}%,sales.ilike.%${s}%,produk.ilike.%${s}%,deskripsi.ilike.%${s}%`);
+        } else {
+          query = query.or(`nama_pt.ilike.%${s}%,produk.ilike.%${s}%,kode.ilike.%${s}%,sales.ilike.%${s}%,proses_logo.ilike.%${s}%`);
+        }
       }
 
       // Apply dynamic field filters
       if (queryParams.filters) {
         Object.entries(queryParams.filters).forEach(([key, val]) => {
           if (val !== undefined && val !== null && val !== '') {
-            query = query.eq(key, val);
+            if (key === 'date_start') {
+              query = query.gte('created_at', val);
+            } else if (key === 'date_end') {
+              query = query.lte('created_at', `${val}T23:59:59.999Z`);
+            } else {
+              query = query.eq(key, val);
+            }
           }
         });
       }
@@ -101,7 +110,7 @@ export class BaseRepository {
           limit,
           totalRecords,
           filteredRecords: totalRecords,
-          totalPages: Math.ceil(totalRecords / limit),
+          totalPages: Math.ceil(totalRecords / Math.max(1, limit)),
         }
       };
     } catch (err: any) {

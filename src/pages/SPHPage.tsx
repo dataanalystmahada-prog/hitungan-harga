@@ -7,7 +7,7 @@ import { TableColumn, FilterConfig } from '../types/table.types';
 import { SPH, SPHStatus, Brand, UserSales } from '../types/database.types';
 import { formatRupiah, formatNumber } from '../utils/formatters';
 import { Button } from '../components/common/Button';
-import { Plus, Printer, Trash2 } from 'lucide-react';
+import { Plus, Printer, Trash2, Building2 } from 'lucide-react';
 import { SPHPreviewModal } from '../components/sph/SPHPreviewModal';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -93,15 +93,17 @@ export const SPHPage: React.FC = () => {
     {
       key: 'tanggal',
       title: 'Tanggal',
-      width: 105,
-      render: (row: SPH) => <span className="font-mono text-xs text-slate-500">{row.tanggal}</span>,
+      width: 115,
+      minWidth: 110,
+      render: (row: SPH) => <span className="font-mono text-xs text-slate-500 whitespace-nowrap">{row.tanggal}</span>,
     },
     {
       key: 'no_sph',
       title: 'Nomor SPH',
-      width: 180,
+      width: 190,
+      minWidth: 180,
       render: (row: SPH) => (
-        <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+        <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs whitespace-nowrap">
           {row.no_sph}
         </span>
       ),
@@ -109,20 +111,29 @@ export const SPHPage: React.FC = () => {
     {
       key: 'nama_pt',
       title: 'Klien / Perusahaan',
-      width: 220,
+      width: 240,
+      minWidth: 200,
       render: (row: SPH) => (
-        <div>
-          <p className="font-semibold text-slate-900 dark:text-slate-100">{row.nama_pt}</p>
-          <p className="text-[10px] text-slate-400 truncate max-w-xs">{row.deskripsi}</p>
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex-shrink-0">
+            <Building2 className="w-3.5 h-3.5" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate text-xs" title={row.nama_pt || 'Non-PT / Umum'}>
+              {row.nama_pt || <span className="text-slate-400 font-normal italic">Non-PT / Umum</span>}
+            </p>
+            <p className="text-[10px] text-slate-400 truncate max-w-xs">{row.deskripsi || '-'}</p>
+          </div>
         </div>
       ),
     },
     {
       key: 'brand',
       title: 'Brand Kop',
-      width: 160,
+      width: 170,
+      minWidth: 150,
       render: (row: SPH) => (
-        <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+        <span className="text-xs text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
           {row.brand}
         </span>
       ),
@@ -131,16 +142,18 @@ export const SPHPage: React.FC = () => {
       key: 'qty',
       title: 'Qty',
       align: 'center',
-      width: 80,
-      render: (row: SPH) => <span className="font-mono">{formatNumber(row.qty)} pcs</span>,
+      width: 95,
+      minWidth: 85,
+      render: (row: SPH) => <span className="font-mono whitespace-nowrap">{formatNumber(row.qty)} pcs</span>,
     },
     {
       key: 'harga_jual_akhir',
       title: 'Total Penawaran',
       align: 'right',
-      width: 150,
+      width: 160,
+      minWidth: 140,
       render: (row: SPH) => (
-        <span className="font-mono font-extrabold text-slate-900 dark:text-slate-100">
+        <span className="font-mono font-extrabold text-slate-900 dark:text-slate-100 whitespace-nowrap">
           {formatRupiah(row.harga_jual_akhir)}
         </span>
       ),
@@ -148,20 +161,21 @@ export const SPHPage: React.FC = () => {
     {
       key: 'sales',
       title: 'Sales PIC',
-      width: 130,
-      render: (row: SPH) => <span className="text-xs text-slate-600 dark:text-slate-400">{row.sales}</span>,
+      width: 140,
+      minWidth: 130,
+      render: (row: SPH) => <span className="text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">{row.sales}</span>,
     },
     {
       key: 'status_sph',
       title: 'Status',
       align: 'center',
-      width: 130,
+      width: 120,
       render: (row: SPH) => (
         <select
           value={row.status_sph}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => handleStatusChange(e, row.id)}
-          className={`text-[11px] font-bold px-2 py-1 rounded-full border cursor-pointer outline-none transition-colors ${
+          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer outline-none transition-colors ${
             row.status_sph === 'Deal' || row.status_sph === 'Disetujui'
               ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300'
               : row.status_sph === 'Negosiasi'
@@ -187,23 +201,23 @@ export const SPHPage: React.FC = () => {
       align: 'center',
       sortable: false,
       hideable: false,
-      width: 100,
+      width: 90,
       render: (row: SPH) => (
         <div className="flex items-center justify-center gap-1">
           <button
             onClick={(e) => handleOpenPrintPreview(e, row)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="Lihat & Cetak SPH"
           >
-            <Printer className="w-4 h-4 text-brand-600" />
+            <Printer className="w-3.5 h-3.5 text-brand-600" />
           </button>
           {role !== 'sales' && (
             <button
               onClick={(e) => handleDelete(e, row.id)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
               title="Hapus SPH"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -212,13 +226,13 @@ export const SPHPage: React.FC = () => {
   ], [role]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-3.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
             Surat Penawaran Harga (SPH)
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
             Kelola dokumen penawaran harga resmi perusahaan yang terhubung langsung ke database Supabase.
           </p>
         </div>
@@ -227,7 +241,7 @@ export const SPHPage: React.FC = () => {
           variant="primary"
           size="sm"
           onClick={() => setPreviewModal({ isOpen: true })}
-          leftIcon={<Plus className="w-4 h-4" />}
+          leftIcon={<Plus className="w-3.5 h-3.5" />}
         >
           Buat SPH Baru
         </Button>

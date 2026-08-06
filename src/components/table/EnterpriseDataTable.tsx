@@ -112,6 +112,21 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
     }
   };
 
+  // Calculate total minimum width of the table based on activeColumns
+  const tableMinWidth = useMemo(() => {
+    let total = 50; // For '#' row number column
+    activeColumns.forEach(c => {
+      if (typeof c.minWidth === 'number') {
+        total += c.minWidth;
+      } else if (typeof c.width === 'number') {
+        total += c.width;
+      } else {
+        total += 140;
+      }
+    });
+    return Math.max(1000, total);
+  }, [activeColumns]);
+
   return (
     <div className="flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">
       {/* Toolbar */}
@@ -148,18 +163,24 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
         ref={tableContainerRef}
         className="relative overflow-x-auto overflow-y-auto max-h-[620px] scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700"
       >
-        <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
-          <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-850/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider text-[11px] select-none">
+        <table
+          style={{ minWidth: tableMinWidth }}
+          className="w-full text-left text-xs sm:text-sm border-collapse"
+        >
+          <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-850/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider text-[10px] select-none">
             <tr>
-              <th className="py-3.5 px-4 w-12 text-center text-slate-400">#</th>
+              <th className="py-3 px-3.5 w-12 text-center text-slate-400">#</th>
               {activeColumns.map(col => {
                 const isSorted = sort.column === col.key;
                 return (
                   <th
                     key={String(col.key)}
-                    style={{ width: col.width }}
+                    style={{
+                      width: col.width,
+                      minWidth: col.minWidth || col.width,
+                    }}
                     onClick={() => col.sortable !== false && onSortChange(String(col.key))}
-                    className={`py-3.5 px-4 transition-colors ${
+                    className={`py-3 px-3.5 whitespace-nowrap transition-colors ${
                       col.sortable !== false ? 'cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800' : ''
                     } ${
                       col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
@@ -178,7 +199,7 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
                               <ArrowDown className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                             )
                           ) : (
-                            <ArrowUpDown className="w-3 h-3 opacity-40 hover:opacity-100" />
+                            <ArrowUpDown className="w-2.5 h-2.5 opacity-40 hover:opacity-100" />
                           )}
                         </span>
                       )}
@@ -189,17 +210,24 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900 text-xs">
             {isLoading && data.length === 0 ? (
               // Loading Skeleton
               Array.from({ length: 6 }).map((_, rIdx) => (
                 <tr key={rIdx} className="animate-pulse">
-                  <td className="py-4 px-4 text-center">
-                    <Skeleton className="h-4 w-4 mx-auto" />
+                  <td className="py-3 px-3.5 text-center">
+                    <Skeleton className="h-3.5 w-3.5 mx-auto" />
                   </td>
                   {activeColumns.map((col, cIdx) => (
-                    <td key={cIdx} className="py-4 px-4">
-                      <Skeleton className="h-4 w-3/4" />
+                    <td
+                      key={cIdx}
+                      style={{
+                        width: col.width,
+                        minWidth: col.minWidth || col.width,
+                      }}
+                      className="py-3 px-3.5"
+                    >
+                      <Skeleton className="h-3.5 w-3/4" />
                     </td>
                   ))}
                 </tr>
@@ -207,13 +235,13 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
             ) : data.length === 0 ? (
               // Empty State
               <tr>
-                <td colSpan={activeColumns.length + 1} className="py-16 text-center">
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
-                      <Database className="w-8 h-8" />
+                <td colSpan={activeColumns.length + 1} className="py-12 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2.5">
+                    <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400">
+                      <Database className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{emptyMessage}</p>
-                    <p className="text-xs text-slate-400 max-w-sm">
+                    <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">{emptyMessage}</p>
+                    <p className="text-[11px] text-slate-400 max-w-sm">
                       Cobalah sesuaikan kata kunci pencarian atau bersihkan filter yang aktif.
                     </p>
                   </div>
@@ -231,7 +259,7 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
                       onRowClick ? 'cursor-pointer' : ''
                     }`}
                   >
-                    <td className="py-3 px-4 text-center text-xs font-mono text-slate-400 select-none">
+                    <td className="py-2.5 px-3.5 text-center text-[11px] font-mono text-slate-400 select-none">
                       {rowNumber}
                     </td>
                     {activeColumns.map(col => {
@@ -239,7 +267,11 @@ export function EnterpriseDataTable<T extends { id?: string | number }>({
                       return (
                         <td
                           key={String(col.key)}
-                          className={`py-3 px-4 ${
+                          style={{
+                            width: col.width,
+                            minWidth: col.minWidth || col.width,
+                          }}
+                          className={`py-2.5 px-3.5 ${
                             col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
                           }`}
                         >
