@@ -165,6 +165,10 @@ export class PerhitunganRepository extends BaseRepository {
         show_diskon: row.show_diskon !== undefined ? row.show_diskon : cached?.show_diskon,
         show_ppn: row.show_ppn !== undefined ? row.show_ppn : cached?.show_ppn,
         show_ongkir: row.show_ongkir !== undefined ? row.show_ongkir : cached?.show_ongkir,
+        show_keterangan: row.show_keterangan !== undefined ? row.show_keterangan : cached?.show_keterangan,
+        deskripsi: row.deskripsi || cached?.deskripsi,
+        brand: row.brand || cached?.brand,
+        keterangan: row.keterangan || cached?.keterangan,
       };
     });
 
@@ -209,7 +213,9 @@ export class PerhitunganRepository extends BaseRepository {
       'show_diskon',
       'show_ppn',
       'show_ongkir',
+      'show_keterangan',
       'ref_id',
+      'keterangan',
       'items',
       'created_at',
       'updated_at',
@@ -233,12 +239,14 @@ export class PerhitunganRepository extends BaseRepository {
     delete fallback.nama_pt;
     delete fallback.items;
     delete fallback.ref_id;
+    delete fallback.keterangan;
     delete fallback.ongkir;
     delete fallback.ppn;
     delete fallback.is_ppn;
     delete fallback.show_diskon;
     delete fallback.show_ppn;
     delete fallback.show_ongkir;
+    delete fallback.show_keterangan;
     return fallback;
   }
 
@@ -264,6 +272,8 @@ export class PerhitunganRepository extends BaseRepository {
         show_diskon: newRecord.show_diskon,
         show_ppn: newRecord.show_ppn,
         show_ongkir: newRecord.show_ongkir,
+        show_keterangan: newRecord.show_keterangan,
+        keterangan: newRecord.keterangan,
       });
     }
 
@@ -271,14 +281,36 @@ export class PerhitunganRepository extends BaseRepository {
       try {
         const { data, error } = await supabase.from('perhitungan').insert(newRecord).select().single();
         if (error) throw error;
-        return { ...data, nama_pt: newRecord.nama_pt || data?.nama_pt, items: newRecord.items || data?.items };
+        return { 
+          ...data, 
+          nama_pt: newRecord.nama_pt || data?.nama_pt, 
+          items: newRecord.items || data?.items,
+          ongkir: newRecord.ongkir ?? data?.ongkir,
+          ppn: newRecord.ppn ?? data?.ppn,
+          is_ppn: newRecord.is_ppn ?? data?.is_ppn,
+          show_diskon: newRecord.show_diskon ?? data?.show_diskon,
+          show_ppn: newRecord.show_ppn ?? data?.show_ppn,
+          show_ongkir: newRecord.show_ongkir ?? data?.show_ongkir,
+          show_keterangan: newRecord.show_keterangan ?? data?.show_keterangan,
+        };
       } catch (err: any) {
         // Defensive fallback: if nama_pt or items column doesn't exist in Supabase table
         if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
           const stripped = this.stripMissingColumns(newRecord);
           const { data, error } = await supabase.from('perhitungan').insert(stripped).select().single();
           if (error) throw error;
-          return { ...data, nama_pt: newRecord.nama_pt, items: newRecord.items };
+          return { 
+            ...data, 
+            nama_pt: newRecord.nama_pt, 
+            items: newRecord.items,
+            ongkir: newRecord.ongkir,
+            ppn: newRecord.ppn,
+            is_ppn: newRecord.is_ppn,
+            show_diskon: newRecord.show_diskon,
+            show_ppn: newRecord.show_ppn,
+            show_ongkir: newRecord.show_ongkir,
+            show_keterangan: newRecord.show_keterangan,
+          };
         }
         throw err;
       }
@@ -313,6 +345,8 @@ export class PerhitunganRepository extends BaseRepository {
           show_diskon: r.show_diskon,
           show_ppn: r.show_ppn,
           show_ongkir: r.show_ongkir,
+          show_keterangan: r.show_keterangan,
+          keterangan: r.keterangan,
         });
       }
     });
@@ -331,6 +365,7 @@ export class PerhitunganRepository extends BaseRepository {
           show_diskon: prepared[idx]?.show_diskon ?? d.show_diskon,
           show_ppn: prepared[idx]?.show_ppn ?? d.show_ppn,
           show_ongkir: prepared[idx]?.show_ongkir ?? d.show_ongkir,
+          show_keterangan: prepared[idx]?.show_keterangan ?? d.show_keterangan,
         }));
       } catch (err: any) {
         if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
@@ -347,6 +382,7 @@ export class PerhitunganRepository extends BaseRepository {
             show_diskon: prepared[idx]?.show_diskon,
             show_ppn: prepared[idx]?.show_ppn,
             show_ongkir: prepared[idx]?.show_ongkir,
+            show_keterangan: prepared[idx]?.show_keterangan,
           }));
         }
         throw err;
@@ -377,6 +413,8 @@ export class PerhitunganRepository extends BaseRepository {
       show_diskon: updates.show_diskon,
       show_ppn: updates.show_ppn,
       show_ongkir: updates.show_ongkir,
+      show_keterangan: updates.show_keterangan,
+      keterangan: updates.keterangan,
     });
 
     if (isConfigured) {
@@ -392,6 +430,13 @@ export class PerhitunganRepository extends BaseRepository {
           ...data,
           nama_pt: updates.nama_pt !== undefined ? updates.nama_pt : data?.nama_pt,
           items: updates.items !== undefined ? updates.items : data?.items,
+          ongkir: updates.ongkir ?? data?.ongkir,
+          ppn: updates.ppn ?? data?.ppn,
+          is_ppn: updates.is_ppn ?? data?.is_ppn,
+          show_diskon: updates.show_diskon ?? data?.show_diskon,
+          show_ppn: updates.show_ppn ?? data?.show_ppn,
+          show_ongkir: updates.show_ongkir ?? data?.show_ongkir,
+          show_keterangan: updates.show_keterangan ?? data?.show_keterangan,
         };
       } catch (err: any) {
         if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
@@ -403,7 +448,18 @@ export class PerhitunganRepository extends BaseRepository {
             .select()
             .single();
           if (error) throw error;
-          return { ...data, nama_pt: updates.nama_pt, items: updates.items };
+          return { 
+            ...data, 
+            nama_pt: updates.nama_pt, 
+            items: updates.items,
+            ongkir: updates.ongkir,
+            ppn: updates.ppn,
+            is_ppn: updates.is_ppn,
+            show_diskon: updates.show_diskon,
+            show_ppn: updates.show_ppn,
+            show_ongkir: updates.show_ongkir,
+            show_keterangan: updates.show_keterangan,
+          };
         }
         throw err;
       }

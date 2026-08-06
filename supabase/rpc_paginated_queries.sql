@@ -1,7 +1,31 @@
 -- ====================================================================
--- ENTERPRISE SUPABASE RPC STORED PROCEDURES
+-- ENTERPRISE SUPABASE RPC STORED PROCEDURES & SCHEMA SYNC
 -- Optimized for 1M+ Records Server-Side Pagination, Filtering & Search
 -- ====================================================================
+
+-- 0. SCHEMA COLUMN MIGRATIONS (Ensure all required columns exist in Supabase tables)
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS nama_pt TEXT;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS items JSONB;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS ongkir NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS ppn NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS is_ppn BOOLEAN DEFAULT false;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS show_diskon BOOLEAN DEFAULT true;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS show_ppn BOOLEAN DEFAULT true;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS show_ongkir BOOLEAN DEFAULT true;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS show_keterangan BOOLEAN DEFAULT true;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS ref_id TEXT;
+ALTER TABLE public.perhitungan ADD COLUMN IF NOT EXISTS keterangan TEXT;
+
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS nama_pt TEXT;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS items JSONB;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS ongkir NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS ppn NUMERIC(15,2) DEFAULT 0;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS is_ppn BOOLEAN DEFAULT false;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS show_diskon BOOLEAN DEFAULT true;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS show_ppn BOOLEAN DEFAULT true;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS show_ongkir BOOLEAN DEFAULT true;
+ALTER TABLE public.sph ADD COLUMN IF NOT EXISTS show_keterangan BOOLEAN DEFAULT true;
+
 
 -- 1. SERVER-SIDE PAGINATED QUERY FOR 'PERHITUNGAN'
 CREATE OR REPLACE FUNCTION public.fn_query_perhitungan_paginated(
@@ -53,6 +77,15 @@ BEGIN
             p.total_harga_jual,
             p.harga_jual_net,
             p.diskon,
+            p.ongkir,
+            p.ppn,
+            p.is_ppn,
+            p.show_diskon,
+            p.show_ppn,
+            p.show_ongkir,
+            p.show_keterangan,
+            p.ref_id,
+            p.keterangan,
             p.items,
             p.created_at,
             p.updated_at,
@@ -175,7 +208,15 @@ BEGIN
             s.status_sph,
             s.keterangan,
             s.diskon,
+            s.ongkir,
+            s.ppn,
+            s.is_ppn,
+            s.show_diskon,
+            s.show_ppn,
+            s.show_ongkir,
+            s.show_keterangan,
             s.harga_jual_akhir,
+            s.items,
             s.created_at,
             s.updated_at,
             s.synced_at

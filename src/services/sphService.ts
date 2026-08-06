@@ -40,6 +40,7 @@ export class SPHService {
       show_diskon: input.show_diskon !== undefined ? input.show_diskon : true,
       show_ppn: input.show_ppn !== undefined ? input.show_ppn : true,
       show_ongkir: input.show_ongkir !== undefined ? input.show_ongkir : true,
+      show_keterangan: input.show_keterangan !== undefined ? input.show_keterangan : true,
       harga_jual_akhir: input.harga_jual_akhir,
       items: input.items,
     };
@@ -68,6 +69,7 @@ export class SPHService {
       ...(input.show_diskon !== undefined && { show_diskon: input.show_diskon }),
       ...(input.show_ppn !== undefined && { show_ppn: input.show_ppn }),
       ...(input.show_ongkir !== undefined && { show_ongkir: input.show_ongkir }),
+      ...(input.show_keterangan !== undefined && { show_keterangan: input.show_keterangan }),
       ...(input.harga_jual_akhir !== undefined && { harga_jual_akhir: input.harga_jual_akhir }),
       ...(input.items !== undefined && { items: input.items }),
     };
