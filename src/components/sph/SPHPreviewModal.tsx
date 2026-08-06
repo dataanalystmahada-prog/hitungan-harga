@@ -17,6 +17,7 @@ export interface SPHPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultData?: {
+    id?: string;
     no_sph?: string;
     tanggal?: string;
     produk?: string;
@@ -69,8 +70,9 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
 }) => {
   const { user, role } = useAuth();
   const { brands, users, keterangan } = useMasterData();
-  const { createSPH, isCreating, getNextSPHNumber } = useSPH({ page: 1, limit: 1 });
+  const { createSPH, updateSPH, isCreating, isUpdatingSPH, getNextSPHNumber } = useSPH({ page: 1, limit: 1 });
   const { success, error } = useToast();
+  const isEditMode = Boolean(defaultData?.id);
 
   const [selectedBrandName, setSelectedBrandName] = useState(
     defaultData?.brand || brands[0]?.nama_brand || 'HELLOSWAG'
@@ -107,12 +109,6 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   const [salesName, setSalesName] = useState(
     defaultData?.sales || (role === 'sales' && user?.nama ? user.nama : users[0]?.nama || 'Sales Admin')
   );
-
-  useEffect(() => {
-    if (user?.nama && role === 'sales') {
-      setSalesName(user.nama);
-    }
-  }, [user, role]);
 
   useEffect(() => {
     if (isOpen && defaultData) {
@@ -153,9 +149,11 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       }
       if (defaultData.sales) {
         setSalesName(defaultData.sales);
+      } else if (user?.nama && role === 'sales') {
+        setSalesName(user.nama);
       }
     }
-  }, [isOpen, defaultData]);
+  }, [isOpen, defaultData, user, role]);
 
   const activeBrand = brands.find(b => b.nama_brand === selectedBrandName) || brands[0];
 
@@ -179,12 +177,12 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     ? defaultData.items.map(it => {
         const unit = it.hargaJualUnit !== undefined && it.hargaJualUnit > 0
           ? it.hargaJualUnit
-          : (it.totalHargaJual && it.qty ? Math.round(it.totalHargaJual / it.qty) : 85000);
+          : (it.totalHargaJual && it.qty ? Math.round(it.totalHargaJual / it.qty) : 0);
         return {
-          produk: it.produk || 'Payung_Ready',
-          kode: it.kode,
-          deskripsi: it.deskripsi,
-          proses_logo: it.proses_logo,
+          produk: it.produk || 'Produk',
+          kode: it.kode || '',
+          deskripsi: it.deskripsi || '',
+          proses_logo: it.proses_logo || '',
           qty: it.qty || 1,
           hargaJualUnit: unit,
           totalHargaJual: unit * (it.qty || 1),
@@ -193,21 +191,21 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       })
     : [
         {
-          produk: defaultData?.produk || 'Payung_Ready',
-          kode: defaultData?.kode,
-          deskripsi: defaultData?.deskripsi,
-          proses_logo: defaultData?.proses_logo,
-          qty: defaultData?.qty || 100,
+          produk: defaultData?.produk || 'Produk',
+          kode: defaultData?.kode || '',
+          deskripsi: defaultData?.deskripsi || '',
+          proses_logo: defaultData?.proses_logo || '',
+          qty: defaultData?.qty || 1,
           hargaJualUnit: defaultData?.hargaJualUnit !== undefined
             ? defaultData.hargaJualUnit
             : (defaultData?.totalHargaJual !== undefined
                 ? Math.round(defaultData.totalHargaJual / (defaultData.qty || 1))
-                : 85000),
+                : 0),
           totalHargaJual: (defaultData?.hargaJualUnit !== undefined
             ? defaultData.hargaJualUnit
             : (defaultData?.totalHargaJual !== undefined
                 ? Math.round(defaultData.totalHargaJual / (defaultData.qty || 1))
-                : 85000)) * (defaultData?.qty || 100),
+                : 0)) * (defaultData?.qty || 1),
           diskon: defaultData?.diskon || 0,
         }
       ];
@@ -236,7 +234,39 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     .map(line => line.replace(/^(\d+[\.\)]|\-|\*)\s*/, ''));
 
   const handlePrint = async () => {
-    if (onSavePerhitunganBeforePrint) {
+    const summaryProduk = lineItems.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
+    const payload = {
+      tanggal: dateFormatted,
+      brand: selectedBrandName,
+      no_sph: noSPH,
+      nama_pt: (namaPt || '').trim(),
+      deskripsi: deskripsi,
+      produk: summaryProduk,
+      qty: totalQtyPcs,
+      harga_jual: Math.round(subtotalGross / (totalQtyPcs || 1)),
+      sales: salesName,
+      status_sph: 'Draft',
+      keterangan: keteranganManual,
+      diskon: diskonNominal,
+      ongkir: ongkirNominal,
+      is_ppn: isPpn,
+      ppn: ppnNominal,
+      show_diskon: showDiskon,
+      show_ppn: showPpn,
+      show_ongkir: showOngkir,
+      show_keterangan: showKeterangan,
+      harga_jual_akhir: grandTotal,
+      items: lineItems,
+    };
+
+    if (isEditMode && defaultData?.id) {
+      try {
+        await updateSPH({ id: defaultData.id, input: payload });
+        if (onSaveSuccess) onSaveSuccess();
+      } catch (err) {
+        console.error('Auto-update SPH on print error:', err);
+      }
+    } else if (onSavePerhitunganBeforePrint) {
       try {
         await onSavePerhitunganBeforePrint(
           deskripsi, 
@@ -256,6 +286,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         console.error('Auto-save calculation on print error:', err);
       }
     }
+
     const originalTitle = document.title;
     document.title = (noSPH || 'SPH-Draft').replace(/\//g, '-');
     window.print();
@@ -266,7 +297,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     try {
       const summaryProduk = lineItems.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
 
-      await createSPH({
+      const payload = {
         tanggal: dateFormatted,
         brand: selectedBrandName,
         no_sph: noSPH,
@@ -275,7 +306,6 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         produk: summaryProduk,
         qty: totalQtyPcs,
         harga_jual: Math.round(subtotalGross / (totalQtyPcs || 1)),
-        ref_id: `REF-${Date.now()}`,
         sales: salesName,
         status_sph: 'Draft',
         keterangan: keteranganManual,
@@ -289,18 +319,29 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         show_keterangan: showKeterangan,
         harga_jual_akhir: grandTotal,
         items: lineItems,
-      });
+      };
 
-      const targetIds = sourceCalculationIds || defaultData?.sourceCalculationIds;
-      if (targetIds && targetIds.length > 0) {
-        try {
-          await CalculationService.deleteBatchCalculations(targetIds);
-        } catch (delErr) {
-          console.warn('Gagal menghapus data perhitungan setelah simpan SPH:', delErr);
+      if (isEditMode && defaultData?.id) {
+        await updateSPH({ id: defaultData.id, input: payload });
+        success('SPH Diperbarui', `Dokumen penawaran ${noSPH} berhasil diperbarui.`);
+      } else {
+        await createSPH({
+          ...payload,
+          ref_id: `REF-${Date.now()}`,
+        });
+
+        const targetIds = sourceCalculationIds || defaultData?.sourceCalculationIds;
+        if (targetIds && targetIds.length > 0) {
+          try {
+            await CalculationService.deleteBatchCalculations(targetIds);
+          } catch (delErr) {
+            console.warn('Gagal menghapus data perhitungan setelah simpan SPH:', delErr);
+          }
         }
+
+        success('SPH Tersimpan', `Surat Penawaran ${noSPH} berhasil disimpan.`);
       }
 
-      success('SPH Tersimpan', `Surat Penawaran ${noSPH} berhasil disimpan.`);
       if (onSaveSuccess) onSaveSuccess();
       onClose();
     } catch (err: any) {
@@ -308,18 +349,22 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     }
   };
 
+  const isSavingSPH = isCreating || isUpdatingSPH;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Generator & Preview Surat Penawaran Harga (SPH)"
+      title={isEditMode ? 'Edit & Preview Surat Penawaran Harga (SPH)' : 'Generator & Preview Surat Penawaran Harga (SPH)'}
       maxWidth="4xl"
       footer={
         <div className="flex items-center justify-between w-full">
           <Button variant="outline" size="sm" onClick={handlePrint} leftIcon={<Printer className="w-3.5 h-3.5" />}>Cetak / Export PDF</Button>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>Batal</Button>
-            <Button variant="primary" size="sm" isLoading={isCreating} onClick={handleSaveToDatabase} leftIcon={<Save className="w-3.5 h-3.5" />}>Simpan SPH</Button>
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={isSavingSPH}>Batal</Button>
+            <Button variant="primary" size="sm" isLoading={isSavingSPH} onClick={handleSaveToDatabase} leftIcon={<Save className="w-3.5 h-3.5" />}>
+              {isEditMode ? 'Perbarui SPH' : 'Simpan SPH'}
+            </Button>
           </div>
         </div>
       }

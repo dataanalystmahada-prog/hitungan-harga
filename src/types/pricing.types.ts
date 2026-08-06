@@ -74,6 +74,7 @@ export interface SPHItemDetail {
 }
 
 export interface CreateSPHInput {
+  id?: string;
   tanggal: string;
   brand: string;
   no_sph?: string;

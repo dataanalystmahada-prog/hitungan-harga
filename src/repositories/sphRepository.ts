@@ -240,6 +240,89 @@ export class SPHRepository extends BaseRepository {
     return newRecord;
   }
 
+  public static async update(id: string, updates: Partial<SPH>): Promise<SPH> {
+    const updatedPayload: Partial<SPH> = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    saveLocalSphMetaCache(id, {
+      nama_pt: updates.nama_pt,
+      items: updates.items,
+      deskripsi: updates.deskripsi,
+      brand: updates.brand,
+      ongkir: updates.ongkir,
+      ppn: updates.ppn,
+      is_ppn: updates.is_ppn,
+      show_diskon: updates.show_diskon,
+      show_ppn: updates.show_ppn,
+      show_ongkir: updates.show_ongkir,
+    });
+
+    if (isConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('sph')
+          .update(updatedPayload)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return {
+          ...data,
+          nama_pt: updates.nama_pt || data?.nama_pt,
+          items: updates.items || data?.items,
+          ongkir: updates.ongkir ?? data?.ongkir,
+          ppn: updates.ppn ?? data?.ppn,
+          is_ppn: updates.is_ppn ?? data?.is_ppn,
+          show_diskon: updates.show_diskon ?? data?.show_diskon,
+          show_ppn: updates.show_ppn ?? data?.show_ppn,
+          show_ongkir: updates.show_ongkir ?? data?.show_ongkir,
+        };
+      } catch (err: any) {
+        if (err.message && (err.message.includes('items') || err.message.includes('column'))) {
+          const fallback = { ...updatedPayload };
+          delete fallback.items;
+          delete fallback.ongkir;
+          delete fallback.ppn;
+          delete fallback.is_ppn;
+          delete fallback.show_diskon;
+          delete fallback.show_ppn;
+          delete fallback.show_ongkir;
+          const { data, error } = await supabase
+            .from('sph')
+            .update(fallback)
+            .eq('id', id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return {
+            ...data,
+            nama_pt: updates.nama_pt,
+            items: updates.items,
+            ongkir: updates.ongkir,
+            ppn: updates.ppn,
+            is_ppn: updates.is_ppn,
+            show_diskon: updates.show_diskon,
+            show_ppn: updates.show_ppn,
+            show_ongkir: updates.show_ongkir,
+          };
+        }
+        throw err;
+      }
+    }
+
+    const mock = this.getMockData();
+    const idx = mock.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      mock[idx] = { ...mock[idx], ...updatedPayload } as SPH;
+      return mock[idx];
+    }
+    return updatedPayload as SPH;
+  }
+
   public static async updateStatus(id: string, status: SPHStatus): Promise<boolean> {
     if (isConfigured) {
       const { error } = await supabase.from('sph').update({ status_sph: status, updated_at: new Date().toISOString() }).eq('id', id);

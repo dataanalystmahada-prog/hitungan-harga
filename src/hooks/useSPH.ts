@@ -45,6 +45,15 @@ export function useSPH(params: QueryParams) {
     },
   });
 
+  const updateSPHMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<CreateSPHInput> }) =>
+      SPHService.updateSPH(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [SPH_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard_metrics'] });
+    },
+  });
+
   return {
     ...query,
     dataList: query.data?.data || [],
@@ -52,6 +61,8 @@ export function useSPH(params: QueryParams) {
     metrics: query.data?.metrics,
     createSPH: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    updateSPH: updateSPHMutation.mutateAsync,
+    isUpdatingSPH: updateSPHMutation.isPending,
     updateStatus: updateStatusMutation.mutateAsync,
     isUpdatingStatus: updateStatusMutation.isPending,
     deleteSPH: deleteMutation.mutateAsync,

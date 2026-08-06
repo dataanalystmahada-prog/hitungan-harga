@@ -280,9 +280,11 @@ export const SPHPage: React.FC = () => {
         <SPHPreviewModal
           isOpen={previewModal.isOpen}
           onClose={() => setPreviewModal({ isOpen: false })}
+          onSaveSuccess={() => refetch()}
           defaultData={
             previewModal.row
               ? {
+                  id: previewModal.row.id,
                   no_sph: previewModal.row.no_sph,
                   tanggal: previewModal.row.tanggal,
                   brand: previewModal.row.brand,

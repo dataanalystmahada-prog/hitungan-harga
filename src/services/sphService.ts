@@ -9,6 +9,10 @@ export class SPHService {
   }
 
   public static async createSPH(input: CreateSPHInput): Promise<SPH> {
+    if (input.id) {
+      return this.updateSPH(input.id, input);
+    }
+
     const now = new Date();
     const dateFormatted = input.tanggal || `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
     const generatedId = `SPH-${Date.now()}`;
@@ -27,7 +31,7 @@ export class SPHService {
       harga_jual: input.harga_jual,
       ref_id: input.ref_id || '',
       sales: input.sales,
-      status_sph: input.status_sph || 'Draft',
+      status_sph: (input.status_sph as SPHStatus) || 'Draft',
       keterangan: input.keterangan || '',
       diskon: input.diskon || 0,
       ongkir: input.ongkir || 0,
@@ -41,6 +45,34 @@ export class SPHService {
     };
 
     return SPHRepository.create(payload);
+  }
+
+  public static async updateSPH(id: string, input: Partial<CreateSPHInput>): Promise<SPH> {
+    const payload: Partial<SPH> = {
+      ...(input.tanggal && { tanggal: input.tanggal }),
+      ...(input.brand && { brand: input.brand }),
+      ...(input.no_sph && { no_sph: input.no_sph }),
+      ...(input.nama_pt !== undefined && { nama_pt: input.nama_pt }),
+      ...(input.deskripsi !== undefined && { deskripsi: input.deskripsi }),
+      ...(input.produk && { produk: input.produk }),
+      ...(input.qty !== undefined && { qty: input.qty }),
+      ...(input.harga_jual !== undefined && { harga_jual: input.harga_jual }),
+      ...(input.ref_id !== undefined && { ref_id: input.ref_id }),
+      ...(input.sales && { sales: input.sales }),
+      ...(input.status_sph && { status_sph: input.status_sph as SPHStatus }),
+      ...(input.keterangan !== undefined && { keterangan: input.keterangan }),
+      ...(input.diskon !== undefined && { diskon: input.diskon }),
+      ...(input.ongkir !== undefined && { ongkir: input.ongkir }),
+      ...(input.ppn !== undefined && { ppn: input.ppn }),
+      ...(input.is_ppn !== undefined && { is_ppn: input.is_ppn }),
+      ...(input.show_diskon !== undefined && { show_diskon: input.show_diskon }),
+      ...(input.show_ppn !== undefined && { show_ppn: input.show_ppn }),
+      ...(input.show_ongkir !== undefined && { show_ongkir: input.show_ongkir }),
+      ...(input.harga_jual_akhir !== undefined && { harga_jual_akhir: input.harga_jual_akhir }),
+      ...(input.items !== undefined && { items: input.items }),
+    };
+
+    return SPHRepository.update(id, payload);
   }
 
   public static async updateStatus(id: string, status: SPHStatus): Promise<boolean> {
