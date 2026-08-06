@@ -30,7 +30,14 @@ export class SPHService {
       status_sph: input.status_sph || 'Draft',
       keterangan: input.keterangan || '',
       diskon: input.diskon || 0,
+      ongkir: input.ongkir || 0,
+      ppn: input.ppn || 0,
+      is_ppn: input.is_ppn || false,
+      show_diskon: input.show_diskon !== undefined ? input.show_diskon : true,
+      show_ppn: input.show_ppn !== undefined ? input.show_ppn : true,
+      show_ongkir: input.show_ongkir !== undefined ? input.show_ongkir : true,
       harga_jual_akhir: input.harga_jual_akhir,
+      items: input.items,
     };
 
     return SPHRepository.create(payload);

@@ -68,6 +68,13 @@ export interface Perhitungan {
   total_harga_jual: number;
   harga_jual_net: number;
   diskon: number;
+  ongkir?: number;
+  ppn?: number;
+  is_ppn?: boolean;
+  show_diskon?: boolean;
+  show_ppn?: boolean;
+  show_ongkir?: boolean;
+  show_keterangan?: boolean;
   ref_id?: string;
   items?: any[];
   created_at?: string;
@@ -92,6 +99,13 @@ export interface SPH {
   status_sph: SPHStatus | string;
   keterangan?: string;
   diskon: number;
+  ongkir?: number;
+  ppn?: number;
+  is_ppn?: boolean;
+  show_diskon?: boolean;
+  show_ppn?: boolean;
+  show_ongkir?: boolean;
+  show_keterangan?: boolean;
   harga_jual_akhir: number;
   items?: any[];
   created_at?: string;

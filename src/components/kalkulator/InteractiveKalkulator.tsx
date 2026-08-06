@@ -91,7 +91,20 @@ export const InteractiveKalkulator: React.FC = () => {
   };
 
   // Actual save logic (Single Unified Record for 1 or More Products)
-  const executeSaveAll = async (globalDiskon: number, deskripsi: string, modalNamaPt?: string) => {
+  const executeSaveAll = async (
+    globalDiskon: number = orderSummary.totalDiskonNominal, 
+    projectDeskripsi?: string, 
+    modalNamaPt?: string,
+    modalOngkir: number = 0,
+    modalIsPpn: boolean = false,
+    modalPpn: number = 0,
+    modalShowDiskon: boolean = true,
+    modalShowPpn: boolean = true,
+    modalShowOngkir: boolean = true,
+    grandTotalOverride?: number,
+    modalKeterangan?: string,
+    modalShowKeterangan?: boolean
+  ) => {
     try {
       const finalNamaPt = (modalNamaPt !== undefined ? modalNamaPt : (namaPt || '')).trim();
       if (modalNamaPt !== undefined && modalNamaPt !== namaPt) {
@@ -113,6 +126,12 @@ export const InteractiveKalkulator: React.FC = () => {
       const summaryKode = items.map(it => it.kode).filter(Boolean).join(', ') || '-';
       const summaryLogo = items.map(it => it.proses_logo).filter(Boolean).join(', ') || '-';
 
+      const subtotalAfterDiskon = Math.max(0, totalGross - globalDiskon);
+      const calculatedPpn = modalIsPpn ? Math.round(subtotalAfterDiskon * 0.11) : 0;
+      const calculatedGrandTotal = grandTotalOverride !== undefined 
+        ? grandTotalOverride 
+        : (subtotalAfterDiskon + calculatedPpn + modalOngkir);
+
       const payload = {
         id: `CALC-${Date.now()}`,
         tanggal: dateFormatted,
@@ -127,8 +146,16 @@ export const InteractiveKalkulator: React.FC = () => {
         margin: orderSummary.avgMarginPersen,
         harga_jual: Math.round(totalGross / totalPcs),
         total_harga_jual: totalGross,
-        harga_jual_net: Math.max(0, totalGross - globalDiskon),
+        harga_jual_net: calculatedGrandTotal,
         diskon: globalDiskon,
+        ongkir: modalOngkir,
+        ppn: calculatedPpn,
+        is_ppn: modalIsPpn,
+        show_diskon: modalShowDiskon,
+        show_ppn: modalShowPpn,
+        show_ongkir: modalShowOngkir,
+        show_keterangan: modalShowKeterangan,
+        keterangan: modalKeterangan,
         items: sphLineItems,
       };
 
@@ -375,14 +402,14 @@ export const InteractiveKalkulator: React.FC = () => {
                             {formatRupiah(calc.modalLogoUnit)}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 block">Margin Target:</span>
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">
-                            {calc.marginPersen}%
-                          </span>
-                        </div>
                       </>
                     )}
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Margin Target:</span>
+                      <span className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">
+                        {calc.marginPersen}%
+                      </span>
+                    </div>
                     <div>
                       <span className="text-[10px] text-slate-400 block">Harga Jual / Pcs:</span>
                       <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
@@ -423,22 +450,20 @@ export const InteractiveKalkulator: React.FC = () => {
             </div>
 
             {role !== 'sales' && (
-              <>
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
-                  <span className="text-xs font-semibold text-slate-300 font-mono">
-                    {formatRupiah(orderSummary.totalModal)}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
-                  <span className="text-xs font-bold text-indigo-300">
-                    {orderSummary.avgMarginPersen}%
-                  </span>
-                </div>
-              </>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Modal:</span>
+                <span className="text-xs font-semibold text-slate-300 font-mono">
+                  {formatRupiah(orderSummary.totalModal)}
+                </span>
+              </div>
             )}
+
+            <div>
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Avg Margin:</span>
+              <span className="text-xs font-bold text-indigo-300">
+                {orderSummary.avgMarginPersen}%
+              </span>
+            </div>
 
             {role !== 'sales' && (
               <div>
@@ -615,8 +640,34 @@ export const InteractiveKalkulator: React.FC = () => {
             diskon: orderSummary.totalDiskonNominal,
             items: sphLineItems,
           }}
-          onSavePerhitunganBeforePrint={async (modalDeskripsi, modalDiskon, modalNamaPt) => {
-            await executeSaveAll(modalDiskon !== undefined ? modalDiskon : orderSummary.totalDiskonNominal, modalDeskripsi, modalNamaPt);
+          onSavePerhitunganBeforePrint={async (
+            modalDeskripsi, 
+            modalDiskon, 
+            modalNamaPt, 
+            modalOngkir, 
+            modalIsPpn, 
+            modalPpn, 
+            modalShowDiskon, 
+            modalShowPpn, 
+            modalShowOngkir,
+            grandTotal,
+            modalKeterangan,
+            modalShowKeterangan
+          ) => {
+            await executeSaveAll(
+              modalDiskon !== undefined ? modalDiskon : orderSummary.totalDiskonNominal, 
+              modalDeskripsi, 
+              modalNamaPt,
+              modalOngkir,
+              modalIsPpn,
+              modalPpn,
+              modalShowDiskon,
+              modalShowPpn,
+              modalShowOngkir,
+              grandTotal,
+              modalKeterangan,
+              modalShowKeterangan
+            );
           }}
         />
       )}

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -61,8 +62,8 @@ export const Modal: React.FC<ModalProps> = ({
     '4xl': 'max-w-4xl',
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto print:static print:p-0 print:overflow-visible print:block">
+  const modalContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto print:static print:p-0 print:overflow-visible print:block printable-modal-wrapper">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200 print:hidden"
@@ -103,4 +104,6 @@ export const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

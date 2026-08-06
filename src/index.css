@@ -35,7 +35,12 @@
     print-color-adjust: exact !important;
   }
 
-  /* Completely remove interactive app chrome, navigation, headers, sidebars and hidden elements */
+  /* 1. HIDE ENTIRE ROOT APP (Background pages, sidebars, navbar, calculators, items, buttons) */
+  #root {
+    display: none !important;
+  }
+
+  /* 2. HIDE ALL INTERACTIVE CHROME, BUTTONS, INPUTS, BACKDROPS, AND MARKED ELEMENTS */
   nav,
   header,
   aside,
@@ -44,22 +49,15 @@
   input,
   select,
   textarea,
-  .print\\:hidden,
+  .print\:hidden,
   .print-hidden,
   [data-print-hidden="true"],
   [class*="backdrop"] {
     display: none !important;
   }
 
-  /* Reset all modal containers and parent wrappers so they don't introduce offset or flex alignment */
-  #root,
-  #root > div,
-  main,
-  main > div,
-  .fixed,
-  [class*="fixed"],
-  [class*="overflow-"],
-  [class*="max-h-"] {
+  /* 3. RESET MODAL CONTAINER (Rendered via React Portal directly into body) */
+  .printable-modal-wrapper {
     position: static !important;
     display: block !important;
     margin: 0 !important;
@@ -77,21 +75,12 @@
     background: transparent !important;
   }
 
-  /* Hide everything on page by default */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Show only printable document and its descendants positioned at the very top (0,0) of the A4 print area */
+  /* 4. PRINTABLE SPH DOCUMENT FORMATTING */
   .printable-doc,
-  .printable-doc * {
+  .sph-document {
+    display: block !important;
     visibility: visible !important;
-  }
-
-  .printable-doc {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
+    position: static !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
@@ -104,22 +93,31 @@
     overflow: visible !important;
   }
 
+  .printable-doc *,
+  .sph-document * {
+    visibility: visible !important;
+  }
+
   /* Multi-page table and section break controls */
-  .printable-doc table {
+  .printable-doc table,
+  .sph-document table {
     width: 100% !important;
     border-collapse: collapse !important;
     page-break-inside: auto;
   }
 
-  .printable-doc thead {
+  .printable-doc thead,
+  .sph-document thead {
     display: table-header-group;
   }
 
-  .printable-doc tfoot {
+  .printable-doc tfoot,
+  .sph-document tfoot {
     display: table-footer-group;
   }
 
-  .printable-doc tr {
+  .printable-doc tr,
+  .sph-document tr {
     page-break-inside: avoid;
     break-inside: avoid;
   }

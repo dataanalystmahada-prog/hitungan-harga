@@ -289,6 +289,13 @@ export const SPHPage: React.FC = () => {
                   totalHargaJual: previewModal.row.harga_jual_akhir,
                   sales: previewModal.row.sales,
                   diskon: previewModal.row.diskon,
+                  ongkir: previewModal.row.ongkir,
+                  is_ppn: previewModal.row.is_ppn !== undefined ? previewModal.row.is_ppn : ((previewModal.row.ppn !== undefined && previewModal.row.ppn > 0) || false),
+                  ppn: previewModal.row.ppn,
+                  show_diskon: previewModal.row.show_diskon !== undefined ? previewModal.row.show_diskon : true,
+                  show_ppn: previewModal.row.show_ppn !== undefined ? previewModal.row.show_ppn : true,
+                  show_ongkir: previewModal.row.show_ongkir !== undefined ? previewModal.row.show_ongkir : true,
+                  show_keterangan: previewModal.row.show_keterangan !== undefined ? previewModal.row.show_keterangan : true,
                   items: previewModal.row.items,
                 }
               : undefined

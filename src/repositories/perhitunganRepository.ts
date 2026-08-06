@@ -159,6 +159,12 @@ export class PerhitunganRepository extends BaseRepository {
         ...row,
         nama_pt: (row.nama_pt || cached?.nama_pt || '').trim(),
         items: row.items || cached?.items,
+        ongkir: row.ongkir !== undefined ? row.ongkir : cached?.ongkir,
+        ppn: row.ppn !== undefined ? row.ppn : cached?.ppn,
+        is_ppn: row.is_ppn !== undefined ? row.is_ppn : cached?.is_ppn,
+        show_diskon: row.show_diskon !== undefined ? row.show_diskon : cached?.show_diskon,
+        show_ppn: row.show_ppn !== undefined ? row.show_ppn : cached?.show_ppn,
+        show_ongkir: row.show_ongkir !== undefined ? row.show_ongkir : cached?.show_ongkir,
       };
     });
 
@@ -197,6 +203,12 @@ export class PerhitunganRepository extends BaseRepository {
       'total_harga_jual',
       'harga_jual_net',
       'diskon',
+      'ongkir',
+      'ppn',
+      'is_ppn',
+      'show_diskon',
+      'show_ppn',
+      'show_ongkir',
       'ref_id',
       'items',
       'created_at',
@@ -221,6 +233,12 @@ export class PerhitunganRepository extends BaseRepository {
     delete fallback.nama_pt;
     delete fallback.items;
     delete fallback.ref_id;
+    delete fallback.ongkir;
+    delete fallback.ppn;
+    delete fallback.is_ppn;
+    delete fallback.show_diskon;
+    delete fallback.show_ppn;
+    delete fallback.show_ongkir;
     return fallback;
   }
 
@@ -235,11 +253,17 @@ export class PerhitunganRepository extends BaseRepository {
       synced_at: new Date().toISOString(),
     };
 
-    if (newRecord.id && (newRecord.nama_pt || newRecord.items)) {
+    if (newRecord.id) {
       saveLocalMetaCache(newRecord.id, {
         nama_pt: newRecord.nama_pt,
         items: newRecord.items,
         ref_id: newRecord.ref_id,
+        ongkir: newRecord.ongkir,
+        ppn: newRecord.ppn,
+        is_ppn: newRecord.is_ppn,
+        show_diskon: newRecord.show_diskon,
+        show_ppn: newRecord.show_ppn,
+        show_ongkir: newRecord.show_ongkir,
       });
     }
 
@@ -278,11 +302,17 @@ export class PerhitunganRepository extends BaseRepository {
     }));
 
     prepared.forEach(r => {
-      if (r.id && (r.nama_pt || r.items)) {
+      if (r.id) {
         saveLocalMetaCache(r.id, {
           nama_pt: r.nama_pt,
           items: r.items,
           ref_id: r.ref_id,
+          ongkir: r.ongkir,
+          ppn: r.ppn,
+          is_ppn: r.is_ppn,
+          show_diskon: r.show_diskon,
+          show_ppn: r.show_ppn,
+          show_ongkir: r.show_ongkir,
         });
       }
     });
@@ -295,6 +325,12 @@ export class PerhitunganRepository extends BaseRepository {
           ...d,
           nama_pt: prepared[idx]?.nama_pt || d.nama_pt,
           items: prepared[idx]?.items || d.items,
+          ongkir: prepared[idx]?.ongkir ?? d.ongkir,
+          ppn: prepared[idx]?.ppn ?? d.ppn,
+          is_ppn: prepared[idx]?.is_ppn ?? d.is_ppn,
+          show_diskon: prepared[idx]?.show_diskon ?? d.show_diskon,
+          show_ppn: prepared[idx]?.show_ppn ?? d.show_ppn,
+          show_ongkir: prepared[idx]?.show_ongkir ?? d.show_ongkir,
         }));
       } catch (err: any) {
         if (err.message && (err.message.includes('nama_pt') || err.message.includes('items') || err.message.includes('column'))) {
@@ -305,6 +341,12 @@ export class PerhitunganRepository extends BaseRepository {
             ...d,
             nama_pt: prepared[idx]?.nama_pt,
             items: prepared[idx]?.items,
+            ongkir: prepared[idx]?.ongkir,
+            ppn: prepared[idx]?.ppn,
+            is_ppn: prepared[idx]?.is_ppn,
+            show_diskon: prepared[idx]?.show_diskon,
+            show_ppn: prepared[idx]?.show_ppn,
+            show_ongkir: prepared[idx]?.show_ongkir,
           }));
         }
         throw err;
@@ -326,12 +368,16 @@ export class PerhitunganRepository extends BaseRepository {
       updated_at: new Date().toISOString(),
     };
 
-    if (updates.nama_pt !== undefined || updates.items !== undefined) {
-      saveLocalMetaCache(id, {
-        nama_pt: updates.nama_pt,
-        items: updates.items,
-      });
-    }
+    saveLocalMetaCache(id, {
+      nama_pt: updates.nama_pt,
+      items: updates.items,
+      ongkir: updates.ongkir,
+      ppn: updates.ppn,
+      is_ppn: updates.is_ppn,
+      show_diskon: updates.show_diskon,
+      show_ppn: updates.show_ppn,
+      show_ongkir: updates.show_ongkir,
+    });
 
     if (isConfigured) {
       try {

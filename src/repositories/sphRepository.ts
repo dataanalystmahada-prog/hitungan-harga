@@ -149,6 +149,12 @@ export class SPHRepository extends BaseRepository {
         ...row,
         nama_pt: (row.nama_pt || cached?.nama_pt || '').trim(),
         items: row.items || cached?.items,
+        ongkir: row.ongkir !== undefined ? row.ongkir : cached?.ongkir,
+        ppn: row.ppn !== undefined ? row.ppn : cached?.ppn,
+        is_ppn: row.is_ppn !== undefined ? row.is_ppn : cached?.is_ppn,
+        show_diskon: row.show_diskon !== undefined ? row.show_diskon : cached?.show_diskon,
+        show_ppn: row.show_ppn !== undefined ? row.show_ppn : cached?.show_ppn,
+        show_ongkir: row.show_ongkir !== undefined ? row.show_ongkir : cached?.show_ongkir,
       };
     });
 
@@ -171,12 +177,18 @@ export class SPHRepository extends BaseRepository {
       synced_at: new Date().toISOString(),
     };
 
-    if (newRecord.id && (newRecord.nama_pt || newRecord.items)) {
+    if (newRecord.id) {
       saveLocalSphMetaCache(newRecord.id, {
         nama_pt: newRecord.nama_pt,
         items: newRecord.items,
         deskripsi: newRecord.deskripsi,
         brand: newRecord.brand,
+        ongkir: newRecord.ongkir,
+        ppn: newRecord.ppn,
+        is_ppn: newRecord.is_ppn,
+        show_diskon: newRecord.show_diskon,
+        show_ppn: newRecord.show_ppn,
+        show_ongkir: newRecord.show_ongkir,
       });
     }
 
@@ -184,14 +196,40 @@ export class SPHRepository extends BaseRepository {
       try {
         const { data, error } = await supabase.from('sph').insert(newRecord).select().single();
         if (error) throw error;
-        return { ...data, nama_pt: newRecord.nama_pt || data?.nama_pt, items: newRecord.items || data?.items };
+        return { 
+          ...data, 
+          nama_pt: newRecord.nama_pt || data?.nama_pt, 
+          items: newRecord.items || data?.items,
+          ongkir: newRecord.ongkir ?? data?.ongkir,
+          ppn: newRecord.ppn ?? data?.ppn,
+          is_ppn: newRecord.is_ppn ?? data?.is_ppn,
+          show_diskon: newRecord.show_diskon ?? data?.show_diskon,
+          show_ppn: newRecord.show_ppn ?? data?.show_ppn,
+          show_ongkir: newRecord.show_ongkir ?? data?.show_ongkir,
+        };
       } catch (err: any) {
         if (err.message && (err.message.includes('items') || err.message.includes('column'))) {
           const fallback = { ...newRecord };
           delete fallback.items;
+          delete fallback.ongkir;
+          delete fallback.ppn;
+          delete fallback.is_ppn;
+          delete fallback.show_diskon;
+          delete fallback.show_ppn;
+          delete fallback.show_ongkir;
           const { data, error } = await supabase.from('sph').insert(fallback).select().single();
           if (error) throw error;
-          return { ...data, nama_pt: newRecord.nama_pt, items: newRecord.items };
+          return { 
+            ...data, 
+            nama_pt: newRecord.nama_pt, 
+            items: newRecord.items,
+            ongkir: newRecord.ongkir,
+            ppn: newRecord.ppn,
+            is_ppn: newRecord.is_ppn,
+            show_diskon: newRecord.show_diskon,
+            show_ppn: newRecord.show_ppn,
+            show_ongkir: newRecord.show_ongkir,
+          };
         }
         throw err;
       }

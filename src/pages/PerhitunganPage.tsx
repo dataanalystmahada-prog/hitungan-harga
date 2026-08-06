@@ -202,6 +202,15 @@ export const PerhitunganPage: React.FC = () => {
 
     const sphLineItems: SPHItemDetail[] = selectedRows.flatMap(row => parsePerhitunganItems(row));
     const totalDiskon = selectedRows.reduce((acc, row) => acc + (row.diskon || 0), 0);
+    const totalOngkir = selectedRows.reduce((acc, row) => acc + (row.ongkir || 0), 0);
+    const hasPpn = selectedRows.some(row => row.is_ppn === true || (row.ppn !== undefined && row.ppn > 0));
+    const totalPpn = selectedRows.reduce((acc, row) => acc + (row.ppn || 0), 0);
+    const showDiskon = selectedRows.some(row => row.show_diskon !== false);
+    const showPpn = selectedRows.some(row => row.show_ppn !== false);
+    const showOngkir = selectedRows.some(row => row.show_ongkir !== false);
+    const showKeterangan = selectedRows.some(row => row.show_keterangan !== false);
+    const commonKeterangan = selectedRows.find(r => (r as any).keterangan)?.keterangan || '';
+
     const commonSales = selectedRows[0]?.sales || '';
     const commonNamaPt = selectedRows.find(r => r.nama_pt)?.nama_pt || '';
     const selectedIdsArray = Array.from(selectedIds);
@@ -213,6 +222,14 @@ export const PerhitunganPage: React.FC = () => {
         sales: commonSales,
         namaPt: commonNamaPt,
         diskon: totalDiskon,
+        ongkir: totalOngkir,
+        is_ppn: hasPpn,
+        ppn: totalPpn,
+        show_diskon: showDiskon,
+        show_ppn: showPpn,
+        show_ongkir: showOngkir,
+        show_keterangan: showKeterangan,
+        keterangan: commonKeterangan,
         items: sphLineItems,
         sourceCalculationIds: selectedIdsArray,
       },
@@ -232,6 +249,14 @@ export const PerhitunganPage: React.FC = () => {
         sales: row.sales || '',
         namaPt: row.nama_pt || '',
         diskon: row.diskon || 0,
+        ongkir: row.ongkir || 0,
+        is_ppn: row.is_ppn !== undefined ? row.is_ppn : ((row.ppn !== undefined && row.ppn > 0) || false),
+        ppn: row.ppn || 0,
+        show_diskon: row.show_diskon !== undefined ? row.show_diskon : true,
+        show_ppn: row.show_ppn !== undefined ? row.show_ppn : true,
+        show_ongkir: row.show_ongkir !== undefined ? row.show_ongkir : true,
+        show_keterangan: row.show_keterangan !== undefined ? row.show_keterangan : true,
+        keterangan: (row as any).keterangan || '',
         items: sphLineItems,
         produk: row.produk,
         qty: row.qty,
@@ -359,11 +384,14 @@ export const PerhitunganPage: React.FC = () => {
     {
       key: 'proses_logo',
       title: 'Proses Logo',
-      width: 220,
-      minWidth: 190,
+      width: 150,
+      minWidth: 120,
       render: (row: Perhitungan) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 shadow-xs">
-          {row.proses_logo || '-'}
+        <span 
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 shadow-xs max-w-[135px] truncate"
+          title={row.proses_logo || '-'}
+        >
+          <span className="truncate">{row.proses_logo || '-'}</span>
         </span>
       ),
     },

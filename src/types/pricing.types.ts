@@ -87,6 +87,13 @@ export interface CreateSPHInput {
   status_sph: string;
   keterangan: string;
   diskon: number;
+  ongkir?: number;
+  ppn?: number;
+  is_ppn?: boolean;
+  show_diskon?: boolean;
+  show_ppn?: boolean;
+  show_ongkir?: boolean;
+  show_keterangan?: boolean;
   harga_jual_akhir: number;
   items?: SPHItemDetail[];
 }
