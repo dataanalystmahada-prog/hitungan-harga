@@ -7,7 +7,8 @@ import { TableColumn, FilterConfig } from '../types/table.types';
 import { SPH, SPHStatus, Brand, UserSales } from '../types/database.types';
 import { formatRupiah, formatNumber } from '../utils/formatters';
 import { Button } from '../components/common/Button';
-import { Plus, Printer, Trash2, Building2 } from 'lucide-react';
+import { Plus, Printer, Trash2, Building2, FileText, DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { Card } from '../components/common/Card';
 import { SPHPreviewModal } from '../components/sph/SPHPreviewModal';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -231,6 +232,17 @@ export const SPHPage: React.FC = () => {
     },
   ], [role]);
 
+  const statTotalSPHAktif = dataList.filter(item => item.status_sph !== 'Ditolak' && item.status_sph !== 'Draft').length;
+  const statOmsetAktif = dataList
+    .filter(item => item.status_sph !== 'Deal' && item.status_sph !== 'Ditolak' && item.status_sph !== 'Draft')
+    .reduce((acc, item) => acc + (item.harga_jual_akhir || 0), 0);
+  const statOmsetDeal = dataList
+    .filter(item => item.status_sph === 'Deal')
+    .reduce((acc, item) => acc + (item.harga_jual_akhir || 0), 0);
+  const statOmsetCancel = dataList
+    .filter(item => item.status_sph === 'Ditolak')
+    .reduce((acc, item) => acc + (item.harga_jual_akhir || 0), 0);
+
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
@@ -242,7 +254,57 @@ export const SPHPage: React.FC = () => {
             Kelola dokumen penawaran harga resmi perusahaan yang terhubung langsung ke database Supabase.
           </p>
         </div>
+      </div>
 
+      {/* KPI Metric Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <FileText className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-slate-400">Total SPH Aktif</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-slate-900 dark:text-slate-100">
+              {formatNumber(statTotalSPHAktif)}
+            </p>
+          </div>
+        </Card>
+        
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+            <DollarSign className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-slate-400">Total Omset Aktif</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              {formatRupiah(statOmsetAktif)}
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+            <CheckCircle className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-slate-400">Total Omset Deal</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-indigo-600 dark:text-indigo-400">
+              {formatRupiah(statOmsetDeal)}
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-2.5 sm:p-3 flex items-center gap-2.5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
+          <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+            <XCircle className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-slate-400">Total Omset Cancel</p>
+            <p className="text-sm sm:text-base font-bold font-mono text-rose-600 dark:text-rose-400">
+              {formatRupiah(statOmsetCancel)}
+            </p>
+          </div>
+        </Card>
       </div>
 
       <EnterpriseDataTable
