@@ -243,14 +243,6 @@ export const SPHPage: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => setPreviewModal({ isOpen: true })}
-          leftIcon={<Plus className="w-3.5 h-3.5" />}
-        >
-          Buat SPH Baru
-        </Button>
       </div>
 
       <EnterpriseDataTable
