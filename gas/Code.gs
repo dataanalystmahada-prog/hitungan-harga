@@ -220,14 +220,22 @@ function syncSingleSheet(target, syncType = 'MANUAL') {
       } else if (typeof val === 'string') {
         val = val.trim();
         // Cek format angka/currency (contoh: "Rp 35.000", "45%", atau "35000")
-        if (isNumericField(key) && val !== '') {
-          const cleanNum = val.replace(/[^0-9.-]+/g, '');
-          record[key] = cleanNum ? parseFloat(cleanNum) : 0;
+        if (isNumericField(key)) {
+          if (val !== '') {
+            const cleanNum = val.replace(/[^0-9.-]+/g, '');
+            record[key] = cleanNum ? parseFloat(cleanNum) : 0;
+          } else {
+            record[key] = 0;
+          }
         } else {
           record[key] = val;
         }
       } else {
-        record[key] = val !== undefined && val !== null ? String(val) : '';
+        if (isNumericField(key)) {
+          record[key] = 0;
+        } else {
+          record[key] = val !== undefined && val !== null ? String(val) : '';
+        }
       }
     }
     
