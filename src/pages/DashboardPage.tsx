@@ -16,6 +16,7 @@ import {
   Sparkles,
   Zap,
   Clock,
+  Banknote,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMasterData } from '../hooks/useMasterData';
@@ -98,13 +99,21 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-3.5">
         <StatsCard
           title="Total Nilai Kalkulasi"
           value={formatRupiah(metrics?.totalPerhitunganRevenue ?? 0)}
           icon={<DollarSign className="w-5 h-5" />}
           subtitle={salesFilter ? `Filter: ${salesFilter}` : 'Akumulasi seluruh hitungan'}
           iconBgColor="bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+        />
+
+        <StatsCard
+          title="Total Nilai Omset SPH"
+          value={formatRupiah(metrics?.totalSPHValue ?? 0)}
+          icon={<Banknote className="w-5 h-5" />}
+          subtitle="Dari SPH yang diterbitkan"
+          iconBgColor="bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400"
         />
 
         <StatsCard
