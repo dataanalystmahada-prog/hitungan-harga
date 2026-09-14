@@ -24,8 +24,20 @@ export class SyncService {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        const json = await res.json();
+        
+        let json: any = {};
+        try {
+          json = await res.json();
+        } catch (e) {
+          // fallback if not json
+        }
+        
         const duration = Math.round(performance.now() - startTs);
+
+        if (!res.ok || json.status === 'error' || json.error) {
+          const errorMessage = json.message || json.error || res.statusText || 'Gagal terhubung ke webhook sinkronisasi.';
+          throw new Error(errorMessage);
+        }
 
         const log = await SyncLogRepository.logSync({
           sheet_name: payload.sheetName || 'ALL_SHEETS',

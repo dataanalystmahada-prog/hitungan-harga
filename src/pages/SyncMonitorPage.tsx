@@ -34,17 +34,19 @@ export const SyncMonitorPage: React.FC = () => {
 
   const handleRunSync = async () => {
     try {
+      const targetName = selectedSheet === 'ALL_SHEETS' ? 'Semua Sheet' : selectedSheet;
       const res = await triggerSync({
         sheetName: selectedSheet === 'ALL_SHEETS' ? undefined : selectedSheet,
         syncType: 'MANUAL',
       });
       if (res.success) {
-        success('Sinkronisasi Sukses', res.message);
+        success(`Sinkronisasi Sukses (${targetName})`, res.message);
       } else {
-        error('Sinkronisasi Gagal', res.message);
+        error(`Sinkronisasi Gagal di Tab: ${targetName}`, `Penyebab Error: ${res.message || 'Terjadi kesalahan tidak diketahui.'}`);
       }
     } catch (err: any) {
-      error('Sinkronisasi Error', err.message);
+      const targetName = selectedSheet === 'ALL_SHEETS' ? 'Semua Sheet' : selectedSheet;
+      error(`Sinkronisasi Gagal di Tab: ${targetName}`, `Penyebab Error Sistem: ${err.message || 'Terjadi kesalahan sistem.'}`);
     }
   };
 
@@ -88,6 +90,14 @@ export const SyncMonitorPage: React.FC = () => {
             </div>
             <h4 className="text-xs font-bold text-white">Google Spreadsheet</h4>
             <p className="text-[11px] text-slate-400">Admin mengelola master harga, produk, & template</p>
+            <a 
+              href={import.meta.env.VITE_GOOGLE_SPREADSHEET_URL || '#'} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xs text-blue-400 hover:text-blue-300 hover:underline mt-1 font-semibold flex items-center gap-1"
+            >
+              Buka Spreadsheet <Globe className="w-3 h-3" />
+            </a>
           </div>
 
           {/* Step 2 */}
