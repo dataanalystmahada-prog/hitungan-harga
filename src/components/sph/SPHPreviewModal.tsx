@@ -329,10 +329,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         await updateSPH({ id: defaultData.id, input: payload });
         success('SPH Diperbarui', `Dokumen penawaran ${noSPH} berhasil diperbarui.`);
       } else {
-        await createSPH({
-          ...payload,
-          ref_id: `REF-${Date.now()}`,
-        });
+        await createSPH(payload);
 
         const targetIds = sourceCalculationIds || defaultData?.sourceCalculationIds;
         if (targetIds && targetIds.length > 0) {

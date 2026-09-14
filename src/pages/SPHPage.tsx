@@ -38,7 +38,7 @@ export const SPHPage: React.FC = () => {
     initialFilters: role === 'sales' && user?.nama ? { sales: user.nama } : {},
   });
 
-  const { dataList, pagination, isLoading, refetch, updateStatus, deleteSPH } = useSPH(queryParams);
+  const { dataList, pagination, isLoading, refetch, updateStatus, deleteSPH, updateSPH } = useSPH(queryParams);
   const { brands, users } = useMasterData();
   const { success, error } = useToast();
 
@@ -94,6 +94,17 @@ export const SPHPage: React.FC = () => {
   const handleOpenPrintPreview = (e: React.MouseEvent, row: SPH) => {
     e.stopPropagation();
     setPreviewModal({ isOpen: true, row });
+  };
+
+  const handleToggleSumber = async (e: React.MouseEvent, id: string, currentRefId: string | undefined) => {
+    e.stopPropagation();
+    const newRefId = currentRefId === 'MANUAL' ? 'HARGA' : 'MANUAL';
+    try {
+      await updateSPH({ id, input: { ref_id: newRefId } });
+      success('Sumber Diperbarui', `Sumber SPH berhasil diubah menjadi ${newRefId === 'MANUAL' ? 'Kalkulasi Manual' : 'Kalkulator Harga'}.`);
+    } catch (err: any) {
+      error('Gagal Mengubah Sumber', err.message);
+    }
   };
 
   const columns: TableColumn<SPH>[] = useMemo(() => [
@@ -163,15 +174,17 @@ export const SPHPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5">
           {row.ref_id === 'MANUAL' ? (
             <span 
-              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/50 text-[9px] font-black" 
-              title="Dibuat dari Kalkulasi Manual"
+              onClick={(e) => handleToggleSumber(e, row.id, row.ref_id)}
+              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/50 text-[9px] font-black cursor-pointer hover:bg-amber-200 transition-colors" 
+              title="Dibuat dari Kalkulasi Manual (Klik untuk ubah)"
             >
               M
             </span>
           ) : (
             <span 
-              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 dark:border-indigo-800/50 text-[9px] font-black" 
-              title="Dibuat dari Kalkulator Harga"
+              onClick={(e) => handleToggleSumber(e, row.id, row.ref_id)}
+              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 dark:border-indigo-800/50 text-[9px] font-black cursor-pointer hover:bg-indigo-200 transition-colors" 
+              title="Dibuat dari Kalkulator Harga (Klik untuk ubah)"
             >
               H
             </span>
