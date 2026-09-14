@@ -98,6 +98,7 @@ export const PerhitunganPage: React.FC = () => {
       show_keterangan?: boolean;
       namaPt?: string;
       brand?: string;
+      ref_id?: string;
       items?: SPHItemDetail[];
       sourceCalculationIds?: string[];
     };
