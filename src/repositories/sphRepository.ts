@@ -363,7 +363,9 @@ export class SPHRepository extends BaseRepository {
   public static async getNextSequence(brandCode: string, date: Date): Promise<string> {
     const year = date.getFullYear();
     const romanMonth = this.getRomanMonth(date);
-    const pattern = `SPH %/${brandCode}/${romanMonth}/${year}`;
+    
+    // Search pattern ignores the month so the sequence continues across months
+    const searchPattern = `SPH %/${brandCode}/%/${year}`;
 
     let lastSeq = 0;
 
@@ -372,7 +374,7 @@ export class SPHRepository extends BaseRepository {
         const { data, error } = await supabase
           .from('sph')
           .select('no_sph')
-          .like('no_sph', pattern)
+          .like('no_sph', searchPattern)
           .order('no_sph', { ascending: false })
           .limit(1);
         
@@ -389,14 +391,24 @@ export class SPHRepository extends BaseRepository {
       }
     } else {
       const mock = this.getMockData();
-      const regex = new RegExp(`^SPH (\\d{4})/${brandCode}/${romanMonth}/${year}$`);
+      // Regex matches any Roman numeral month
+      const regex = new RegExp(`^SPH (\\d+)/${brandCode}/[A-Z]+/${year}$`);
       const matches = mock.filter(m => m.no_sph && regex.test(m.no_sph));
       if (matches.length > 0) {
-        matches.sort((a, b) => (b.no_sph || '').localeCompare(a.no_sph || ''));
-        const parts = (matches[0].no_sph || '').split('/');
-        const seqPart = parts[0].replace('SPH ', '').trim();
-        const parsed = parseInt(seqPart, 10);
-        if (!isNaN(parsed)) lastSeq = parsed;
+        // Sort based on the extracted sequence number, not string
+        matches.sort((a, b) => {
+          const matchA = (a.no_sph || '').match(regex);
+          const matchB = (b.no_sph || '').match(regex);
+          const numA = matchA ? parseInt(matchA[1], 10) : 0;
+          const numB = matchB ? parseInt(matchB[1], 10) : 0;
+          return numB - numA; // Descending
+        });
+        
+        const match = (matches[0].no_sph || '').match(regex);
+        if (match) {
+          const parsed = parseInt(match[1], 10);
+          if (!isNaN(parsed)) lastSeq = parsed;
+        }
       }
     }
 
