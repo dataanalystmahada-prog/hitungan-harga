@@ -36,7 +36,7 @@ export const Navbar: React.FC = () => {
     : 'US';
 
   return (
-    <header className="sticky top-0 z-20 h-13 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-5 flex items-center justify-between transition-colors">
+    <header className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-5 pt-5 sm:pt-6 pb-3 sm:pb-4 flex items-center justify-between transition-colors">
       {/* Page Title / Breadcrumb */}
       <div>
         <h1 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">

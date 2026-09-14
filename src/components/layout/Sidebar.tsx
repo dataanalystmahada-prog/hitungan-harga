@@ -119,28 +119,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
         </nav>
       </div>
 
-      {/* Bottom Status Card */}
-      {!isCollapsed && (
-        <div className="p-2.5 m-2 rounded-lg bg-slate-850/70 border border-slate-750/70">
-          <div className="flex items-center justify-between text-[11px] text-slate-300 mb-0.5">
-            <span className="font-semibold">Enterprise Core</span>
-            <span className="text-[9px] text-emerald-400 font-mono">v2.4</span>
+      <div className="flex flex-col mt-auto">
+        {/* Bottom Status Card */}
+        {!isCollapsed && (
+          <div className="p-2.5 mx-2 mb-2 rounded-lg bg-slate-800/70 border border-slate-700/70">
+            <div className="flex items-center justify-between text-[11px] text-slate-300 mb-0.5">
+              <span className="font-semibold">Enterprise Core</span>
+              <span className="text-[9px] text-emerald-400 font-mono">v2.4</span>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-normal">
+              RPC High-performance active.
+            </p>
           </div>
-          <p className="text-[10px] text-slate-400 leading-normal">
-            RPC High-performance active.
-          </p>
-        </div>
-      )}
+        )}
 
-      {/* Logout Button */}
-      <div className="p-2 border-t border-slate-800">
-        <button
-          onClick={logout}
-          className="flex items-center gap-2.5 w-full p-2 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span>Keluar</span>}
-        </button>
+        {/* Logout Button */}
+        <div className="p-2 border-t border-slate-800">
+          <button
+            onClick={logout}
+            className="flex items-center gap-2.5 w-full p-2 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+          >
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>Keluar</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );

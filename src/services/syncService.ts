@@ -72,6 +72,29 @@ export class SyncService {
     // Direct simulated sync response
     await new Promise(resolve => setTimeout(resolve, 800));
     const duration = Math.round(performance.now() - startTs);
+    
+    // Simulate failure 50% of the time for testing purposes when webhook is not set
+    const isSimulatedError = Math.random() < 0.5;
+
+    if (isSimulatedError) {
+      const log = await SyncLogRepository.logSync({
+        sheet_name: payload.sheetName || 'ALL_SHEETS',
+        sync_type: payload.syncType,
+        status: 'FAILED',
+        records_processed: 0,
+        records_inserted: 0,
+        records_updated: 0,
+        duration_ms: duration,
+        error_message: 'Simulasi error koneksi ke Google Spreadsheet',
+        triggered_by: 'React Web Dashboard (Manual Trigger)',
+      });
+
+      return {
+        success: false,
+        message: `Simulasi error: Gagal terhubung ke Google Spreadsheet saat memproses tab ${payload.sheetName || 'Semua Sheet'}.`,
+        log,
+      };
+    }
 
     const log = await SyncLogRepository.logSync({
       sheet_name: payload.sheetName || 'ALL_SHEETS',

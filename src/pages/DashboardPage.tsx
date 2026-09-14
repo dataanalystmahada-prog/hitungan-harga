@@ -47,7 +47,7 @@ export const DashboardPage: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5 sm:gap-6">
       {/* Top Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-900 via-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-lg border border-brand-800/40">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
