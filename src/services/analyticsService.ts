@@ -41,8 +41,9 @@ export class AnalyticsService {
       : 0;
 
     const totalSPHCount = sales ? sphData.pagination.filteredRecords : sphData.pagination.totalRecords;
-    const totalSPHValue = sphData.data.reduce((acc, curr) => acc + (curr.harga_jual_akhir || 0), 0);
-    const totalSPHDeal = sphData.data.filter(s => s.status_sph === 'Deal' || s.status_sph === 'Disetujui').length;
+    const dealSPHs = sphData.data.filter(s => s.status_sph === 'Deal' || s.status_sph === 'Disetujui');
+    const totalSPHDeal = dealSPHs.length;
+    const totalSPHValue = dealSPHs.reduce((acc, curr) => acc + (curr.harga_jual_akhir || 0), 0);
 
     const syncs24hSuccess = syncLogs.filter(s => s.status === 'SUCCESS').length;
 

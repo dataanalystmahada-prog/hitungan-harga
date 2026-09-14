@@ -646,6 +646,7 @@ export const ManualKalkulator: React.FC = () => {
             namaPt,
             brand,
             diskon: orderSummary.totalDiskon,
+            ref_id: 'MANUAL',
             items: sphLineItems,
           }}
           onSavePerhitunganBeforePrint={async (

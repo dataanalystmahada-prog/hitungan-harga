@@ -29,6 +29,7 @@ export interface SPHPreviewModalProps {
     hargaJualUnit?: number;
     totalHargaJual?: number;
     sales?: string;
+    status_sph?: string;
     diskon?: number;
     ongkir?: number;
     ppn?: number;
@@ -39,6 +40,7 @@ export interface SPHPreviewModalProps {
     show_keterangan?: boolean;
     namaPt?: string;
     brand?: string;
+    ref_id?: string;
     items?: SPHItemDetail[];
     sourceCalculationIds?: string[];
   };
@@ -256,6 +258,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       show_ongkir: showOngkir,
       show_keterangan: showKeterangan,
       harga_jual_akhir: grandTotal,
+      ref_id: defaultData?.ref_id || '',
       items: lineItems,
     };
 
@@ -307,7 +310,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         qty: totalQtyPcs,
         harga_jual: Math.round(subtotalGross / (totalQtyPcs || 1)),
         sales: salesName,
-        status_sph: 'Draft',
+        status_sph: isEditMode && defaultData?.status_sph ? defaultData.status_sph : 'Draft',
         keterangan: keteranganManual,
         diskon: diskonNominal,
         ongkir: ongkirNominal,
@@ -318,6 +321,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         show_ongkir: showOngkir,
         show_keterangan: showKeterangan,
         harga_jual_akhir: grandTotal,
+        ref_id: defaultData?.ref_id || '',
         items: lineItems,
       };
 

@@ -668,6 +668,7 @@ export const InteractiveKalkulator: React.FC = () => {
             namaPt: namaPt,
             brand: brand,
             diskon: orderSummary.totalDiskonNominal,
+            ref_id: 'HARGA',
             items: sphLineItems,
           }}
           onSavePerhitunganBeforePrint={async (

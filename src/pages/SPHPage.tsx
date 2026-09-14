@@ -160,9 +160,26 @@ export const SPHPage: React.FC = () => {
       width: 160,
       minWidth: 140,
       render: (row: SPH) => (
-        <span className="font-mono font-extrabold text-slate-900 dark:text-slate-100 whitespace-nowrap">
-          {formatRupiah(row.harga_jual_akhir)}
-        </span>
+        <div className="flex items-center justify-end gap-1.5">
+          {row.ref_id === 'MANUAL' ? (
+            <span 
+              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/50 text-[9px] font-black" 
+              title="Dibuat dari Kalkulasi Manual"
+            >
+              M
+            </span>
+          ) : (
+            <span 
+              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 dark:border-indigo-800/50 text-[9px] font-black" 
+              title="Dibuat dari Kalkulator Harga"
+            >
+              H
+            </span>
+          )}
+          <span className="font-mono font-extrabold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+            {formatRupiah(row.harga_jual_akhir)}
+          </span>
+        </div>
       ),
     },
     {
