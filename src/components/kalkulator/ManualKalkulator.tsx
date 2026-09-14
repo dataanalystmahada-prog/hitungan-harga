@@ -142,6 +142,7 @@ export const ManualKalkulator: React.FC = () => {
         show_ongkir: modalShowOngkir,
         show_keterangan: modalShowKeterangan,
         keterangan: modalKeterangan,
+        ref_id: 'MANUAL',
         items: sphLineItems,
       };
 

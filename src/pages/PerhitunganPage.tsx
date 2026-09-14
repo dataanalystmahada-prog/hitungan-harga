@@ -223,6 +223,7 @@ export const PerhitunganPage: React.FC = () => {
     const showOngkir = selectedRows.some(row => row.show_ongkir !== false);
     const showKeterangan = selectedRows.some(row => row.show_keterangan !== false);
     const commonKeterangan = selectedRows.find(r => r.keterangan)?.keterangan || '';
+    const commonRefId = selectedRows.some(r => r.ref_id === 'MANUAL') ? 'MANUAL' : 'HARGA';
 
     const commonSales = selectedRows[0]?.sales || '';
     const commonNamaPt = selectedRows.find(r => r.nama_pt)?.nama_pt || '';
@@ -243,6 +244,7 @@ export const PerhitunganPage: React.FC = () => {
         show_ongkir: showOngkir,
         show_keterangan: showKeterangan,
         keterangan: commonKeterangan,
+        ref_id: commonRefId,
         items: sphLineItems,
         sourceCalculationIds: selectedIdsArray,
       },
@@ -270,6 +272,7 @@ export const PerhitunganPage: React.FC = () => {
         show_ongkir: row.show_ongkir !== undefined ? row.show_ongkir : true,
         show_keterangan: row.show_keterangan !== undefined ? row.show_keterangan : true,
         keterangan: row.keterangan || '',
+        ref_id: row.ref_id,
         items: sphLineItems,
         produk: row.produk,
         qty: row.qty,
@@ -482,12 +485,29 @@ export const PerhitunganPage: React.FC = () => {
       key: 'harga_jual_net',
       title: 'Total Net Jual',
       align: 'right',
-      width: 145,
-      minWidth: 135,
+      width: 165,
+      minWidth: 145,
       render: (row: Perhitungan) => (
-        <span className="font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-          {formatRupiah(row.harga_jual_net)}
-        </span>
+        <div className="flex items-center justify-end gap-1.5">
+          {row.ref_id === 'MANUAL' ? (
+            <span 
+              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800/50 text-[9px] font-black" 
+              title="Dibuat dari Kalkulasi Manual"
+            >
+              M
+            </span>
+          ) : (
+            <span 
+              className="inline-flex items-center justify-center w-4 h-4 rounded-sm bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 dark:border-indigo-800/50 text-[9px] font-black" 
+              title="Dibuat dari Kalkulator Harga"
+            >
+              H
+            </span>
+          )}
+          <span className="font-mono font-extrabold text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+            {formatRupiah(row.harga_jual_net)}
+          </span>
+        </div>
       ),
     },
     {

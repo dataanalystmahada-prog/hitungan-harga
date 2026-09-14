@@ -167,6 +167,7 @@ export const InteractiveKalkulator: React.FC = () => {
         show_ongkir: modalShowOngkir,
         show_keterangan: modalShowKeterangan,
         keterangan: modalKeterangan,
+        ref_id: 'HARGA',
         items: sphLineItems,
       };
 
