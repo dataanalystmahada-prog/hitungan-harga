@@ -54,14 +54,32 @@ export const MasterDataPage: React.FC = () => {
 
   const handleSaveUser = async () => {
     if (!newUser.nama) return alert('Nama harus diisi');
-    const userToSave = { ...newUser, id: newUser.id || `USR-${Date.now()}` };
-    const success = await MasterDataRepository.createUser(userToSave);
-    if (success) {
-      alert('Berhasil menyimpan user');
-      setIsAddingUser(false);
-      setNewUser({ role: 'sales', pin: '123456' });
-      refetch();
+    
+    const isUpdating = users.some((u: UserSales) => u.id === newUser.id);
+    
+    if (isUpdating) {
+      const success = await MasterDataRepository.updateUser(newUser.id!, newUser);
+      if (success) {
+        alert('Berhasil memperbarui user');
+        setIsAddingUser(false);
+        setNewUser({ role: 'sales', pin: '123456' });
+        refetch();
+      }
+    } else {
+      const userToSave = { ...newUser, id: `USR-${Date.now()}` };
+      const success = await MasterDataRepository.createUser(userToSave);
+      if (success) {
+        alert('Berhasil menyimpan user');
+        setIsAddingUser(false);
+        setNewUser({ role: 'sales', pin: '123456' });
+        refetch();
+      }
     }
+  };
+
+  const handleEditUser = (user: UserSales) => {
+    setNewUser(user);
+    setIsAddingUser(true);
   };
 
   const handleDeleteUser = async (id: string) => {
@@ -372,9 +390,15 @@ export const MasterDataPage: React.FC = () => {
                       {u.role || 'sales'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-mono hidden sm:inline-block">{u.email}</span>
-                    <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity">Hapus</button>
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex flex-col text-right sm:text-left">
+                      <span className="text-slate-500 dark:text-slate-400 font-mono hidden sm:block">{u.email}</span>
+                      <span className="text-slate-400 font-mono text-[10px]">PIN: {u.pin || '-'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleEditUser(u)} className="text-blue-500 hover:text-blue-700 font-semibold">Edit</button>
+                      <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-700 font-semibold">Hapus</button>
+                    </div>
                   </div>
                 </div>
               ))}

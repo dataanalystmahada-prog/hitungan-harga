@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
     >
       {/* Top Brand Logo */}
       <div className="flex flex-col">
-        <div className="flex items-center justify-between h-13 px-3.5 border-b border-slate-800">
+        <div className="flex items-center justify-between pt-5 sm:pt-6 pb-3 sm:pb-4 px-3.5 border-b border-slate-800">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/25 flex-shrink-0">
               <Zap className="w-4 h-4 fill-current" />
