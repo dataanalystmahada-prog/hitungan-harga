@@ -7,6 +7,7 @@ import {
   Percent, 
   Truck, 
   BarChart, 
+  TrendingUp,
   ShieldCheck,
   CheckCircle2,
   Info
@@ -124,6 +125,30 @@ export const AturanAplikasiPage: React.FC = () => {
                 </div>
               </li>
             </ul>
+          </div>
+        </Card>
+
+        {/* Skala Kuantiti & Interpolasi */}
+        <Card hoverEffect className="p-6 border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-4">
+          <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="p-2 rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Skala Kuantiti & Penyesuaian</h3>
+              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Interpolasi Harga</p>
+            </div>
+          </div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
+            <p>
+              Apabila kuantiti (Qty) pesanan berada <strong>di antara dua tier matriks standar</strong> (misal: Qty 40 pcs berada di antara tier 24 dan 50), sistem <strong className="text-brand-600 dark:text-brand-400">tidak akan otomatis membulatkan</strong> harga ke tier terbawah/teratas.
+            </p>
+            <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/50 rounded-lg flex items-start gap-2.5 mt-2">
+              <Info className="w-4 h-4 text-purple-600 dark:text-purple-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-purple-800 dark:text-purple-400">
+                Sistem akan menghitung <strong>Penyesuaian (Interpolasi) Margin</strong> secara presisi agar harganya menjadi lebih adil dan mendekati tier di atasnya sesuai proporsi jumlah pesanan (misal: disesuaikan mendekati ke 50 pcs).
+              </p>
+            </div>
           </div>
         </Card>
 

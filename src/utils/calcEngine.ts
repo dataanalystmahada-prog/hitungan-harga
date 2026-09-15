@@ -45,6 +45,38 @@ export function getTierKey(tier: QuantityTier): keyof ModalLogo & keyof Margin {
 }
 
 /**
+ * Get interpolated value for quantities that fall between defined tiers
+ */
+export function getInterpolatedValue(qty: number, record: any): number {
+  if (qty <= 12) return parseSpreadsheetNumber(record[getTierKey(12)]);
+  if (qty >= 500) return parseSpreadsheetNumber(record[getTierKey(500)]);
+  
+  if (QUANTITY_TIERS.includes(qty as QuantityTier)) {
+    return parseSpreadsheetNumber(record[getTierKey(qty as QuantityTier)]);
+  }
+
+  let lower: QuantityTier = 12;
+  let upper: QuantityTier = 500;
+  for (let i = 0; i < QUANTITY_TIERS.length - 1; i++) {
+    if (qty > QUANTITY_TIERS[i] && qty < QUANTITY_TIERS[i+1]) {
+      lower = QUANTITY_TIERS[i];
+      upper = QUANTITY_TIERS[i+1];
+      break;
+    }
+  }
+
+  const valLower = parseSpreadsheetNumber(record[getTierKey(lower)]);
+  const valUpper = parseSpreadsheetNumber(record[getTierKey(upper)]);
+  
+  if (valLower === 0 && valUpper === 0) return 0;
+  if (valLower === 0) return valUpper;
+  if (valUpper === 0) return valLower;
+
+  const ratio = (qty - lower) / (upper - lower);
+  return valLower + ratio * (valUpper - valLower);
+}
+
+/**
  * Enterprise Single Product Pricing Engine
  */
 export function calculatePricingEngine(
@@ -85,8 +117,8 @@ export function calculatePricingEngine(
       l => (l.produk || '').toLowerCase().trim() === inputProd &&
            (l.proses_logo || '').toLowerCase().trim() === inputLogo
     );
-    if (foundLogo && foundLogo[tierKey] !== undefined) {
-      modalLogoUnit = parseSpreadsheetNumber(foundLogo[tierKey]);
+    if (foundLogo) {
+      modalLogoUnit = getInterpolatedValue(input.qty || 12, foundLogo);
     }
   }
 
@@ -103,8 +135,8 @@ export function calculatePricingEngine(
     if (!foundMargin) {
       foundMargin = marginList.find(m => (m.produk || '').toLowerCase().trim() === inputProd);
     }
-    if (foundMargin && foundMargin[tierKey] !== undefined) {
-      marginRawValue = parseSpreadsheetNumber(foundMargin[tierKey]);
+    if (foundMargin) {
+      marginRawValue = getInterpolatedValue(input.qty || 12, foundMargin);
     }
   }
 
