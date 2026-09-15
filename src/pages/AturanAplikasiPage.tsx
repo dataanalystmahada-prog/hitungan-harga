@@ -7,7 +7,6 @@ import {
   Percent, 
   Truck, 
   BarChart, 
-  CloudSync,
   ShieldCheck,
   CheckCircle2,
   Info
