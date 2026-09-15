@@ -16,7 +16,7 @@ import { PerhitunganPage } from './pages/PerhitunganPage';
 import { SPHPage } from './pages/SPHPage';
 import { MasterDataPage } from './pages/MasterDataPage';
 import { SyncMonitorPage } from './pages/SyncMonitorPage';
-import { PromptLibraryPage } from './pages/PromptLibraryPage';
+import { AturanAplikasiPage } from './pages/AturanAplikasiPage';
 import { LoginPage } from './pages/LoginPage';
 
 // Configure TanStack Query Client
@@ -49,7 +49,7 @@ export function App() {
                     <Route path="sph" element={<SPHPage />} />
                     <Route path="master-data" element={<MasterDataPage />} />
                     <Route path="sync-monitor" element={<SyncMonitorPage />} />
-                    <Route path="prompts" element={<PromptLibraryPage />} />
+                    <Route path="aturan" element={<AturanAplikasiPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>
                 </Routes>

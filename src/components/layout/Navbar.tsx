@@ -13,7 +13,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/sph': { title: 'Surat Penawaran Harga (SPH)', subtitle: 'Kelola dan buat penawaran resmi formal ke klien & perusahaan.' },
   '/master-data': { title: 'Master Data & Spreadsheet View', subtitle: 'Tabel referensi produk, modal, margin, dan brand.' },
   '/sync-monitor': { title: 'Sync Engine & Audit Logs', subtitle: 'Monitoring pipeline sinkronisasi Google Sheets ke Supabase.' },
-  '/prompts': { title: 'Prompt Library & AI Assistant', subtitle: 'Kumpulan template pesan sales dan follow-up SPH.' },
+  '/aturan': { title: 'Kumpulan Aturan Sistem', subtitle: 'Daftar regulasi, formula, dan logika baku yang diterapkan otomatis.' },
 };
 
 export const Navbar: React.FC = () => {

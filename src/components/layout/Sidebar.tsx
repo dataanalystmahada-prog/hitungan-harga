@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Zap,
   LogOut,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../contexts/AuthContext';
@@ -37,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { title: 'Surat Penawaran (SPH)', path: '/sph', icon: FileSpreadsheet },
   { title: 'Master Data', path: '/master-data', icon: Database },
   { title: 'Sync Engine', path: '/sync-monitor', icon: RefreshCw },
-  { title: 'Prompt Library', path: '/prompts', icon: Sparkles },
+  { title: 'Kumpulan Aturan', path: '/aturan', icon: BookOpen },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
