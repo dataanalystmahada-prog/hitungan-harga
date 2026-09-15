@@ -128,8 +128,28 @@ export class PerhitunganRepository extends BaseRepository {
       try {
         // Direct table query directly reads all columns from PostgreSQL table
         result = await this.fetchPaginated<Perhitungan>('perhitungan', params, '*', fallbackFn);
+      } catch (err) {
+        // Fallback to RPC if direct table query fails
+        result = await this.callRpc<Perhitungan>(
+          'fn_query_perhitungan_paginated',
+          {
+            p_page: page,
+            p_limit: limit,
+            p_search: params.search || null,
+            p_sales: params.filters?.sales || null,
+            p_produk: params.filters?.produk || null,
+            p_proses_logo: params.filters?.proses_logo || null,
+            p_date_start: params.filters?.date_start || null,
+            p_date_end: params.filters?.date_end || null,
+            p_sort_by: params.sortBy || 'created_at',
+            p_sort_order: params.sortOrder || 'DESC'
+          },
+          fallbackFn
+        );
+      }
 
-        // Fetch metrics separately for all filtered data
+      // Fetch metrics separately for all filtered data (always attempt this, even if using RPC)
+      try {
         let metricsQuery = supabase.from('perhitungan').select('total_harga_jual, margin');
         
         if (params.search && params.search.trim()) {
@@ -151,32 +171,16 @@ export class PerhitunganRepository extends BaseRepository {
           });
         }
         
-        const { data: metricsData } = await metricsQuery;
+        const { data: metricsData, error: metricsError } = await metricsQuery;
         
-        if (metricsData) {
+        if (!metricsError && metricsData) {
           result.metrics = {
             totalRevenue: metricsData.reduce((acc, curr) => acc + (curr.total_harga_jual || 0), 0),
             avgMargin: metricsData.length > 0 ? Number((metricsData.reduce((acc, curr) => acc + (curr.margin || 0), 0) / metricsData.length).toFixed(2)) : 0
           };
         }
       } catch (err) {
-        // Fallback to RPC if direct table query fails
-        result = await this.callRpc<Perhitungan>(
-          'fn_query_perhitungan_paginated',
-          {
-            p_page: page,
-            p_limit: limit,
-            p_search: params.search || null,
-            p_sales: params.filters?.sales || null,
-            p_produk: params.filters?.produk || null,
-            p_proses_logo: params.filters?.proses_logo || null,
-            p_date_start: params.filters?.date_start || null,
-            p_date_end: params.filters?.date_end || null,
-            p_sort_by: params.sortBy || 'created_at',
-            p_sort_order: params.sortOrder || 'DESC'
-          },
-          fallbackFn
-        );
+        // Silently ignore metrics error and use fallback
       }
     } else {
       result = await fallbackFn();
