@@ -38,7 +38,7 @@ export const SPHPage: React.FC = () => {
     initialFilters: role === 'sales' && user?.nama ? { sales: user.nama } : {},
   });
 
-  const { dataList, pagination, isLoading, refetch, updateStatus, deleteSPH, updateSPH } = useSPH(queryParams);
+  const { dataList, pagination, metrics, isLoading, refetch, updateStatus, deleteSPH, updateSPH } = useSPH(queryParams);
   const { brands, users } = useMasterData();
   const { success, error } = useToast();
 
@@ -262,16 +262,10 @@ export const SPHPage: React.FC = () => {
     },
   ], [role]);
 
-  const statTotalSPHAktif = dataList.filter(item => item.status_sph !== 'Ditolak' && item.status_sph !== 'Draft').length;
-  const statOmsetAktif = dataList
-    .filter(item => item.status_sph !== 'Deal' && item.status_sph !== 'Ditolak' && item.status_sph !== 'Draft')
-    .reduce((acc, item) => acc + (item.harga_jual_akhir || 0), 0);
-  const statOmsetDeal = dataList
-    .filter(item => item.status_sph === 'Deal')
-    .reduce((acc, item) => acc + (item.harga_jual_akhir || 0), 0);
-  const statOmsetCancel = dataList
-    .filter(item => item.status_sph === 'Ditolak')
-    .reduce((acc, item) => acc + (item.harga_jual_akhir || 0), 0);
+  const statTotalSPHAktif = metrics?.totalSPHAktif || 0;
+  const statOmsetAktif = metrics?.omsetAktif || 0;
+  const statOmsetDeal = metrics?.omsetDeal || 0;
+  const statOmsetCancel = metrics?.omsetCancel || 0;
 
   return (
     <div className="flex flex-col gap-3.5">

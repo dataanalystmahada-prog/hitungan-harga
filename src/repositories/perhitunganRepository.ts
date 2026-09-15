@@ -128,6 +128,37 @@ export class PerhitunganRepository extends BaseRepository {
       try {
         // Direct table query directly reads all columns from PostgreSQL table
         result = await this.fetchPaginated<Perhitungan>('perhitungan', params, '*', fallbackFn);
+
+        // Fetch metrics separately for all filtered data
+        let metricsQuery = supabase.from('perhitungan').select('total_harga_jual, margin');
+        
+        if (params.search && params.search.trim()) {
+          const s = params.search.trim();
+          metricsQuery = metricsQuery.or(`nama_pt.ilike.%${s}%,produk.ilike.%${s}%,kode.ilike.%${s}%,sales.ilike.%${s}%,proses_logo.ilike.%${s}%`);
+        }
+        
+        if (params.filters) {
+          Object.entries(params.filters).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== '') {
+              if (key === 'date_start') {
+                metricsQuery = metricsQuery.gte('created_at', val);
+              } else if (key === 'date_end') {
+                metricsQuery = metricsQuery.lte('created_at', `${val}T23:59:59.999Z`);
+              } else {
+                metricsQuery = metricsQuery.eq(key, val);
+              }
+            }
+          });
+        }
+        
+        const { data: metricsData } = await metricsQuery;
+        
+        if (metricsData) {
+          result.metrics = {
+            totalRevenue: metricsData.reduce((acc, curr) => acc + (curr.total_harga_jual || 0), 0),
+            avgMargin: metricsData.length > 0 ? Number((metricsData.reduce((acc, curr) => acc + (curr.margin || 0), 0) / metricsData.length).toFixed(2)) : 0
+          };
+        }
       } catch (err) {
         // Fallback to RPC if direct table query fails
         result = await this.callRpc<Perhitungan>(
@@ -172,17 +203,17 @@ export class PerhitunganRepository extends BaseRepository {
       };
     });
 
-    const totalRevenue = enrichedData.reduce((acc, curr) => acc + (curr.total_harga_jual || 0), 0);
-    const avgMargin = enrichedData.length > 0
+    const totalRevenue = result.metrics?.totalRevenue ?? enrichedData.reduce((acc, curr) => acc + (curr.total_harga_jual || 0), 0);
+    const avgMargin = result.metrics?.avgMargin ?? (enrichedData.length > 0
       ? Number((enrichedData.reduce((acc, curr) => acc + (curr.margin || 0), 0) / enrichedData.length).toFixed(2))
-      : 0;
+      : 0);
 
     return {
       ...result,
       data: enrichedData,
       metrics: {
-        totalRevenue: result.metrics?.totalRevenue ?? totalRevenue,
-        avgMargin: result.metrics?.avgMargin ?? avgMargin,
+        totalRevenue,
+        avgMargin,
       }
     };
   }

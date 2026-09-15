@@ -98,6 +98,11 @@ export class SPHRepository extends BaseRepository {
       const offset = (page - 1) * limit;
       const paginatedData = list.slice(offset, offset + limit);
       const totalQuotationValue = list.reduce((acc, curr) => acc + (curr.harga_jual_akhir || 0), 0);
+      
+      const totalSPHAktif = list.filter(i => i.status_sph !== 'Ditolak' && i.status_sph !== 'Draft').length;
+      const omsetAktif = list.filter(i => i.status_sph !== 'Deal' && i.status_sph !== 'Ditolak' && i.status_sph !== 'Draft').reduce((a, c) => a + (c.harga_jual_akhir || 0), 0);
+      const omsetDeal = list.filter(i => i.status_sph === 'Deal').reduce((a, c) => a + (c.harga_jual_akhir || 0), 0);
+      const omsetCancel = list.filter(i => i.status_sph === 'Ditolak').reduce((a, c) => a + (c.harga_jual_akhir || 0), 0);
 
       return {
         data: paginatedData,
@@ -109,7 +114,11 @@ export class SPHRepository extends BaseRepository {
           totalPages: Math.ceil(totalFiltered / Math.max(1, limit)),
         },
         metrics: {
-          totalQuotationValue
+          totalQuotationValue,
+          totalSPHAktif,
+          omsetAktif,
+          omsetDeal,
+          omsetCancel
         }
       };
     };
@@ -119,6 +128,39 @@ export class SPHRepository extends BaseRepository {
     if (isConfigured) {
       try {
         result = await this.fetchPaginated<SPH>('sph', params, '*', fallbackFn);
+
+        // Fetch metrics separately for all filtered data
+        let metricsQuery = supabase.from('sph').select('status_sph, harga_jual_akhir');
+        
+        if (params.search && params.search.trim()) {
+          const s = params.search.trim();
+          metricsQuery = metricsQuery.or(`no_sph.ilike.%${s}%,nama_pt.ilike.%${s}%,brand.ilike.%${s}%,sales.ilike.%${s}%,produk.ilike.%${s}%,deskripsi.ilike.%${s}%`);
+        }
+        
+        if (params.filters) {
+          Object.entries(params.filters).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== '') {
+              if (key === 'date_start') {
+                metricsQuery = metricsQuery.gte('created_at', val);
+              } else if (key === 'date_end') {
+                metricsQuery = metricsQuery.lte('created_at', `${val}T23:59:59.999Z`);
+              } else {
+                metricsQuery = metricsQuery.eq(key, val);
+              }
+            }
+          });
+        }
+        
+        const { data: metricsData } = await metricsQuery;
+        
+        if (metricsData) {
+          result.metrics = {
+             totalSPHAktif: metricsData.filter(i => i.status_sph !== 'Ditolak' && i.status_sph !== 'Draft').length,
+             omsetAktif: metricsData.filter(i => i.status_sph !== 'Deal' && i.status_sph !== 'Ditolak' && i.status_sph !== 'Draft').reduce((a, c) => a + (c.harga_jual_akhir || 0), 0),
+             omsetDeal: metricsData.filter(i => i.status_sph === 'Deal').reduce((a, c) => a + (c.harga_jual_akhir || 0), 0),
+             omsetCancel: metricsData.filter(i => i.status_sph === 'Ditolak').reduce((a, c) => a + (c.harga_jual_akhir || 0), 0),
+          };
+        }
       } catch (err) {
         result = await this.callRpc<SPH>(
           'fn_query_sph_paginated',

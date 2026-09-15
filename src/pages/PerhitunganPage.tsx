@@ -592,7 +592,7 @@ export const PerhitunganPage: React.FC = () => {
           <div>
             <p className="text-[10px] font-medium text-slate-400">Total Hitungan Aktif</p>
             <p className="text-sm sm:text-base font-bold font-mono text-slate-900 dark:text-slate-100">
-              {formatNumber(pagination?.totalRecords || dataList.length)}
+              {formatNumber(pagination?.filteredRecords || dataList.length)}
             </p>
           </div>
         </Card>
