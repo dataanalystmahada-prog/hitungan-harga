@@ -317,7 +317,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
 
   const handleSaveToDatabase = async () => {
     try {
-      const summaryProduk = lineItems.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
+      const summaryProduk = items.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
 
       const payload = {
         tanggal: dateFormatted,
@@ -341,7 +341,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         show_keterangan: showKeterangan,
         harga_jual_akhir: grandTotal,
         ref_id: defaultData?.ref_id || '',
-        items: lineItems,
+        items: items,
       };
 
       if (isEditMode && defaultData?.id) {
@@ -604,7 +604,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {lineItems.map((item, idx) => (
+                {items.map((item, idx) => (
                   <tr key={idx} className="border-b border-slate-300 break-inside-avoid">
                     <td className="py-2 px-3 text-center border-r border-slate-300 align-top">{idx + 1}</td>
                     <td className="py-2 px-3 border-r border-slate-300 align-top">
