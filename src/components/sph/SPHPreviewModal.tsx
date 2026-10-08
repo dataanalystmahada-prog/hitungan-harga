@@ -376,7 +376,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? 'Edit & Preview Surat Penawaran Harga (SPH)' : 'Generator & Preview Surat Penawaran Harga (SPH)'}
-      maxWidth="4xl"
+      maxWidth="7xl"
       footer={
         <div className="flex items-center justify-between w-full">
           <Button variant="outline" size="sm" onClick={handlePrint} leftIcon={<Printer className="w-3.5 h-3.5" />}>Cetak / Export PDF</Button>
@@ -389,9 +389,9 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         </div>
       }
     >
-      <div className="flex flex-col gap-3.5 print:gap-0 print:block">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 print:gap-0 print:block">
         {/* Settings Panel */}
-        <div className="print:hidden flex flex-col gap-2.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs">
+        <div className="print:hidden flex flex-col gap-2.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs overflow-y-auto max-h-[75vh]">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-start">
             <Select
               label="Kop Brand Perusahaan"
@@ -554,8 +554,9 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         </div>
 
         {/* Printable SPH Document Preview */}
-        <div id="sph-print-document" className="printable-doc sph-document bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none">
-          {/* Header */}
+        <div className="overflow-y-auto max-h-[75vh] print:max-h-none print:overflow-visible print:bg-transparent bg-slate-100/50 dark:bg-slate-800/30 p-2 sm:p-4 rounded-xl flex justify-center">
+          <div id="sph-print-document" className="printable-doc sph-document bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none w-full max-w-[210mm]">
+            {/* Header */}
           <div className="flex justify-between items-start pb-2">
             <div>
               <h1 className="font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight uppercase leading-tight">{activeBrand?.nama_brand || 'HELLOSWAG'}</h1>
@@ -693,6 +694,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               <p className="text-[10px] text-slate-500 mt-0.5">Divisi Penjualan & Kemitraan</p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </Modal>
