@@ -112,6 +112,8 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     defaultData?.sales || (role === 'sales' && user?.nama ? user.nama : users[0]?.nama || 'Sales Admin')
   );
 
+  const [items, setItems] = useState<SPHItemDetail[]>([]);
+
   useEffect(() => {
     if (isOpen && defaultData) {
       if (defaultData.namaPt !== undefined) {
@@ -154,6 +156,45 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       } else if (user?.nama && role === 'sales') {
         setSalesName(user.nama);
       }
+
+      // Initialize items
+      const initialItems = defaultData.items && defaultData.items.length > 0
+        ? defaultData.items.map(it => {
+            const unit = it.hargaJualUnit !== undefined && it.hargaJualUnit > 0
+              ? it.hargaJualUnit
+              : (it.totalHargaJual && it.qty ? Math.round(it.totalHargaJual / it.qty) : 0);
+            return {
+              produk: it.produk || 'Produk',
+              kode: it.kode || '',
+              deskripsi: it.deskripsi || '',
+              proses_logo: it.proses_logo || '',
+              qty: it.qty || 1,
+              hargaJualUnit: unit,
+              totalHargaJual: unit * (it.qty || 1),
+              diskon: it.diskon || 0,
+            };
+          })
+        : [
+            {
+              produk: defaultData.produk || 'Produk',
+              kode: defaultData.kode || '',
+              deskripsi: defaultData.deskripsi || '',
+              proses_logo: defaultData.proses_logo || '',
+              qty: defaultData.qty || 1,
+              hargaJualUnit: defaultData.hargaJualUnit !== undefined
+                ? defaultData.hargaJualUnit
+                : (defaultData.totalHargaJual !== undefined
+                    ? Math.round(defaultData.totalHargaJual / (defaultData.qty || 1))
+                    : 0),
+              totalHargaJual: (defaultData.hargaJualUnit !== undefined
+                ? defaultData.hargaJualUnit
+                : (defaultData.totalHargaJual !== undefined
+                    ? Math.round(defaultData.totalHargaJual / (defaultData.qty || 1))
+                    : 0)) * (defaultData.qty || 1),
+              diskon: defaultData.diskon || 0,
+            }
+          ];
+      setItems(initialItems);
     }
   }, [isOpen, defaultData, user, role]);
 
@@ -175,45 +216,23 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     }
   }, [isOpen, brandCode, defaultData?.no_sph]);
 
-  const lineItems: SPHItemDetail[] = defaultData?.items && defaultData.items.length > 0
-    ? defaultData.items.map(it => {
-        const unit = it.hargaJualUnit !== undefined && it.hargaJualUnit > 0
-          ? it.hargaJualUnit
-          : (it.totalHargaJual && it.qty ? Math.round(it.totalHargaJual / it.qty) : 0);
-        return {
-          produk: it.produk || 'Produk',
-          kode: it.kode || '',
-          deskripsi: it.deskripsi || '',
-          proses_logo: it.proses_logo || '',
-          qty: it.qty || 1,
-          hargaJualUnit: unit,
-          totalHargaJual: unit * (it.qty || 1),
-          diskon: it.diskon || 0,
-        };
-      })
-    : [
-        {
-          produk: defaultData?.produk || 'Produk',
-          kode: defaultData?.kode || '',
-          deskripsi: defaultData?.deskripsi || '',
-          proses_logo: defaultData?.proses_logo || '',
-          qty: defaultData?.qty || 1,
-          hargaJualUnit: defaultData?.hargaJualUnit !== undefined
-            ? defaultData.hargaJualUnit
-            : (defaultData?.totalHargaJual !== undefined
-                ? Math.round(defaultData.totalHargaJual / (defaultData.qty || 1))
-                : 0),
-          totalHargaJual: (defaultData?.hargaJualUnit !== undefined
-            ? defaultData.hargaJualUnit
-            : (defaultData?.totalHargaJual !== undefined
-                ? Math.round(defaultData.totalHargaJual / (defaultData.qty || 1))
-                : 0)) * (defaultData?.qty || 1),
-          diskon: defaultData?.diskon || 0,
-        }
-      ];
+  const handleItemChange = (index: number, field: keyof SPHItemDetail, value: any) => {
+    setItems(prev => {
+      const newItems = [...prev];
+      newItems[index] = { ...newItems[index], [field]: value };
+      
+      if (field === 'qty' || field === 'hargaJualUnit') {
+        const qty = field === 'qty' ? value : newItems[index].qty;
+        const harga = field === 'hargaJualUnit' ? value : newItems[index].hargaJualUnit;
+        newItems[index].totalHargaJual = (qty || 0) * (harga || 0);
+      }
+      
+      return newItems;
+    });
+  };
 
-  const totalQtyPcs = lineItems.reduce((acc, it) => acc + it.qty, 0);
-  const subtotalGross = lineItems.reduce((acc, it) => acc + (it.hargaJualUnit * it.qty), 0);
+  const totalQtyPcs = items.reduce((acc, it) => acc + it.qty, 0);
+  const subtotalGross = items.reduce((acc, it) => acc + (it.hargaJualUnit * it.qty), 0);
   
   const diskonNominal = Math.max(0, globalDiskon || 0);
   const subtotalAfterDiskon = Math.max(0, subtotalGross - diskonNominal);
@@ -236,7 +255,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     .map(line => line.replace(/^(\d+[\.\)]|\-|\*)\s*/, ''));
 
   const handlePrint = async () => {
-    const summaryProduk = lineItems.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
+    const summaryProduk = items.map(it => `${it.produk} (${it.qty} pcs)`).join(', ');
     const payload = {
       tanggal: dateFormatted,
       brand: selectedBrandName,
@@ -259,7 +278,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       show_keterangan: showKeterangan,
       harga_jual_akhir: grandTotal,
       ref_id: defaultData?.ref_id || '',
-      items: lineItems,
+      items: items,
     };
 
     if (isEditMode && defaultData?.id) {
@@ -494,6 +513,42 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 placeholder="Setiap baris Enter otomatis jadi poin 3, 4, 5...&#10;Contoh:&#10;Pembayaran DP 50%&#10;Estimasi produksi 14 hari kerja"
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all resize-y"
               />
+            </div>
+          </div>
+
+          {/* Edit Items Panel */}
+          <div className="flex flex-col gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Daftar Item / Produk (Edit Harga & Qty)</label>
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+              {items.map((item, idx) => (
+                <div key={idx} className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div className="flex-grow min-w-[120px]">
+                    <Input 
+                      label="Nama Produk" 
+                      value={item.produk} 
+                      onChange={(e) => handleItemChange(idx, 'produk', e.target.value)} 
+                    />
+                  </div>
+                  <div className="w-full sm:w-24">
+                    <Input 
+                      label="Qty" 
+                      type="number" 
+                      min={1} 
+                      value={item.qty || ''} 
+                      onChange={(e) => handleItemChange(idx, 'qty', parseInt(e.target.value) || 0)} 
+                    />
+                  </div>
+                  <div className="w-full sm:w-36">
+                    <Input 
+                      label="Harga Satuan (Rp)" 
+                      type="number" 
+                      min={0} 
+                      value={item.hargaJualUnit || ''} 
+                      onChange={(e) => handleItemChange(idx, 'hargaJualUnit', parseInt(e.target.value) || 0)} 
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
