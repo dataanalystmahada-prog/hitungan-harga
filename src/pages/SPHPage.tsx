@@ -80,8 +80,14 @@ export const SPHPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string, status: string) => {
     e.stopPropagation();
+    
+    if (role === 'sales' && status !== 'Draft') {
+      error('Akses Ditolak', 'SPH yang sudah dikirim atau diproses tidak dapat dihapus.');
+      return;
+    }
+
     if (!confirm('Hapus dokumen penawaran SPH ini?')) return;
     try {
       await deleteSPH(id);
@@ -239,26 +245,30 @@ export const SPHPage: React.FC = () => {
       sortable: false,
       hideable: false,
       width: 90,
-      render: (row: SPH) => (
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={(e) => handleOpenPrintPreview(e, row)}
-            className="p-1 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="Lihat & Cetak SPH"
-          >
-            <Printer className="w-3.5 h-3.5 text-brand-600" />
-          </button>
-          {role !== 'sales' && (
+      render: (row: SPH) => {
+        const canDelete = role === 'admin' || row.status_sph === 'Draft';
+
+        return (
+          <div className="flex items-center justify-center gap-1">
             <button
-              onClick={(e) => handleDelete(e, row.id)}
-              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-              title="Hapus SPH"
+              onClick={(e) => handleOpenPrintPreview(e, row)}
+              className="p-1 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Lihat & Cetak SPH"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Printer className="w-3.5 h-3.5 text-brand-600" />
             </button>
-          )}
-        </div>
-      ),
+            {canDelete && (
+              <button
+                onClick={(e) => handleDelete(e, row.id, row.status_sph as string)}
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                title={role === 'sales' ? "Hapus SPH (Hanya Draft)" : "Hapus SPH"}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ], [role]);
 

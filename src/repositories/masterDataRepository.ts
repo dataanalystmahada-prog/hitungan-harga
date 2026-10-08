@@ -153,4 +153,41 @@ export class MasterDataRepository extends BaseRepository {
     }
     return true;
   }
+
+  // --- CRUD Pricing Data ---
+  public static async updateModalProduk(id: string, data: Partial<ModalProduk>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('modal_produk').update(data).eq('id', id);
+      if (error) {
+        console.error('Error updating modal_produk:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  public static async updateModalLogo(id: string, data: Partial<ModalLogo>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('modal_logo').update(data).eq('id', id);
+      if (error) {
+        console.error('Error updating modal_logo:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  public static async updateMargin(id: string, data: Partial<Margin>): Promise<boolean> {
+    if (isConfigured) {
+      const { error } = await supabase.from('margin').update(data).eq('id', id);
+      if (error) {
+        console.error('Error updating margin:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
 }

@@ -11,6 +11,9 @@ import {
   Users,
   Info,
   Lock,
+  Edit2,
+  Check,
+  X,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -39,6 +42,16 @@ export const MasterDataPage: React.FC = () => {
   // Form states for Divisi
   const [isAddingDivisi, setIsAddingDivisi] = useState(false);
   const [newDivisi, setNewDivisi] = useState<Partial<Divisi>>({});
+
+  // Form states for inline editing pricing
+  const [editingModalProduk, setEditingModalProduk] = useState<string | null>(null);
+  const [modalProdukForm, setModalProdukForm] = useState<Partial<ModalProduk>>({});
+  
+  const [editingModalLogo, setEditingModalLogo] = useState<string | null>(null);
+  const [modalLogoForm, setModalLogoForm] = useState<Partial<ModalLogo>>({});
+
+  const [editingMargin, setEditingMargin] = useState<string | null>(null);
+  const [marginForm, setMarginForm] = useState<Partial<Margin>>({});
 
   if (role !== 'admin') {
     return (
@@ -105,6 +118,36 @@ export const MasterDataPage: React.FC = () => {
     if (confirm('Yakin ingin menghapus divisi ini?')) {
       await MasterDataRepository.deleteDivisi(id);
       refetch();
+    }
+  };
+
+  const handleSaveModalProduk = async (id: string) => {
+    const success = await MasterDataRepository.updateModalProduk(id, modalProdukForm);
+    if (success) {
+      setEditingModalProduk(null);
+      refetch();
+    } else {
+      alert('Gagal menyimpan perubahan');
+    }
+  };
+
+  const handleSaveModalLogo = async (id: string) => {
+    const success = await MasterDataRepository.updateModalLogo(id, modalLogoForm);
+    if (success) {
+      setEditingModalLogo(null);
+      refetch();
+    } else {
+      alert('Gagal menyimpan perubahan');
+    }
+  };
+
+  const handleSaveMargin = async (id: string) => {
+    const success = await MasterDataRepository.updateMargin(id, marginForm);
+    if (success) {
+      setEditingMargin(null);
+      refetch();
+    } else {
+      alert('Gagal menyimpan perubahan');
     }
   };
 
@@ -218,6 +261,7 @@ export const MasterDataPage: React.FC = () => {
                 <th className="py-2.5 px-3">Nama Produk</th>
                 <th className="py-2.5 px-3 font-mono">Kode</th>
                 <th className="py-2.5 px-3 text-right">Harga Modal Dasar</th>
+                <th className="py-2.5 px-3 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -226,7 +270,39 @@ export const MasterDataPage: React.FC = () => {
                   <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">{item.produk}</td>
                   <td className="py-3 px-4 font-mono text-slate-500">{item.kode}</td>
                   <td className="py-3 px-4 font-mono text-right text-emerald-600 dark:text-emerald-400 font-bold">
-                    {formatRupiah(item.harga_modal)}
+                    {editingModalProduk === item.id ? (
+                      <input 
+                        type="number" 
+                        className="w-full text-right text-sm p-1 border rounded dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                        value={modalProdukForm.harga_modal ?? item.harga_modal} 
+                        onChange={e => setModalProdukForm({...modalProdukForm, harga_modal: Number(e.target.value)})}
+                      />
+                    ) : (
+                      formatRupiah(item.harga_modal)
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {editingModalProduk === item.id ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => handleSaveModalProduk(item.id)} className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setEditingModalProduk(null)} className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          setEditingModalProduk(item.id);
+                          setModalProdukForm({ harga_modal: item.harga_modal });
+                        }} 
+                        className="p-1 rounded text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition mx-auto block"
+                        title="Edit Harga Modal"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -251,24 +327,63 @@ export const MasterDataPage: React.FC = () => {
                 <th className="py-3 px-2 text-right">Qty 200</th>
                 <th className="py-3 px-2 text-right">Qty 300</th>
                 <th className="py-3 px-2 text-right">Qty 500</th>
+                <th className="py-3 px-2 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {modalLogo.map((item: ModalLogo) => (
-                <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                  <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-slate-100">{item.produk}</td>
-                  <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{item.proses_logo}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_12)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_24)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_50)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_75)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_100)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_150)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_200)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_300)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono">{formatRupiah(item.qty_500)}</td>
-                </tr>
-              ))}
+              {modalLogo.map((item: ModalLogo) => {
+                const isEditing = editingModalLogo === item.id;
+                
+                return (
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-slate-100">{item.produk}</td>
+                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{item.proses_logo}</td>
+                    {[12, 24, 50, 75, 100, 150, 200, 300, 500].map(qty => {
+                      const key = `qty_${qty}` as keyof ModalLogo;
+                      return (
+                        <td key={qty} className="py-2.5 px-2 text-right font-mono">
+                          {isEditing ? (
+                            <input 
+                              type="number" 
+                              className="w-16 text-right text-xs p-1 border rounded dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                              value={(modalLogoForm as any)[key] ?? item[key]} 
+                              onChange={e => setModalLogoForm({...modalLogoForm, [key]: Number(e.target.value)})}
+                            />
+                          ) : (
+                            formatRupiah(item[key] as number)
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="py-2.5 px-2 text-center">
+                      {isEditing ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => handleSaveModalLogo(item.id)} className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition">
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => setEditingModalLogo(null)} className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setEditingModalLogo(item.id);
+                            setModalLogoForm({ 
+                              qty_12: item.qty_12, qty_24: item.qty_24, qty_50: item.qty_50, 
+                              qty_75: item.qty_75, qty_100: item.qty_100, qty_150: item.qty_150, 
+                              qty_200: item.qty_200, qty_300: item.qty_300, qty_500: item.qty_500 
+                            });
+                          }} 
+                          className="p-1 rounded text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition mx-auto block"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </Card>
@@ -290,24 +405,63 @@ export const MasterDataPage: React.FC = () => {
                 <th className="py-3 px-2 text-center">200 pcs</th>
                 <th className="py-3 px-2 text-center">300 pcs</th>
                 <th className="py-3 px-2 text-center">500 pcs</th>
+                <th className="py-3 px-2 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {margin.map((item: Margin) => (
-                <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                  <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-slate-100">{item.produk}</td>
-                  <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{item.proses_logo}</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_12}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_24}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_50}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_75}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_100}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_150}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_200}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_300}%</td>
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600">{item.qty_500}%</td>
-                </tr>
-              ))}
+              {margin.map((item: Margin) => {
+                const isEditing = editingMargin === item.id;
+
+                return (
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-slate-100">{item.produk}</td>
+                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{item.proses_logo}</td>
+                    {[12, 24, 50, 75, 100, 150, 200, 300, 500].map(qty => {
+                      const key = `qty_${qty}` as keyof Margin;
+                      return (
+                        <td key={qty} className="py-2.5 px-2 text-center font-bold text-amber-600">
+                          {isEditing ? (
+                            <input 
+                              type="number" 
+                              className="w-12 text-center text-xs p-1 border rounded dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                              value={(marginForm as any)[key] ?? item[key]} 
+                              onChange={e => setMarginForm({...marginForm, [key]: Number(e.target.value)})}
+                            />
+                          ) : (
+                            `${item[key]}%`
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="py-2.5 px-2 text-center">
+                      {isEditing ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => handleSaveMargin(item.id)} className="p-1 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition">
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => setEditingMargin(null)} className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setEditingMargin(item.id);
+                            setMarginForm({ 
+                              qty_12: item.qty_12, qty_24: item.qty_24, qty_50: item.qty_50, 
+                              qty_75: item.qty_75, qty_100: item.qty_100, qty_150: item.qty_150, 
+                              qty_200: item.qty_200, qty_300: item.qty_300, qty_500: item.qty_500 
+                            });
+                          }} 
+                          className="p-1 rounded text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition mx-auto block"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </Card>
