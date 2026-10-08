@@ -53,15 +53,7 @@ export const SyncMonitorPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            Sync Engine & Pipeline Audit Logs
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Pipeline sinkronisasi satu arah: Google Spreadsheet ➔ Google Apps Script ➔ Supabase ➔ React.
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4">
 
         <Button
           variant="outline"

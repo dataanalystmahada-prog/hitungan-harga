@@ -391,14 +391,24 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 print:gap-0 print:block">
         {/* Settings Panel */}
-        <div className="print:hidden flex flex-col gap-2.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs overflow-y-auto max-h-[75vh]">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-start">
-            <Select
-              label="Kop Brand Perusahaan"
-              options={brands.map(b => ({ label: b.nama_brand, value: b.nama_brand }))}
-              value={selectedBrandName}
-              onChange={(e) => setSelectedBrandName(e.target.value)}
-            />
+        <div className="print:hidden flex flex-col gap-4 p-3 sm:p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs overflow-y-auto max-h-[75vh]">
+          {/* Group 1: Informasi Dasar */}
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+              <Select
+                label="Kop Brand Perusahaan"
+                options={brands.map(b => ({ label: b.nama_brand, value: b.nama_brand }))}
+                value={selectedBrandName}
+                onChange={(e) => setSelectedBrandName(e.target.value)}
+              />
+              <Select
+                label="Sales In-Charge"
+                options={users.map(u => ({ label: u.nama === user?.nama ? `${u.nama} (Akun Anda)` : u.nama, value: u.nama }))}
+                value={salesName}
+                onChange={(e) => setSalesName(e.target.value)}
+                disabled={role === 'sales'}
+              />
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                 Nama Klien / Perusahaan
@@ -411,16 +421,48 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all resize-y"
               />
             </div>
-            <Select
-              label="Sales In-Charge"
-              options={users.map(u => ({ label: u.nama === user?.nama ? `${u.nama} (Akun Anda)` : u.nama, value: u.nama }))}
-              value={salesName}
-              onChange={(e) => setSalesName(e.target.value)}
-              disabled={role === 'sales'}
-            />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50">
+          <div className="border-t border-slate-200 dark:border-slate-700/50"></div>
+
+          {/* Group 2: Pengaturan Harga & Biaya */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <Input
+                  label="Biaya Pengiriman/Ongkir (Rp)"
+                  type="number"
+                  min={0}
+                  value={ongkir || ''}
+                  onChange={(e) => setOngkir(parseInt(e.target.value) || 0)}
+                />
+                <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                  <input type="checkbox" checked={showOngkir} onChange={(e) => setShowOngkir(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                  <span>Tampilkan Ongkir di SPH</span>
+                </label>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <Select
+                  label="PPN (11%)"
+                  options={[
+                    { label: 'Tidak (Non-PPN)', value: 'tidak' },
+                    { label: 'Ya (PPN 11%)', value: 'ya' },
+                  ]}
+                  value={isPpn ? 'ya' : 'tidak'}
+                  onChange={(e) => {
+                    const val = e.target.value === 'ya';
+                    setIsPpn(val);
+                    if (val) setShowPpn(true);
+                  }}
+                />
+                <label className={`flex items-center gap-1.5 text-[11px] font-medium select-none ${isPpn ? 'text-slate-600 dark:text-slate-300 cursor-pointer' : 'text-slate-400 opacity-60'}`}>
+                  <input type="checkbox" checked={showPpn && isPpn} disabled={!isPpn} onChange={(e) => setShowPpn(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                  <span>Tampilkan PPN di SPH</span>
+                </label>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1">
               <Input
                 label="Diskon (Rp)"
@@ -430,67 +472,36 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 value={globalDiskon || ''}
                 onChange={(e) => setGlobalDiskon(parseInt(e.target.value) || 0)}
               />
-              <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none mb-1">
                 <input type="checkbox" checked={showDiskon} onChange={(e) => setShowDiskon(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
                 <span>Tampilkan Diskon di SPH</span>
               </label>
               {role === 'sales' && (
-                <div className="mt-1 p-2 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-500/30 text-[11px]">
-                  <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-amber-200">
+                <div className="p-2 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-500/30 text-[11px]">
+                  <div className="flex flex-col gap-1">
                     <span className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold">
                       Max Diskon (Kategori A - {maxDiskonInfo.persentase}%):
                     </span>
-                    <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
+                    <span className="font-mono font-bold text-amber-700 dark:text-amber-300 text-sm">
                       {formatRupiah(maxDiskonInfo.maxNominal)}
                     </span>
                   </div>
-                  <p className="text-[10px] italic text-slate-600 dark:text-slate-300 mt-0.5">
+                  <p className="text-[10px] italic text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
                     "{pesanDiskon}"
                   </p>
                 </div>
               )}
             </div>
-
-            <div className="flex flex-col gap-1">
-              <Input
-                label="Biaya Pengiriman/Ongkir (Rp)"
-                type="number"
-                min={0}
-                value={ongkir || ''}
-                onChange={(e) => setOngkir(parseInt(e.target.value) || 0)}
-              />
-              <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer select-none">
-                <input type="checkbox" checked={showOngkir} onChange={(e) => setShowOngkir(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-                <span>Tampilkan Ongkir di SPH</span>
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <Select
-                label="PPN (11%)"
-                options={[
-                  { label: 'Tidak (Non-PPN)', value: 'tidak' },
-                  { label: 'Ya (PPN 11%)', value: 'ya' },
-                ]}
-                value={isPpn ? 'ya' : 'tidak'}
-                onChange={(e) => {
-                  const val = e.target.value === 'ya';
-                  setIsPpn(val);
-                  if (val) setShowPpn(true);
-                }}
-              />
-              <label className={`flex items-center gap-1.5 text-[11px] font-medium select-none ${isPpn ? 'text-slate-600 dark:text-slate-300 cursor-pointer' : 'text-slate-400 opacity-60'}`}>
-                <input type="checkbox" checked={showPpn && isPpn} disabled={!isPpn} onChange={(e) => setShowPpn(e.target.checked)} className="w-3.5 h-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-                <span>Tampilkan PPN di SPH</span>
-              </label>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/50">
+          <div className="border-t border-slate-200 dark:border-slate-700/50"></div>
+
+          {/* Group 3: Catatan & Syarat */}
+          <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Catatan / Deskripsi Project</label>
               <textarea
-                rows={2}
+                rows={3}
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}
                 placeholder="Tulis deskripsi project (Tekan Enter untuk baris baru)..."
@@ -507,7 +518,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
                 </label>
               </div>
               <textarea
-                rows={2}
+                rows={4}
                 value={keteranganManual}
                 onChange={(e) => setKeteranganManual(e.target.value)}
                 placeholder="Setiap baris Enter otomatis jadi poin 3, 4, 5...&#10;Contoh:&#10;Pembayaran DP 50%&#10;Estimasi produksi 14 hari kerja"
@@ -555,22 +566,22 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
 
         {/* Printable SPH Document Preview */}
         <div className="overflow-y-auto max-h-[75vh] print:max-h-none print:overflow-visible print:bg-transparent bg-slate-100/50 dark:bg-slate-800/30 p-2 sm:p-4 rounded-xl flex justify-center">
-          <div id="sph-print-document" className="printable-doc sph-document bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none w-full max-w-[210mm]">
+          <div id="sph-print-document" className="printable-doc sph-document bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none w-full max-w-[210mm] print:max-w-none">
             {/* Header */}
-          <div className="flex justify-between items-start pb-2">
-            <div>
-              <h1 className="font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight uppercase leading-tight">{activeBrand?.nama_brand || 'HELLOSWAG'}</h1>
-              <p className="text-xs text-slate-600 mt-1">{activeBrand?.alamat || 'Jl. Kiara Sari I No.2. Sekejati. Kec. Buahbatu. Kota Bandung. Jawa Barat 40289'}</p>
-              <p className="text-xs text-slate-600 mt-0.5">
+          <div className="flex justify-between items-start pb-2 gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight uppercase leading-tight break-words">{activeBrand?.nama_brand || 'HELLOSWAG'}</h1>
+              <p className="text-[11px] sm:text-xs text-slate-600 mt-1 pr-2">{activeBrand?.alamat || 'Jl. Kiara Sari I No.2. Sekejati. Kec. Buahbatu. Kota Bandung. Jawa Barat 40289'}</p>
+              <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5">
                 {activeBrand?.no_telp_kantor ? `Telp: ${activeBrand.no_telp_kantor} | ` : ''}
                 {activeBrand?.no_telp_wa ? `WA: ${activeBrand.no_telp_wa} | ` : ''}
                 {activeBrand?.email ? `Email: ${activeBrand.email}` : ''}
               </p>
             </div>
-            <div className="text-right flex flex-col items-end">
-              <span className="inline-block px-3 py-1 bg-slate-900 text-white font-bold text-[11px] uppercase tracking-wider rounded">SURAT PENAWARAN HARGA</span>
-              <p className="text-xs font-mono font-bold text-slate-800 mt-1.5">{noSPH || 'SPH 0001/MH/VIII/2026'}</p>
-              <p className="text-xs text-slate-600 mt-0.5">{dateFormatted}</p>
+            <div className="text-right flex flex-col items-end shrink-0 max-w-[200px] sm:max-w-[250px]">
+              <span className="inline-block px-3 py-1 bg-slate-900 text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider rounded text-center">SURAT PENAWARAN HARGA</span>
+              <p className="text-[11px] sm:text-xs font-mono font-bold text-slate-800 mt-1.5">{noSPH || 'SPH 0001/MH/VIII/2026'}</p>
+              <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5">{dateFormatted}</p>
             </div>
           </div>
 

@@ -279,15 +279,7 @@ export const SPHPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-            Surat Penawaran Harga (SPH)
-          </h2>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Kelola dokumen penawaran harga resmi perusahaan yang terhubung langsung ke database Supabase.
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-2.5">
       </div>
 
       {/* KPI Metric Summary Cards */}

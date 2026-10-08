@@ -16,16 +16,7 @@ import {
 export const AturanAplikasiPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <ShieldCheck className="w-6 h-6 text-brand-500" />
-          Kumpulan Aturan Sistem
-        </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Daftar regulasi, formula, dan aturan logika baku yang diterapkan secara otomatis di dalam aplikasi Enterprise Pricing.
-        </p>
-      </div>
+
 
       {/* Rules Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

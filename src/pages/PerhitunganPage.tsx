@@ -553,16 +553,7 @@ export const PerhitunganPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-3.5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-brand-600" />
-            Database Perhitungan Harga
-          </h2>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Daftar kalkulasi harga aktif. Centang baris untuk membuat SPH, data akan otomatis dipindahkan ke SPH setelah disimpan.
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-3">
 
         <div className="flex items-center gap-2">
           {selectedIds.size > 0 && (

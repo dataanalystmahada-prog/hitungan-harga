@@ -154,15 +154,7 @@ export const MasterDataPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       {/* Header Info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-            Master Data & Referensi Spreadsheet
-          </h2>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Data master tersinkronisasi dari Google Spreadsheet ke Supabase.
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-3">
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/30 text-[11px] font-semibold">
