@@ -196,6 +196,7 @@ export class SPHRepository extends BaseRepository {
         ...row,
         nama_pt: (row.nama_pt || cached?.nama_pt || '').trim(),
         items: row.items || cached?.items,
+        photos: (row as any).photos || cached?.photos,
         ongkir: row.ongkir !== undefined ? row.ongkir : cached?.ongkir,
         ppn: row.ppn !== undefined ? row.ppn : cached?.ppn,
         is_ppn: row.is_ppn !== undefined ? row.is_ppn : cached?.is_ppn,
@@ -242,6 +243,7 @@ export class SPHRepository extends BaseRepository {
       saveLocalSphMetaCache(newRecord.id, {
         nama_pt: newRecord.nama_pt,
         items: newRecord.items,
+        photos: (newRecord as any).photos,
         deskripsi: newRecord.deskripsi,
         brand: newRecord.brand,
         ongkir: newRecord.ongkir,
@@ -276,6 +278,7 @@ export class SPHRepository extends BaseRepository {
         if (err.message && (err.message.includes('items') || err.message.includes('column'))) {
           const fallback = { ...newRecord };
           delete fallback.items;
+          delete (fallback as any).photos;
           delete fallback.ongkir;
           delete fallback.ppn;
           delete fallback.is_ppn;
@@ -290,6 +293,7 @@ export class SPHRepository extends BaseRepository {
             ...data, 
             nama_pt: newRecord.nama_pt, 
             items: newRecord.items,
+            photos: (newRecord as any).photos,
             ongkir: newRecord.ongkir,
             ppn: newRecord.ppn,
             is_ppn: newRecord.is_ppn,
@@ -318,6 +322,7 @@ export class SPHRepository extends BaseRepository {
     saveLocalSphMetaCache(id, {
       nama_pt: updates.nama_pt,
       items: updates.items,
+      photos: (updates as any).photos,
       deskripsi: updates.deskripsi,
       brand: updates.brand,
       ongkir: updates.ongkir,
@@ -356,6 +361,7 @@ export class SPHRepository extends BaseRepository {
         if (err.message && (err.message.includes('items') || err.message.includes('column'))) {
           const fallback = { ...updatedPayload };
           delete fallback.items;
+          delete (fallback as any).photos;
           delete fallback.ongkir;
           delete fallback.ppn;
           delete fallback.is_ppn;

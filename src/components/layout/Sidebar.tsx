@@ -137,7 +137,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
         {/* User Profile, Theme & Sync Status */}
         {!isCollapsed && (
           <div className="mx-2 mb-2 p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 flex flex-col gap-3">
-            <div className="flex items-center gap-2.5">
+            <div className="w-full">
+              <SyncStatusBar />
+            </div>
+            <div className="flex items-center gap-2.5 border-t border-slate-700/50 pt-3">
               <div className="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-[11px] shadow-sm shadow-brand-500/20 flex-shrink-0">
                 {initials}
               </div>
@@ -156,9 +159,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
               >
                 {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
               </button>
-            </div>
-            <div className="border-t border-slate-700/50 pt-3 w-full">
-              <SyncStatusBar />
             </div>
           </div>
         )}

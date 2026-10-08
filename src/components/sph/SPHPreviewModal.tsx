@@ -43,6 +43,7 @@ export interface SPHPreviewModalProps {
     ref_id?: string;
     items?: SPHItemDetail[];
     sourceCalculationIds?: string[];
+    photos?: string[];
   };
   sourceCalculationIds?: string[];
   onSavePerhitunganBeforePrint?: (
@@ -113,6 +114,24 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
   );
 
   const [items, setItems] = useState<SPHItemDetail[]>([]);
+  const [photos, setPhotos] = useState<string[]>(defaultData?.photos || []);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files).slice(0, 6 - photos.length);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setPhotos(prev => [...prev, event.target!.result as string].slice(0, 6));
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      // reset input value so the same file can be uploaded again if removed
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     if (isOpen && defaultData) {
@@ -195,6 +214,9 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
             }
           ];
       setItems(initialItems);
+      if (defaultData.photos) {
+        setPhotos(defaultData.photos);
+      }
     }
   }, [isOpen, defaultData, user, role]);
 
@@ -279,6 +301,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
       harga_jual_akhir: grandTotal,
       ref_id: defaultData?.ref_id || '',
       items: items,
+      photos: photos,
     };
 
     if (isEditMode && defaultData?.id) {
@@ -342,6 +365,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
         harga_jual_akhir: grandTotal,
         ref_id: defaultData?.ref_id || '',
         items: items,
+        photos: photos,
       };
 
       if (isEditMode && defaultData?.id) {
@@ -562,6 +586,35 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Lampiran Panel */}
+          <div className="flex flex-col gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Lampiran Foto / Gambar (Maks 6)</label>
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*" 
+              onChange={handlePhotoUpload}
+              disabled={photos.length >= 6}
+              className="text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/30 dark:file:text-brand-400 cursor-pointer disabled:opacity-50"
+            />
+            {photos.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {photos.map((p, idx) => (
+                  <div key={idx} className="relative w-14 h-14 rounded-lg border border-slate-200 dark:border-slate-700 group overflow-hidden bg-slate-50 dark:bg-slate-900">
+                    <img src={p} className="w-full h-full object-cover" alt="Lampiran" />
+                    <button 
+                      onClick={() => setPhotos(photos.filter((_, i) => i !== idx))} 
+                      className="absolute top-0.5 right-0.5 bg-rose-500 text-white rounded-md w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                      title="Hapus gambar"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Printable SPH Document Preview */}
@@ -705,6 +758,21 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
               <p className="text-[10px] text-slate-500 mt-0.5">Divisi Penjualan & Kemitraan</p>
             </div>
           </div>
+
+          {/* Lampiran Page (only shown if there are photos) */}
+          {photos.length > 0 && (
+            <div className="break-before-page pt-8 print:pt-12">
+              <h2 className="font-bold text-lg text-slate-900 uppercase mb-6 text-center border-b-2 border-slate-900 pb-2 inline-block mx-auto flex justify-center w-full max-w-xs">LAMPIRAN - LAMPIRAN</h2>
+              <div className="grid grid-cols-2 gap-6 mt-4">
+                {photos.map((photo, i) => (
+                  <div key={i} className="flex flex-col items-center p-2 border border-slate-200 rounded-lg bg-slate-50 break-inside-avoid shadow-sm print:shadow-none">
+                    <img src={photo} alt={`Lampiran ${i+1}`} className="w-full h-[250px] object-contain rounded" />
+                    <p className="text-[10px] font-bold text-slate-500 mt-3 uppercase tracking-wider">Gambar {i+1}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         </div>
       </div>
