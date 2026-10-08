@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../contexts/AuthContext';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { SyncStatusBar } from '../sync/SyncStatusBar';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -42,7 +45,17 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
-  const { role, logout } = useAuth();
+  const { role, logout, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
+  const initials = user?.nama
+    ? user.nama
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(n => n[0].toUpperCase())
+        .join('')
+    : 'US';
   
   const filteredNavItems = NAV_ITEMS.filter(item => {
     if (role === 'admin') return true;
@@ -121,16 +134,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       </div>
 
       <div className="flex flex-col mt-auto">
-        {/* Bottom Status Card */}
+        {/* User Profile, Theme & Sync Status */}
         {!isCollapsed && (
-          <div className="p-2.5 mx-2 mb-2 rounded-lg bg-slate-800/70 border border-slate-700/70">
-            <div className="flex items-center justify-between text-[11px] text-slate-300 mb-0.5">
-              <span className="font-semibold">Enterprise Core</span>
-              <span className="text-[9px] text-emerald-400 font-mono">v2.4</span>
+          <div className="mx-2 mb-2 p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-[11px] shadow-sm shadow-brand-500/20 flex-shrink-0">
+                {initials}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[11px] font-bold text-slate-100 truncate">
+                  {user?.nama || 'Sales Admin'}
+                </span>
+                <span className="text-[9px] text-slate-400 uppercase tracking-wider truncate">
+                  {user?.role || role || 'Sales PIC'}
+                </span>
+              </div>
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors border border-slate-700/60"
+                title={`Ganti ke Tema ${theme === 'dark' ? 'Terang' : 'Gelap'}`}
+              >
+                {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
+              </button>
             </div>
-            <p className="text-[10px] text-slate-400 leading-normal">
-              RPC High-performance active.
-            </p>
+            <div className="border-t border-slate-700/50 pt-3 w-full">
+              <SyncStatusBar />
+            </div>
           </div>
         )}
 

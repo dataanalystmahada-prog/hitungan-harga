@@ -12,17 +12,17 @@ export const SyncStatusBar: React.FC = () => {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm select-none"
+        className="flex items-center w-full gap-2 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-slate-900/50 hover:bg-slate-900 dark:bg-slate-950/50 dark:hover:bg-slate-900 text-slate-300 transition-all border border-slate-700/50 shadow-sm select-none"
         title="Buka Sinkronisasi Monitor"
       >
-        <span className="relative flex h-2 w-2">
+        <span className="relative flex h-2 w-2 flex-shrink-0">
           {isHealthy && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
           <span className={`relative inline-flex rounded-full h-2 w-2 ${isHealthy ? 'bg-emerald-500' : 'bg-amber-500'}`} />
         </span>
-        <span className="hidden md:inline text-[11px]">
+        <span className="flex-1 text-left truncate">
           {isSyncing ? 'Menyinkronkan...' : `Sync: ${lastSync ? formatTimeAgo(lastSync.created_at) : 'Aktif'}`}
         </span>
-        <RefreshCw className={`w-3 h-3 text-slate-400 ${isSyncing ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`w-3 h-3 flex-shrink-0 text-slate-400 ${isSyncing ? 'animate-spin text-brand-400' : ''}`} />
       </button>
 
       <SyncMonitorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

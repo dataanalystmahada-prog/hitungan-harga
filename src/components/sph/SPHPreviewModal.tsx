@@ -391,7 +391,7 @@ export const SPHPreviewModal: React.FC<SPHPreviewModalProps> = ({
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 print:gap-0 print:block">
         {/* Settings Panel */}
-        <div className="print:hidden flex flex-col gap-4 p-3 sm:p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs overflow-y-auto max-h-[75vh]">
+        <div className="print:hidden flex flex-col gap-4 p-3 sm:p-5 bg-slate-100 dark:bg-slate-800/90 rounded-xl border-2 border-slate-300 dark:border-slate-600 shadow-inner text-xs overflow-y-auto max-h-[75vh]">
           {/* Group 1: Informasi Dasar */}
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
