@@ -111,6 +111,7 @@ export interface SPH {
   show_keterangan?: boolean;
   harga_jual_akhir: number;
   items?: any[];
+  photos?: string[];
   created_at?: string;
   updated_at?: string;
   synced_at?: string;
