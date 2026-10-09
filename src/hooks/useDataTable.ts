@@ -22,7 +22,8 @@ export function useDataTable(options: UseDataTableOptions = {}) {
     order: options.initialSortOrder || 'DESC',
   });
 
-  const [filters, setFilters] = useState<Record<string, any>>(options.initialFilters || {});
+  const [initialFilters] = useState<Record<string, any>>(options.initialFilters || {});
+  const [filters, setFilters] = useState<Record<string, any>>(initialFilters);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({});
 
   const handleSort = useCallback((column: string) => {
@@ -55,10 +56,10 @@ export function useDataTable(options: UseDataTableOptions = {}) {
   }, []);
 
   const handleClearFilters = useCallback(() => {
-    setFilters({});
+    setFilters(initialFilters);
     setSearch('');
     setPage(1);
-  }, []);
+  }, [initialFilters]);
 
   const toggleColumnVisibility = useCallback((columnKey: string) => {
     setVisibleColumns(prev => ({

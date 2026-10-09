@@ -315,67 +315,117 @@ export const InteractiveKalkulator: React.FC = () => {
               </div>
 
               {/* Item Card Body */}
-              <div className="p-3.5">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                  {/* Select Produk */}
-                  <div className="md:col-span-4">
-                    <Select
-                      label="Kategori Produk"
-                      options={uniqueProdukList.map(p => ({ label: p, value: p }))}
-                      value={item.produk}
-                      onChange={(e) => handleItemProductChange(item.id, e.target.value)}
-                    />
+              <div className="p-3.5 flex flex-col gap-3">
+                <div className="flex flex-col xl:flex-row gap-3 items-end">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-10 gap-2.5 w-full">
+                    {/* Select Produk */}
+                    <div className="md:col-span-3">
+                      <Select
+                        label="Kategori Produk"
+                        options={uniqueProdukList.map(p => ({ label: p, value: p }))}
+                        value={item.produk}
+                        onChange={(e) => handleItemProductChange(item.id, e.target.value)}
+                      />
+                    </div>
+
+                    {/* Select Kode / Model */}
+                    <div className="md:col-span-3">
+                      <Select
+                        label="Varian / Kode Model"
+                        options={
+                          kodes.length > 0
+                            ? kodes.map(k => ({
+                                label: k.kode,
+                                value: k.kode
+                              }))
+                            : [{ label: 'Standard / Default', value: '' }]
+                        }
+                        value={item.kode || ''}
+                        onChange={(e) => updateItem(item.id, { kode: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Select Logo */}
+                    <div className="md:col-span-2">
+                      <Select
+                        label="Proses Logo & Branding"
+                        options={
+                          logos.length > 0
+                            ? logos.map(l => ({ label: l, value: l }))
+                            : [{ label: 'Tanpa Logo / Polos', value: '' }]
+                        }
+                        value={item.proses_logo || ''}
+                        onChange={(e) => updateItem(item.id, { proses_logo: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Quantity & Discount */}
+                    <div className="md:col-span-2">
+                      <Input
+                        label="Qty (Pcs)"
+                        type="number"
+                        min={0}
+                        value={item.qty === 0 ? '' : item.qty}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(item.id, { qty: val === '' ? 0 : Math.max(0, parseInt(val) || 0) });
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  {/* Select Kode / Model */}
-                  <div className="md:col-span-3">
-                    <Select
-                      label="Varian / Kode Model"
-                      options={
-                        kodes.length > 0
-                          ? kodes.map(k => ({
-                              label: k.kode,
-                              value: k.kode
-                            }))
-                          : [{ label: 'Standard / Default', value: '' }]
-                      }
-                      value={item.kode || ''}
-                      onChange={(e) => updateItem(item.id, { kode: e.target.value })}
-                    />
-                  </div>
-
-                  {/* Select Logo */}
-                  <div className="md:col-span-3">
-                    <Select
-                      label="Proses Logo & Branding"
-                      options={
-                        logos.length > 0
-                          ? logos.map(l => ({ label: l, value: l }))
-                          : [{ label: 'Tanpa Logo / Polos', value: '' }]
-                      }
-                      value={item.proses_logo || ''}
-                      onChange={(e) => updateItem(item.id, { proses_logo: e.target.value })}
-                    />
-                  </div>
-
-                  {/* Quantity & Discount */}
-                  <div className="md:col-span-2">
-                    <Input
-                      label="Qty (Pcs)"
-                      type="number"
-                      min={0}
-                      value={item.qty === 0 ? '' : item.qty}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateItem(item.id, { qty: val === '' ? 0 : Math.max(0, parseInt(val) || 0) });
-                      }}
-                    />
-                  </div>
+                  {/* Live Item Calculation Badges */}
+                  {calc && (
+                    <div className="w-full xl:w-auto flex-shrink-0 grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs min-h-[58px] items-center">
+                      {role !== 'sales' && (
+                        <>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block leading-tight">Modal Produk:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
+                              {formatRupiah(calc.modalProdukUnit)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block leading-tight">Modal Logo:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
+                              {formatRupiah(calc.modalLogoUnit)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight">Margin Target:</span>
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400 text-[11px]">
+                          {calc.marginPersen}%
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight">Harga Jual/Pcs:</span>
+                        <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                          {formatRupiah(calc.hargaJualNetUnit)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight">Subtotal ({item.qty}):</span>
+                        <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                          {formatRupiah(calc.totalHargaJualNet)}
+                        </span>
+                      </div>
+                      {role !== 'sales' && (
+                        <div>
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium leading-tight">Est. Untung:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
+                            +{formatRupiah(calc.keuntunganTotal)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Quantity Tier Buttons */}
                 {role !== 'sales' && (
-                  <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/40">
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800/40">
                     <span className="text-[11px] font-medium text-slate-400 mr-1">Quick Tier:</span>
                     {QUANTITY_TIERS.map(tier => (
                       <button
@@ -394,54 +444,6 @@ export const InteractiveKalkulator: React.FC = () => {
                         {tier} pcs
                       </button>
                     ))}
-                  </div>
-                )}
-
-                {/* Live Item Calculation Badges */}
-                {calc && (
-                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs">
-                    {role !== 'sales' && (
-                      <>
-                        <div>
-                          <span className="text-[10px] text-slate-400 block">Modal Produk:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-xs">
-                            {formatRupiah(calc.modalProdukUnit)}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 block">Modal Logo:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-xs">
-                            {formatRupiah(calc.modalLogoUnit)}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Margin Target:</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">
-                        {calc.marginPersen}%
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Harga Jual / Pcs:</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
-                        {formatRupiah(calc.hargaJualNetUnit)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Subtotal ({item.qty} pcs):</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
-                        {formatRupiah(calc.totalHargaJualNet)}
-                      </span>
-                    </div>
-                    {role !== 'sales' && (
-                      <div>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-xs">
-                          +{formatRupiah(calc.keuntunganTotal)}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

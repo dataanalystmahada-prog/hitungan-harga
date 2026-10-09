@@ -48,26 +48,33 @@ export const SPHPage: React.FC = () => {
   }>({ isOpen: false });
 
   // Filter configurations
-  const filterConfigs: FilterConfig[] = useMemo(() => [
-    {
-      key: 'status',
-      label: 'Status Penawaran',
-      type: 'select',
-      options: ALL_STATUSES.map(st => ({ label: st, value: st })),
-    },
-    {
-      key: 'brand',
-      label: 'Brand Perusahaan',
-      type: 'select',
-      options: brands.map((b: Brand) => ({ label: b.nama_brand, value: b.nama_brand })),
-    },
-    {
-      key: 'sales',
-      label: 'Sales PIC',
-      type: 'select',
-      options: users.map((u: UserSales) => ({ label: u.nama, value: u.nama })),
-    },
-  ], [brands, users]);
+  const filterConfigs: FilterConfig[] = useMemo(() => {
+    const configs: FilterConfig[] = [
+      {
+        key: 'status',
+        label: 'Status Penawaran',
+        type: 'select',
+        options: ALL_STATUSES.map(st => ({ label: st, value: st })),
+      },
+      {
+        key: 'brand',
+        label: 'Brand Perusahaan',
+        type: 'select',
+        options: brands.map((b: Brand) => ({ label: b.nama_brand, value: b.nama_brand })),
+      },
+    ];
+
+    if (role !== 'sales') {
+      configs.push({
+        key: 'sales',
+        label: 'Sales PIC',
+        type: 'select',
+        options: users.map((u: UserSales) => ({ label: u.nama, value: u.nama })),
+      });
+    }
+
+    return configs;
+  }, [brands, users, role]);
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>, id: string) => {
     e.stopPropagation();

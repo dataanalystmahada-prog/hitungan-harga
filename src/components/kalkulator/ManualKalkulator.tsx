@@ -296,162 +296,153 @@ export const ManualKalkulator: React.FC = () => {
                   />
                 </div>
 
-                {/* Row 2: Modal & Margin & Qty */}
-                <div className={`grid grid-cols-2 gap-3 ${role !== 'sales' ? 'md:grid-cols-5' : 'md:grid-cols-2'}`}>
-                  {role !== 'sales' ? (
-                    <>
+                {/* Row 2: Modal & Margin & Qty & Badges */}
+                <div className="flex flex-col xl:flex-row gap-3 items-end">
+                  <div className={`flex-1 grid grid-cols-2 gap-3 w-full ${role !== 'sales' ? 'md:grid-cols-5' : 'md:grid-cols-2'}`}>
+                    {role !== 'sales' ? (
+                      <>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                            Modal Produk (Rp)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.modalProduk || ''}
+                            placeholder="0"
+                            onChange={(e) => updateItem(item.id, { modalProduk: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                            Modal Logo (Rp)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.modalLogo || ''}
+                            placeholder="0"
+                            onChange={(e) => updateItem(item.id, { modalLogo: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                            Tipe Margin
+                          </label>
+                          <select
+                            value={item.marginType}
+                            onChange={(e) => updateItem(item.id, { marginType: e.target.value as 'multiplier' | 'persen' })}
+                            className="w-full px-2.5 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          >
+                            <option value="multiplier">Multiplier (×1.70)</option>
+                            <option value="persen">Persen (35%)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                            {item.marginType === 'multiplier' ? 'Multiplier (×)' : 'Margin (%)'}
+                          </label>
+                          <input
+                            type="number"
+                            step={item.marginType === 'multiplier' ? 0.01 : 1}
+                            min={item.marginType === 'multiplier' ? 1.01 : 1}
+                            max={item.marginType === 'multiplier' ? 10 : 99}
+                            value={item.marginValue}
+                            onChange={(e) => updateItem(item.id, { marginValue: parseFloat(e.target.value) || (item.marginType === 'multiplier' ? 1.5 : 25) })}
+                            className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+                      </>
+                    ) : (
                       <div>
                         <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                          Modal Produk (Rp)
+                          Harga Jual Net (Rp)
                         </label>
                         <input
                           type="number"
                           min={0}
-                          value={item.modalProduk || ''}
+                          value={item.manualHargaJual || ''}
                           placeholder="0"
-                          onChange={(e) => updateItem(item.id, { modalProduk: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) => updateItem(item.id, { manualHargaJual: parseFloat(e.target.value) || 0 })}
                           className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
+                    )}
 
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                          Modal Logo (Rp)
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={item.modalLogo || ''}
-                          placeholder="0"
-                          onChange={(e) => updateItem(item.id, { modalLogo: parseFloat(e.target.value) || 0 })}
-                          className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                          Tipe Margin
-                        </label>
-                        <select
-                          value={item.marginType}
-                          onChange={(e) => updateItem(item.id, { marginType: e.target.value as 'multiplier' | 'persen' })}
-                          className="w-full px-2.5 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        >
-                          <option value="multiplier">Multiplier (×1.70)</option>
-                          <option value="persen">Persen (35%)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                          {item.marginType === 'multiplier' ? 'Multiplier (×)' : 'Margin (%)'}
-                        </label>
-                        <input
-                          type="number"
-                          step={item.marginType === 'multiplier' ? 0.01 : 1}
-                          min={item.marginType === 'multiplier' ? 1.01 : 1}
-                          max={item.marginType === 'multiplier' ? 10 : 99}
-                          value={item.marginValue}
-                          onChange={(e) => updateItem(item.id, { marginValue: parseFloat(e.target.value) || (item.marginType === 'multiplier' ? 1.5 : 25) })}
-                          className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                        />
-                      </div>
-                    </>
-                  ) : (
                     <div>
                       <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                        Harga Jual Net (Rp)
+                        Qty (Pcs)
                       </label>
                       <input
                         type="number"
                         min={0}
-                        value={item.manualHargaJual || ''}
-                        placeholder="0"
-                        onChange={(e) => updateItem(item.id, { manualHargaJual: parseFloat(e.target.value) || 0 })}
+                        value={item.qty === 0 ? '' : item.qty}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(item.id, { qty: val === '' ? 0 : Math.max(0, parseInt(val) || 0) });
+                        }}
                         className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </div>
+                  </div>
+
+                  {/* Live Result Badges */}
+                  {(item.totalModal !== undefined) && (
+                    <div className="w-full xl:w-auto flex-shrink-0 grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-xs min-h-[58px] items-center">
+                      {role !== 'sales' && (
+                        <>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block leading-tight">Total Modal:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
+                              {formatRupiah(item.totalModal || 0)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block leading-tight">
+                              {item.marginType === 'multiplier' ? `Multiplier:` : `Margin:`}
+                            </span>
+                            <span className="font-bold text-amber-600 dark:text-amber-400 text-[11px]">
+                              {item.marginPersen?.toFixed(1)}% margin
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      {role === 'sales' && (
+                        <div>
+                          <span className="text-[10px] text-slate-400 block leading-tight">Margin Target:</span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400 text-[11px]">
+                            {item.marginPersen?.toFixed(1)}% margin
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight">Harga Jual/Pcs:</span>
+                        <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                          {formatRupiah(item.hargaJualUnit || 0)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block leading-tight">Subtotal ({item.qty}):</span>
+                        <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                          {formatRupiah(item.totalHargaJualNet || 0)}
+                        </span>
+                      </div>
+                      {role !== 'sales' && (
+                        <div>
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium leading-tight">Est. Untung:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
+                            +{formatRupiah(item.keuntunganTotal || 0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   )}
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Qty (Pcs)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={item.qty === 0 ? '' : item.qty}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateItem(item.id, { qty: val === '' ? 0 : Math.max(0, parseInt(val) || 0) });
-                      }}
-                      className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                  </div>
                 </div>
-
-                {/* Quick Tier */}
-                {role !== 'sales' && (
-                  <div className="flex flex-wrap items-center gap-1 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/40">
-                    <span className="text-[10px] font-medium text-slate-400 mr-1">Quick Tier:</span>
-                    {TIER_QUICK.map(tier => (
-                      <button
-                        key={tier}
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); updateItem(item.id, { qty: tier }); }}
-                        className={`px-2 py-0.5 text-xs font-semibold rounded-md transition-all ${
-                          item.qty === tier
-                            ? 'bg-amber-500 text-white shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        }`}
-                      >
-                        {tier} pcs
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Live Result Badges */}
-                {(item.totalModal !== undefined) && (
-                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-3 p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-xs">
-                    {role !== 'sales' && (
-                      <div>
-                        <span className="text-[10px] text-slate-400 block">Total Modal:</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-xs">
-                          {formatRupiah(item.totalModal || 0)}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">
-                        {item.marginType === 'multiplier' ? `Multiplier ×${item.marginValue}:` : `Margin ${item.marginValue}%:`}
-                      </span>
-                      <span className="font-bold text-amber-600 dark:text-amber-400 text-xs">
-                        {item.marginPersen?.toFixed(1)}% margin
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Harga Jual / Pcs:</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
-                        {formatRupiah(item.hargaJualUnit || 0)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Subtotal ({item.qty} pcs):</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
-                        {formatRupiah(item.totalHargaJualNet || 0)}
-                      </span>
-                    </div>
-                    {role !== 'sales' && (
-                      <div>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Est. Keuntungan:</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-xs">
-                          +{formatRupiah(item.keuntunganTotal || 0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           );
