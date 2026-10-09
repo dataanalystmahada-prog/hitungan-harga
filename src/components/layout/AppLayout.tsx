@@ -32,10 +32,12 @@ export const AppLayout: React.FC = () => {
         {/* Dynamic Page Outlet with Custom Scrollbar */}
         <main className="flex-1 overflow-y-auto pt-5 sm:pt-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8 bg-slate-50 dark:bg-slate-950 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800">
           <div className="max-w-7xl mx-auto space-y-5">
-            <div className="mb-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{pageInfo.title}</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{pageInfo.subtitle}</p>
-            </div>
+            {location.pathname !== '/kalkulator' && location.pathname !== '/kalkulator-manual' && (
+              <div className="mb-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{pageInfo.title}</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{pageInfo.subtitle}</p>
+              </div>
+            )}
             <Outlet />
           </div>
         </main>
