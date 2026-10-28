@@ -57,16 +57,27 @@ export function useMultiKalkulator() {
     }
   }, [user, masterProduk, modalProduk, modalLogo, users, brands]);
 
-  // Helper: Get available Kodes for a product
+  // Helper: Get available Kodes for a product (Deduplicated & Alphabetically Sorted)
   const getAvailableKodes = (productName: string): { kode: string; harga: number }[] => {
     if (!productName) return [];
     const prodNorm = (productName || '').toLowerCase().trim();
-    return modalProduk
+    const map = new Map<string, number>();
+
+    modalProduk
       .filter(m => (m.produk || '').toLowerCase().trim() === prodNorm)
-      .map(m => ({ kode: m.kode || m.id, harga: Number(m.harga_modal) || 0 }));
+      .forEach(m => {
+        const k = (m.kode || m.id || '').trim();
+        if (k && !map.has(k)) {
+          map.set(k, Number(m.harga_modal) || 0);
+        }
+      });
+
+    return Array.from(map.entries())
+      .map(([kode, harga]) => ({ kode, harga }))
+      .sort((a, b) => a.kode.localeCompare(b.kode, 'id', { numeric: true, sensitivity: 'base' }));
   };
 
-  // Helper: Get available Logos for a product
+  // Helper: Get available Logos for a product (Deduplicated & Alphabetically Sorted)
   const getAvailableLogos = (productName: string): string[] => {
     if (!productName) return [];
     const prodNorm = (productName || '').toLowerCase().trim();
@@ -74,10 +85,10 @@ export function useMultiKalkulator() {
       new Set(
         modalLogo
           .filter(l => (l.produk || '').toLowerCase().trim() === prodNorm)
-          .map(l => l.proses_logo)
+          .map(l => (l.proses_logo || '').trim())
           .filter(Boolean)
       )
-    );
+    ).sort((a, b) => a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' }));
   };
 
   // Add Item

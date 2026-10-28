@@ -3,6 +3,7 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
+import { SearchableSelect } from '../common/SearchableSelect';
 import { formatRupiah, formatNumber } from '../../utils/formatters';
 import { Perhitungan, UserSales } from '../../types/database.types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -59,23 +60,27 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
     }
   }, [calculation, user, role]);
 
-  // Dynamic Dropdown Options
+  // Dynamic Dropdown Options (Alphabetically Sorted)
   const productOptions = useMemo(() => {
     const fromMaster = masterProduk.map(p => p.nama_produk);
     const fromModal = modalProduk.map(m => m.produk);
-    const unique = Array.from(new Set([...fromMaster, ...fromModal])).filter(Boolean);
+    const unique = Array.from(new Set([...fromMaster, ...fromModal])).filter(Boolean).map(s => s.trim());
     if (unique.length === 0 && calculation?.produk) {
       return [{ label: calculation.produk, value: calculation.produk }];
     }
-    return unique.map(p => ({ label: p, value: p }));
+    return Array.from(new Set(unique))
+      .sort((a, b) => a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' }))
+      .map(p => ({ label: p, value: p }));
   }, [masterProduk, modalProduk, calculation]);
 
   const kodeOptions = useMemo(() => {
     if (!produk) return [];
     const prodNorm = (produk || '').toLowerCase().trim();
     const filtered = modalProduk.filter(m => (m.produk || '').toLowerCase().trim() === prodNorm);
-    const unique = Array.from(new Set(filtered.map(m => m.kode || ''))).filter(Boolean);
-    return unique.map(k => ({ label: k, value: k }));
+    const unique = Array.from(new Set(filtered.map(m => (m.kode || '').trim()))).filter(Boolean);
+    return unique
+      .sort((a, b) => a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' }))
+      .map(k => ({ label: k, value: k }));
   }, [produk, modalProduk]);
 
   const prosesLogoOptions = useMemo(() => {
@@ -241,22 +246,15 @@ export const EditPerhitunganModal: React.FC<EditPerhitunganModalProps> = ({
 
         {/* Row 2: Kode Dropdown & Proses Logo Dropdown */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {kodeOptions.length > 0 ? (
-            <Select
-              label="Kode / Model Produk"
-              options={kodeOptions}
-              value={kode}
-              onChange={(e) => setKode(e.target.value)}
-              placeholder="-- Pilih Kode --"
-            />
-          ) : (
-            <Input
-              label="Kode / Model Produk"
-              placeholder="Contoh: T-01, MUG-02"
-              value={kode}
-              onChange={(e) => setKode(e.target.value)}
-            />
-          )}
+          <SearchableSelect
+            label="Kode / Model Produk"
+            placeholder="Cari atau ketik kode/model..."
+            options={kodeOptions}
+            value={kode}
+            onChange={(val) => setKode(val)}
+            allowCustom={true}
+            sortAlphabetically={true}
+          />
 
           {prosesLogoOptions.length > 0 ? (
             <Select

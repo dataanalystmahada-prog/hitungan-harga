@@ -6,6 +6,7 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
+import { SearchableSelect } from '../common/SearchableSelect';
 import { formatRupiah, formatNumber } from '../../utils/formatters';
 import { 
   Plus, 
@@ -58,8 +59,14 @@ export const InteractiveKalkulator: React.FC = () => {
 
   const { modalProduk, modalLogo, margin, keterangan } = useMasterData();
   const uniqueProdukList = React.useMemo(() => {
-    return Array.from(new Set(modalProduk.map(m => m.produk))).filter(Boolean).sort();
-  }, [modalProduk]);
+    const all = [
+      ...masterProduk.map(p => p.nama_produk),
+      ...modalProduk.map(m => m.produk)
+    ].filter(Boolean).map(s => s.trim());
+    return Array.from(new Set(all)).sort((a, b) =>
+      a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' })
+    );
+  }, [masterProduk, modalProduk]);
 
   // Rekomendasi Diskon Maksimal (Kategori A) untuk User Sales
   const pesanDiskonObj = keterangan.find(
@@ -258,8 +265,8 @@ export const InteractiveKalkulator: React.FC = () => {
               onClick={() => setFocusedItemId(item.id)}
               className={`rounded-xl border transition-all duration-150 ${
                 isFocused
-                  ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md relative z-20'
+                  : 'bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 relative z-10'
               }`}
             >
               {/* Item Card Header */}
@@ -318,30 +325,38 @@ export const InteractiveKalkulator: React.FC = () => {
               <div className="p-3.5 flex flex-col gap-3">
                 <div className="flex flex-col xl:flex-row gap-3 items-end">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-10 gap-2.5 w-full">
-                    {/* Select Produk */}
+                    {/* Select Produk (Searchable & Alphabetical) */}
                     <div className="md:col-span-3">
-                      <Select
+                      <SearchableSelect
                         label="Kategori Produk"
+                        placeholder="Pilih atau cari produk..."
                         options={uniqueProdukList.map(p => ({ label: p, value: p }))}
                         value={item.produk}
-                        onChange={(e) => handleItemProductChange(item.id, e.target.value)}
+                        onChange={(newProd) => handleItemProductChange(item.id, newProd)}
+                        allowCustom={false}
+                        sortAlphabetically={true}
                       />
                     </div>
 
-                    {/* Select Kode / Model */}
+                    {/* Select Kode / Model (Bisa diketik, muncul sesuai data, urut alfabet & rapih) */}
                     <div className="md:col-span-3">
-                      <Select
+                      <SearchableSelect
                         label="Varian / Kode Model"
+                        placeholder="Ketik atau pilih varian..."
                         options={
                           kodes.length > 0
                             ? kodes.map(k => ({
                                 label: k.kode,
-                                value: k.kode
+                                value: k.kode,
+                                sublabel: (role !== 'sales' && k.harga > 0) ? formatRupiah(k.harga) : undefined
                               }))
                             : [{ label: 'Standard / Default', value: '' }]
                         }
                         value={item.kode || ''}
-                        onChange={(e) => updateItem(item.id, { kode: e.target.value })}
+                        onChange={(newKode) => updateItem(item.id, { kode: newKode })}
+                        allowCustom={true}
+                        sortAlphabetically={true}
+                        emptyMessage="Tidak ada varian yang cocok"
                       />
                     </div>
 
