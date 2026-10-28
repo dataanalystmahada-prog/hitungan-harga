@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../utils/cn';
 import { ChevronDown, Check, X, Search, PlusCircle } from 'lucide-react';
 
@@ -82,7 +83,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   className,
   allowCustom = true,
   sortAlphabetically = true,
-  emptyMessage = 'Tidak ada varian yang cocok',
+  emptyMessage = 'Tidak ada pilihan yang cocok',
   id,
 }) => {
   const generatedId = useId();
@@ -90,11 +91,29 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+
+  // Dynamic floating position for portal
+  const [dropdownPos, setDropdownPos] = useState<{
+    left: number;
+    top?: number;
+    bottom?: number;
+    width: number;
+    maxHeight: number;
+    openUp: boolean;
+  }>({
+    left: 0,
+    width: 280,
+    maxHeight: 260,
+    openUp: false,
+  });
+
+  const itemNoun = label?.toLowerCase().includes('produk') ? 'produk' : 'varian';
 
   // 1. Deduplicate & sort options alphabetically (A-Z)
   const sortedOptions = useMemo(() => {
@@ -169,10 +188,69 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   // Total selectable items count for keyboard navigation
   const totalItems = filteredOptions.length + (showCustomOption ? 1 : 0);
 
-  // Close dropdown on click outside
+  // Position calculation for portal floating dropdown
+  const updateDropdownPosition = () => {
+    if (!inputRef.current) return;
+    const rect = inputRef.current.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // If space below is tight (< 220px) and there's more space above, open upwards!
+    const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+
+    // Calculate max height based on available space in chosen direction
+    const availableSpace = openUp ? spaceAbove - 24 : spaceBelow - 24;
+    const maxHeight = Math.max(140, Math.min(280, availableSpace));
+
+    // Ensure dropdown stays horizontally inside the viewport
+    const targetWidth = Math.max(rect.width, 280);
+    let left = rect.left;
+    if (left + targetWidth > viewportWidth - 12) {
+      left = Math.max(12, viewportWidth - targetWidth - 12);
+    }
+
+    setDropdownPos({
+      left,
+      width: targetWidth,
+      top: openUp ? undefined : rect.bottom + 6,
+      bottom: openUp ? viewportHeight - rect.top + 6 : undefined,
+      maxHeight,
+      openUp,
+    });
+  };
+
+  // Update position when opened or when scrolling/resizing
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateDropdownPosition();
+
+    const handleScrollOrResize = () => {
+      updateDropdownPosition();
+    };
+
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isOpen]);
+
+  // Close dropdown on click outside (handles both container and portal)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInput = containerRef.current && containerRef.current.contains(target);
+      const clickedDropdown = dropdownRef.current && dropdownRef.current.contains(target);
+
+      if (!clickedInput && !clickedDropdown) {
         handleCloseDropdown();
       }
     };
@@ -183,7 +261,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, searchQuery, allowCustom, selectedOption, value]);
+  }, [isOpen]);
 
   // Reset highlighted index when filtered items change
   useEffect(() => {
@@ -205,7 +283,6 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const handleOpenDropdown = () => {
     if (disabled) return;
     setIsOpen(true);
-    // Initialize search query with empty or selected text so user can see all options right away
     setSearchQuery('');
   };
 
@@ -280,7 +357,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={cn('w-full flex flex-col gap-1 relative', isOpen && 'z-30')}>
+    <div ref={containerRef} className="w-full flex flex-col gap-1 relative">
       {label && (
         <label
           htmlFor={selectId}
@@ -362,108 +439,125 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         </div>
       </div>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div className="absolute left-0 right-0 sm:min-w-[300px] top-full mt-1.5 z-50 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100">
-          {/* Header Info: Alphabetical & count indicator */}
-          <div className="px-3 py-1.5 bg-slate-50/90 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-            <span className="flex items-center gap-1.5">
-              <Search className="w-3 h-3 text-slate-400" />
-              {searchQuery.trim() ? (
-                <span>Hasil: <b>{filteredOptions.length}</b> varian</span>
-              ) : (
-                <span>Total: <b>{filteredOptions.length}</b> varian</span>
-              )}
-            </span>
-            <span className="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold text-[9px] border border-indigo-200/60 dark:border-indigo-800/60 tracking-wider">
-              A — Z
-            </span>
-          </div>
-
-          {/* Scrollable Options List */}
+      {/* Floating Portal Dropdown Menu - Never covered by sticky bars or cards */}
+      {isOpen &&
+        createPortal(
           <div
-            ref={listRef}
-            className="max-h-60 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50 py-1"
+            ref={dropdownRef}
+            style={{
+              position: 'fixed',
+              left: `${dropdownPos.left}px`,
+              top: dropdownPos.top !== undefined ? `${dropdownPos.top}px` : undefined,
+              bottom: dropdownPos.bottom !== undefined ? `${dropdownPos.bottom}px` : undefined,
+              width: `${dropdownPos.width}px`,
+              zIndex: 99999,
+            }}
+            className={cn(
+              'rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 overflow-hidden flex flex-col',
+              dropdownPos.openUp ? 'animate-in fade-in-0 slide-in-from-bottom-2 duration-150' : 'animate-in fade-in-0 slide-in-from-top-2 duration-150'
+            )}
           >
-            {/* Filtered Options */}
-            {filteredOptions.map((opt, idx) => {
-              const isSelected = selectedOption?.value === opt.value;
-              const isHighlighted = highlightedIndex === idx;
+            {/* Header Info: Alphabetical & count indicator */}
+            <div className="px-3 py-1.5 bg-slate-50/95 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium shrink-0">
+              <span className="flex items-center gap-1.5">
+                <Search className="w-3 h-3 text-slate-400" />
+                {searchQuery.trim() ? (
+                  <span>Hasil: <b>{filteredOptions.length}</b> {itemNoun}</span>
+                ) : (
+                  <span>Total: <b>{filteredOptions.length}</b> {itemNoun}</span>
+                )}
+              </span>
+              <span className="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold text-[9px] border border-indigo-200/60 dark:border-indigo-800/60 tracking-wider">
+                A — Z
+              </span>
+            </div>
 
-              return (
+            {/* Scrollable Options List */}
+            <div
+              ref={listRef}
+              style={{ maxHeight: `${dropdownPos.maxHeight}px` }}
+              className="overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50 py-1"
+            >
+              {/* Filtered Options */}
+              {filteredOptions.map((opt, idx) => {
+                const isSelected = selectedOption?.value === opt.value;
+                const isHighlighted = highlightedIndex === idx;
+
+                return (
+                  <div
+                    key={`${opt.value}-${idx}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
+                    onClick={() => handleSelect(opt.value)}
+                    className={cn(
+                      'px-3 py-2 flex items-center justify-between text-xs cursor-pointer select-none transition-colors duration-100',
+                      isSelected
+                        ? 'bg-brand-50/80 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-medium'
+                        : isHighlighted
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    )}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                      <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                        {isSelected ? (
+                          <Check className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                        )}
+                      </div>
+                      <span className="truncate">
+                        <HighlightMatch text={opt.label} query={searchQuery} />
+                      </span>
+                    </div>
+
+                    {/* Sublabel (e.g. price / badge) */}
+                    {opt.sublabel && (
+                      <span className="shrink-0 px-1.5 py-0.5 rounded font-mono text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700/50">
+                        {opt.sublabel}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Custom typed value option */}
+              {showCustomOption && (
                 <div
-                  key={`${opt.value}-${idx}`}
                   role="option"
-                  aria-selected={isSelected}
-                  onMouseEnter={() => setHighlightedIndex(idx)}
-                  onClick={() => handleSelect(opt.value)}
+                  onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
+                  onClick={() => handleSelect(searchQuery.trim())}
                   className={cn(
-                    'px-3 py-2 flex items-center justify-between text-xs cursor-pointer select-none transition-colors duration-100',
-                    isSelected
-                      ? 'bg-brand-50/80 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-medium'
-                      : isHighlighted
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    'px-3 py-2 flex items-center gap-2 text-xs cursor-pointer select-none border-t border-dashed border-slate-200 dark:border-slate-700 transition-colors',
+                    highlightedIndex === filteredOptions.length
+                      ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-medium'
+                      : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
                   )}
                 >
-                  <div className="flex items-center gap-2 min-w-0 pr-2">
-                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                      {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-                      ) : (
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                      )}
-                    </div>
-                    <span className="truncate">
-                      <HighlightMatch text={opt.label} query={searchQuery} />
-                    </span>
-                  </div>
+                  <PlusCircle className="w-4 h-4 shrink-0 text-indigo-500" />
+                  <span className="truncate">
+                    Gunakan baru: <b className="font-semibold underline">"{searchQuery.trim()}"</b>
+                  </span>
+                </div>
+              )}
 
-                  {/* Sublabel (e.g. price / badge) */}
-                  {opt.sublabel && (
-                    <span className="shrink-0 px-1.5 py-0.5 rounded font-mono text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700/50">
-                      {opt.sublabel}
+              {/* Empty state */}
+              {filteredOptions.length === 0 && !showCustomOption && (
+                <div className="px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500 flex flex-col items-center gap-1">
+                  <Search className="w-5 h-5 text-slate-300 dark:text-slate-600 mb-1" />
+                  <span>{emptyMessage}</span>
+                  {searchQuery && (
+                    <span className="text-[11px] text-slate-400 italic">
+                      "{searchQuery}"
                     </span>
                   )}
                 </div>
-              );
-            })}
-
-            {/* Custom typed value option */}
-            {showCustomOption && (
-              <div
-                role="option"
-                onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
-                onClick={() => handleSelect(searchQuery.trim())}
-                className={cn(
-                  'px-3 py-2 flex items-center gap-2 text-xs cursor-pointer select-none border-t border-dashed border-slate-200 dark:border-slate-700 transition-colors',
-                  highlightedIndex === filteredOptions.length
-                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-medium'
-                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
-                )}
-              >
-                <PlusCircle className="w-4 h-4 shrink-0 text-indigo-500" />
-                <span className="truncate">
-                  Gunakan varian baru: <b className="font-semibold underline">"{searchQuery.trim()}"</b>
-                </span>
-              </div>
-            )}
-
-            {/* Empty state */}
-            {filteredOptions.length === 0 && !showCustomOption && (
-              <div className="px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500 flex flex-col items-center gap-1">
-                <Search className="w-5 h-5 text-slate-300 dark:text-slate-600 mb-1" />
-                <span>{emptyMessage}</span>
-                {searchQuery && (
-                  <span className="text-[11px] text-slate-400 italic">
-                    "{searchQuery}"
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
 
       {error && <p className="text-[11px] text-rose-500 font-medium">{error}</p>}
       {!error && helperText && (
