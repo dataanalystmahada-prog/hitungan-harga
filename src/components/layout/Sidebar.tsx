@@ -46,8 +46,8 @@ interface NavItem {
 
 const KALKULATOR_SUBITEMS: SubMenuItem[] = [
   { title: 'Kalkulator Harga', path: '/kalkulator', icon: Calculator, badge: 'Auto', badgeType: 'emerald' },
-  { title: 'Kalkulator Manual', path: '/kalkulator-manual', icon: PenSquare, badge: 'Baru', badgeType: 'blue' },
-  { title: 'Kalkulator Rekomendasi', path: '/kalkulator-rekomendasi', icon: Sparkles, badge: 'Maint', badgeType: 'amber' },
+  { title: 'Kalkulator Manual', path: '/kalkulator-manual', icon: PenSquare, badge: 'Manual', badgeType: 'blue' },
+  { title: 'Kalkulator Rekomendasi', path: '/kalkulator-rekomendasi', icon: Sparkles, badge: 'Baru', badgeType: 'emerald' },
 ];
 
 const NAV_ITEMS: NavItem[] = [

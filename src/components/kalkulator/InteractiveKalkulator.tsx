@@ -432,52 +432,60 @@ export const InteractiveKalkulator: React.FC = () => {
                   </div>
 
                   {/* Live Item Calculation Badges */}
-                  {calc && (
-                    <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs min-h-[58px] items-center">
-                      {role !== 'sales' && (
-                        <>
+                  {calc && (() => {
+                    const isTanpaLogo = !item.proses_logo || 
+                      item.proses_logo.trim() === '' ||
+                      item.proses_logo.toLowerCase().includes('tanpa logo') || 
+                      item.proses_logo.toLowerCase().includes('polos');
+                    const modalLogoDisplay = isTanpaLogo ? 0 : (calc.modalLogoUnit || 0);
+
+                    return (
+                      <div className={`w-full grid gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs min-h-[58px] items-center ${
+                        role === 'sales' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-6'
+                      }`}>
+                        {role !== 'sales' && (
                           <div>
                             <span className="text-[10px] text-slate-400 block leading-tight">Modal Produk:</span>
                             <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
                               {formatRupiah(calc.modalProdukUnit)}
                             </span>
                           </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block leading-tight">Modal Logo:</span>
-                            <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
-                              {formatRupiah(calc.modalLogoUnit)}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                      <div>
-                        <span className="text-[10px] text-slate-400 block leading-tight">Margin Target:</span>
-                        <span className="font-bold text-indigo-600 dark:text-indigo-400 text-[11px]">
-                          {calc.marginPersen}%
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block leading-tight">Harga Jual/Pcs:</span>
-                        <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
-                          {formatRupiah(calc.hargaJualNetUnit)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block leading-tight">Subtotal ({item.qty}):</span>
-                        <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
-                          {formatRupiah(calc.totalHargaJualNet)}
-                        </span>
-                      </div>
-                      {role !== 'sales' && (
+                        )}
                         <div>
-                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium leading-tight">Est. Untung:</span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
-                            +{formatRupiah(calc.keuntunganTotal)}
+                          <span className="text-[10px] text-slate-400 block leading-tight">Margin Target:</span>
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 text-[11px]">
+                            {calc.marginPersen}%
                           </span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        <div>
+                          <span className="text-[10px] text-slate-400 block leading-tight">Modal Logo:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[11px]">
+                            {formatRupiah(modalLogoDisplay)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block leading-tight">Harga Jual/Pcs:</span>
+                          <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                            {formatRupiah(calc.hargaJualNetUnit)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block leading-tight">Subtotal ({item.qty}):</span>
+                          <span className="font-bold text-slate-900 dark:text-white font-mono text-xs">
+                            {formatRupiah(calc.totalHargaJualNet)}
+                          </span>
+                        </div>
+                        {role !== 'sales' && (
+                          <div>
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium leading-tight">Est. Untung:</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
+                              +{formatRupiah(calc.keuntunganTotal)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Quick Quantity Tier Buttons */}
@@ -761,12 +769,19 @@ export const InteractiveKalkulator: React.FC = () => {
 
                   // Modal Logo
                   let modalL = 0;
-                  const foundL = modalLogo.find(
-                    l => (l.produk || '').toLowerCase().trim() === focusedProd &&
-                         (focusedLogo ? (l.proses_logo || '').toLowerCase().trim() === focusedLogo : true)
-                  );
-                  if (foundL && foundL[tierKey] !== undefined) {
-                    modalL = parseSpreadsheetNumber(foundL[tierKey]);
+                  const isFocusedTanpaLogo = !focusedLogo || 
+                    focusedLogo === 'tanpa logo / polos' || 
+                    focusedLogo.includes('tanpa logo') || 
+                    focusedLogo.includes('polos');
+
+                  if (!isFocusedTanpaLogo) {
+                    const foundL = modalLogo.find(
+                      l => (l.produk || '').toLowerCase().trim() === focusedProd &&
+                           (l.proses_logo || '').toLowerCase().trim() === focusedLogo
+                    );
+                    if (foundL && foundL[tierKey] !== undefined) {
+                      modalL = parseSpreadsheetNumber(foundL[tierKey]);
+                    }
                   }
 
                   // Margin Multiplier / %

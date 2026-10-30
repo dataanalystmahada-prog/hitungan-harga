@@ -110,7 +110,14 @@ export function calculatePricingEngine(
 
   // 2. Resolve Modal Logo from Matrix
   let modalLogoUnit = input.customModalLogo !== undefined ? input.customModalLogo : 0;
-  if (modalLogoUnit === 0 && input.produk && input.proses_logo) {
+  const isTanpaLogo = !input.proses_logo || 
+    input.proses_logo.trim() === '' ||
+    input.proses_logo.toLowerCase().includes('tanpa logo') ||
+    input.proses_logo.toLowerCase().includes('polos');
+
+  if (isTanpaLogo) {
+    modalLogoUnit = 0;
+  } else if (modalLogoUnit === 0 && input.produk && input.proses_logo) {
     const inputProd = (input.produk || '').toLowerCase().trim();
     const inputLogo = (input.proses_logo || '').toLowerCase().trim();
     const foundLogo = modalLogoList.find(
