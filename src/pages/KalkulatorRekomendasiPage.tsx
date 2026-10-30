@@ -440,69 +440,94 @@ export const KalkulatorRekomendasiPage: React.FC = () => {
                 </Card>
               )}
 
-              {/* Case 2: Matching items found */}
+              {/* Case 2: Matching items found (Tabel Rekomendasi) */}
               {sortedItems.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {sortedItems.map((item, idx) => (
-                    <div
-                      key={item.kode}
-                      className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-500/50 hover:shadow-md transition-all flex flex-col justify-between gap-2.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-bold text-[10px]">
-                            {idx + 1}
-                          </span>
-                          <div>
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">
-                              Kode Model
-                            </span>
-                            <span className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">
-                              {item.kode}
-                            </span>
-                          </div>
-                        </div>
+                <Card className="p-0 overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 text-[11px]">
+                          <th className="py-2.5 px-3 text-center w-12 font-sans">No</th>
+                          <th className="py-2.5 px-3 font-sans">Kode Model</th>
+                          <th className="py-2.5 px-3 text-right font-sans">Harga Jual / Pcs</th>
+                          <th className="py-2.5 px-3 text-center font-sans">Hemat dari Budget</th>
+                          <th className="py-2.5 px-3 text-right font-sans">Subtotal ({lastCalculatedQty} pcs)</th>
+                          {role !== 'sales' && (
+                            <th className="py-2.5 px-3 text-center font-sans">Modal & Margin</th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                        {sortedItems.map((item, idx) => {
+                          const isTopMatch = idx === 0 && sortBy === 'closest';
 
-                        {item.hematDariBudget > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                            <TrendingDown className="w-3 h-3" />
-                            Hemat {formatRupiah(item.hematDariBudget)}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                            Pas Budget
-                          </span>
-                        )}
-                      </div>
+                          return (
+                            <tr
+                              key={item.kode}
+                              className={`transition-colors ${
+                                isTopMatch
+                                  ? 'bg-brand-50/40 dark:bg-brand-950/20 hover:bg-brand-50/60 dark:hover:bg-brand-950/30'
+                                  : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
+                              }`}
+                            >
+                              {/* No */}
+                              <td className="py-2.5 px-3 text-center font-sans">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px]">
+                                  {idx + 1}
+                                </span>
+                              </td>
 
-                      {/* Pricing row */}
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-end justify-between">
-                        <div>
-                          <span className="text-[10px] text-slate-400 block leading-tight">Harga Jual / Pcs:</span>
-                          <span className="text-base font-black text-brand-600 dark:text-brand-400 font-mono">
-                            {formatRupiah(item.hargaJual)}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-slate-400 block leading-tight">
-                            Subtotal ({lastCalculatedQty} pcs):
-                          </span>
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 font-mono">
-                            {formatRupiah(item.subtotal)}
-                          </span>
-                        </div>
-                      </div>
+                              {/* Kode Model */}
+                              <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{item.kode}</span>
+                                  {isTopMatch && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-sans font-bold bg-brand-500 text-white shadow-sm">
+                                      Paling Mendekati
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
 
-                      {/* Modal & margin details for non-sales */}
-                      {role !== 'sales' && (
-                        <div className="pt-1.5 border-t border-dashed border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 font-mono">
-                          <span>Modal Prod: {formatRupiah(item.hargaModalProduk)}</span>
-                          <span>Margin: {item.marginPersen}%</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                              {/* Harga Jual / Pcs */}
+                              <td className="py-2.5 px-3 text-right font-black text-brand-600 dark:text-brand-400 text-xs sm:text-sm">
+                                {formatRupiah(item.hargaJual)}
+                              </td>
+
+                              {/* Hemat dari Budget */}
+                              <td className="py-2.5 px-3 text-center font-sans">
+                                {item.hematDariBudget > 0 ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    <TrendingDown className="w-3.5 h-3.5" />
+                                    Hemat {formatRupiah(item.hematDariBudget)}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                    Pas Budget
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Subtotal */}
+                              <td className="py-2.5 px-3 text-right font-bold text-slate-800 dark:text-slate-200">
+                                {formatRupiah(item.subtotal)}
+                              </td>
+
+                              {/* Modal & Margin for Admin */}
+                              {role !== 'sales' && (
+                                <td className="py-2.5 px-3 text-center text-[10px] text-slate-500 font-sans">
+                                  <span className="font-mono">M: {formatRupiah(item.hargaModalProduk)}</span>
+                                  <span className="mx-1">•</span>
+                                  <span className="font-semibold text-brand-600 dark:text-brand-400">{item.marginPersen}%</span>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               )}
             </div>
           )}
