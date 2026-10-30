@@ -12,6 +12,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { DashboardPage } from './pages/DashboardPage';
 import { KalkulatorPage } from './pages/KalkulatorPage';
 import { KalkulatorManualPage } from './pages/KalkulatorManualPage';
+import { KalkulatorRekomendasiPage } from './pages/KalkulatorRekomendasiPage';
 import { PerhitunganPage } from './pages/PerhitunganPage';
 import { SPHPage } from './pages/SPHPage';
 import { MasterDataPage } from './pages/MasterDataPage';
@@ -45,6 +46,7 @@ export function App() {
                     <Route index element={<DashboardPage />} />
                     <Route path="kalkulator" element={<KalkulatorPage />} />
                     <Route path="kalkulator-manual" element={<KalkulatorManualPage />} />
+                    <Route path="kalkulator-rekomendasi" element={<KalkulatorRekomendasiPage />} />
                     <Route path="perhitungan" element={<PerhitunganPage />} />
                     <Route path="sph" element={<SPHPage />} />
                     <Route path="master-data" element={<MasterDataPage />} />

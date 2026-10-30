@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useMultiKalkulator } from '../../hooks/useMultiKalkulator';
 import { QUANTITY_TIERS, findClosestTier, getTierKey, parseSpreadsheetNumber } from '../../utils/calcEngine';
 import { calculateMaxDiskon } from '../../utils/discountEngine';
@@ -22,7 +22,9 @@ import {
   Layers, 
   Building2, 
   User,
-  ShieldAlert
+  ShieldAlert,
+  ClipboardCopy,
+  Check
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePerhitungan } from '../../hooks/usePerhitungan';
@@ -84,6 +86,42 @@ export const InteractiveKalkulator: React.FC = () => {
 
   const [isSPHModalOpen, setIsSPHModalOpen] = useState(false);
   const [isSavePreviewModalOpen, setIsSavePreviewModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Generate spesifikasi text for copy
+  const generateSpecText = useCallback(() => {
+    return items.map((item, idx) => {
+      const calc = item.calculation;
+      const hargaJual = calc ? formatRupiah(calc.hargaJualNetUnit) : 'Rp 0';
+      const lines = [
+        `Produk : ${item.produk || '-'}`,
+        `Kode : ${item.kode || '-'}`,
+        `Logo : ${item.proses_logo || 'Tanpa Logo / Polos'}`,
+        `Qty : ${item.qty || 0} pcs`,
+        '',
+        `Harga : ${hargaJual}`,
+      ];
+      return lines.join('\n');
+    }).join('\n================\n');
+  }, [items]);
+
+  const handleCopySpec = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(generateSpecText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback copy
+      const textarea = document.createElement('textarea');
+      textarea.value = generateSpecText();
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [generateSpecText]);
 
   // Prepare line items for SPH modal & unified storage
   const sphLineItems = items.map(it => {
@@ -251,13 +289,21 @@ export const InteractiveKalkulator: React.FC = () => {
         </div>
       </Card>
 
-      {/* 2. List of Multi-Product Items */}
-      <div className="flex flex-col gap-3">
+      {/* 2. Two-Column Layout: Items (Left) + Spec Card (Right) */}
+      <div className="flex flex-col xl:flex-row gap-3">
+        {/* Left: List of Multi-Product Items */}
+        <div className="flex flex-col gap-3 xl:flex-1 xl:min-w-0">
         {items.map((item, index) => {
           const calc = item.calculation;
           const kodes = getAvailableKodes(item.produk);
           const logos = getAvailableLogos(item.produk);
           const isFocused = item.id === focusedItemId;
+
+          // Build logo options: always start with "Tanpa Logo / Polos", then data from DB
+          const logoOptions = [
+            { label: 'Tanpa Logo / Polos', value: '' },
+            ...logos.map(l => ({ label: l, value: l }))
+          ];
 
           return (
             <div
@@ -323,10 +369,10 @@ export const InteractiveKalkulator: React.FC = () => {
 
               {/* Item Card Body */}
               <div className="p-3.5 flex flex-col gap-3">
-                <div className="flex flex-col xl:flex-row gap-3 items-end">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-10 gap-2.5 w-full">
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 w-full">
                     {/* Select Produk (Searchable & Alphabetical) */}
-                    <div className="md:col-span-3">
+                    <div>
                       <SearchableSelect
                         label="Kategori Produk"
                         placeholder="Pilih atau cari produk..."
@@ -338,8 +384,8 @@ export const InteractiveKalkulator: React.FC = () => {
                       />
                     </div>
 
-                    {/* Select Kode / Model (Bisa diketik, muncul sesuai data, urut alfabet & rapih) */}
-                    <div className="md:col-span-3">
+                    {/* Select Kode / Model */}
+                    <div>
                       <SearchableSelect
                         label="Varian / Kode Model"
                         placeholder="Ketik atau pilih varian..."
@@ -360,22 +406,18 @@ export const InteractiveKalkulator: React.FC = () => {
                       />
                     </div>
 
-                    {/* Select Logo */}
-                    <div className="md:col-span-2">
+                    {/* Select Logo - with "Tanpa Logo / Polos" always first */}
+                    <div>
                       <Select
                         label="Proses Logo & Branding"
-                        options={
-                          logos.length > 0
-                            ? logos.map(l => ({ label: l, value: l }))
-                            : [{ label: 'Tanpa Logo / Polos', value: '' }]
-                        }
+                        options={logoOptions}
                         value={item.proses_logo || ''}
                         onChange={(e) => updateItem(item.id, { proses_logo: e.target.value })}
                       />
                     </div>
 
-                    {/* Quantity & Discount */}
-                    <div className="md:col-span-2">
+                    {/* Quantity */}
+                    <div>
                       <Input
                         label="Qty (Pcs)"
                         type="number"
@@ -391,7 +433,7 @@ export const InteractiveKalkulator: React.FC = () => {
 
                   {/* Live Item Calculation Badges */}
                   {calc && (
-                    <div className="w-full xl:w-auto flex-shrink-0 grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs min-h-[58px] items-center">
+                    <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 text-xs min-h-[58px] items-center">
                       {role !== 'sales' && (
                         <>
                           <div>
@@ -465,6 +507,123 @@ export const InteractiveKalkulator: React.FC = () => {
             </div>
           );
         })}
+        </div>
+
+        {/* Right: Spesifikasi Penawaran Card */}
+        <div className="xl:w-[340px] xl:flex-shrink-0">
+          <div className="sticky top-4">
+            <Card className="p-0 overflow-hidden">
+              {/* Spec Card Header */}
+              <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  <span className="font-bold text-sm">Spesifikasi Penawaran</span>
+                </div>
+                <button
+                  onClick={handleCopySpec}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-semibold"
+                  title="Salin ke Clipboard"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardCopy className="w-3.5 h-3.5" />
+                      Salin
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Spec Card Body */}
+              <div className="p-4 space-y-0">
+                {items.map((item, idx) => {
+                  const calc = item.calculation;
+                  const hargaJual = calc ? formatRupiah(calc.hargaJualNetUnit) : 'Rp 0';
+
+                  return (
+                    <React.Fragment key={item.id}>
+                      {idx > 0 && (
+                        <div className="py-2">
+                          <div className="border-t-2 border-dashed border-slate-300 dark:border-slate-600 relative">
+                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-900 px-2 text-[10px] text-slate-400 font-mono select-none">
+                              ════════════════
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-1.5 py-2">
+                        <div className="flex items-start gap-2 text-xs">
+                          <span className="text-slate-500 dark:text-slate-400 w-16 flex-shrink-0 font-medium">Produk</span>
+                          <span className="text-slate-400 dark:text-slate-500">:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 break-words">
+                            {item.produk || '-'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 text-xs">
+                          <span className="text-slate-500 dark:text-slate-400 w-16 flex-shrink-0 font-medium">Kode</span>
+                          <span className="text-slate-400 dark:text-slate-500">:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono break-words">
+                            {item.kode || '-'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 text-xs">
+                          <span className="text-slate-500 dark:text-slate-400 w-16 flex-shrink-0 font-medium">Logo</span>
+                          <span className="text-slate-400 dark:text-slate-500">:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 break-words">
+                            {item.proses_logo || 'Tanpa Logo / Polos'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 text-xs">
+                          <span className="text-slate-500 dark:text-slate-400 w-16 flex-shrink-0 font-medium">Qty</span>
+                          <span className="text-slate-400 dark:text-slate-500">:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {item.qty || 0} pcs
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2 text-xs mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <span className="text-slate-500 dark:text-slate-400 w-16 flex-shrink-0 font-bold">Harga</span>
+                          <span className="text-slate-400 dark:text-slate-500">:</span>
+                          <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm font-mono">
+                            {hargaJual}
+                          </span>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+
+                {/* Total if multiple items */}
+                {items.length > 1 && (
+                  <div className="pt-3 mt-2 border-t-2 border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Grand Total</span>
+                      <span className="text-sm font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 font-mono">
+                        {formatRupiah(orderSummary.totalHargaJualNet)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Spec Card Footer - Preview as plain text */}
+              <div className="px-4 pb-3">
+                <details className="group">
+                  <summary className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer select-none font-medium flex items-center gap-1">
+                    <span className="group-open:rotate-90 transition-transform text-[10px]">▶</span>
+                    Preview Teks Salin
+                  </summary>
+                  <pre className="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap overflow-x-auto leading-relaxed select-all">
+                    {generateSpecText()}
+                  </pre>
+                </details>
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* 3. Grand Total Aggregate Order Sticky Summary */}

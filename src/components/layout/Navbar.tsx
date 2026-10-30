@@ -9,6 +9,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Executive Dashboard', subtitle: 'Ikhtisar performa penjualan, margin, dan transaksi real-time.' },
   '/kalkulator': { title: 'Kalkulator Harga & Margin', subtitle: 'Hitung modal bahan, sablon/bordir, dan tentukan harga jual tiering.' },
   '/kalkulator-manual': { title: 'Kalkulator Harga Manual', subtitle: 'Kalkulasi cepat dengan input manual dan fleksibel.' },
+  '/kalkulator-rekomendasi': { title: 'Kalkulator Rekomendasi', subtitle: 'Fitur rekomendasi harga otomatis (Dalam Pengembangan / Maintenance).' },
   '/perhitungan': { title: 'Database Perhitungan Harga', subtitle: 'Daftar seluruh perhitungan harga tersinkron dari Supabase.' },
   '/sph': { title: 'Surat Penawaran Harga (SPH)', subtitle: 'Kelola dan buat penawaran resmi formal ke klien & perusahaan.' },
   '/master-data': { title: 'Master Data & Spreadsheet View', subtitle: 'Tabel referensi produk, modal, margin, dan brand.' },

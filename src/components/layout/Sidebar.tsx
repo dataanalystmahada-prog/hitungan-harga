@@ -1,23 +1,25 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calculator,
   PenSquare,
+  Sparkles,
   TableProperties,
   FileSpreadsheet,
   Database,
   RefreshCw,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Zap,
   LogOut,
   BookOpen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../contexts/AuthContext';
-import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { SyncStatusBar } from '../sync/SyncStatusBar';
 
@@ -26,17 +28,35 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-interface NavItem {
+interface SubMenuItem {
   title: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
+  badgeType?: 'emerald' | 'blue' | 'amber';
 }
+
+interface NavItem {
+  title: string;
+  path?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  subItems?: SubMenuItem[];
+}
+
+const KALKULATOR_SUBITEMS: SubMenuItem[] = [
+  { title: 'Kalkulator Harga', path: '/kalkulator', icon: Calculator, badge: 'Auto', badgeType: 'emerald' },
+  { title: 'Kalkulator Manual', path: '/kalkulator-manual', icon: PenSquare, badge: 'Baru', badgeType: 'blue' },
+  { title: 'Kalkulator Rekomendasi', path: '/kalkulator-rekomendasi', icon: Sparkles, badge: 'Maint', badgeType: 'amber' },
+];
 
 const NAV_ITEMS: NavItem[] = [
   { title: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { title: 'Kalkulator Harga', path: '/kalkulator', icon: Calculator, badge: 'Auto' },
-  { title: 'Kalkulator Manual', path: '/kalkulator-manual', icon: PenSquare, badge: 'Baru' },
+  {
+    title: 'Kalkulator',
+    icon: Calculator,
+    subItems: KALKULATOR_SUBITEMS,
+  },
   { title: 'Data Perhitungan', path: '/perhitungan', icon: TableProperties },
   { title: 'Surat Penawaran (SPH)', path: '/sph', icon: FileSpreadsheet },
   { title: 'Master Data', path: '/master-data', icon: Database },
@@ -47,6 +67,10 @@ const NAV_ITEMS: NavItem[] = [
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const { role, logout, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+
+  const isKalkulatorActive = location.pathname.startsWith('/kalkulator');
+  const [isKalkulatorOpen, setIsKalkulatorOpen] = useState(true);
 
   const initials = user?.nama
     ? user.nama
@@ -57,12 +81,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
         .join('')
     : 'US';
   
-  const filteredNavItems = NAV_ITEMS.filter(item => {
-    if (role === 'admin') return true;
-    // For sales and purchasing, only show specific paths
-    const allowedPaths = ['/', '/kalkulator', '/kalkulator-manual', '/perhitungan', '/sph'];
-    return allowedPaths.includes(item.path);
-  });
+  const allowedPaths = ['/', '/kalkulator', '/kalkulator-manual', '/kalkulator-rekomendasi', '/perhitungan', '/sph'];
+
+  const filteredNavItems = NAV_ITEMS.map(item => {
+    if (role === 'admin') return item;
+    
+    // For non-admin roles
+    if (item.subItems) {
+      const allowedSubs = item.subItems.filter(sub => allowedPaths.includes(sub.path));
+      if (allowedSubs.length > 0) {
+        return { ...item, subItems: allowedSubs };
+      }
+      return null;
+    }
+
+    if (item.path && allowedPaths.includes(item.path)) {
+      return item;
+    }
+    return null;
+  }).filter((item): item is NavItem => item !== null);
+
+  const renderBadge = (badge: string, badgeType?: 'emerald' | 'blue' | 'amber') => {
+    const colorClasses = {
+      emerald: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      amber: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    }[badgeType || 'emerald'];
+
+    return (
+      <span className={cn('px-1.5 py-0.2 text-[8px] font-bold rounded-full border', colorClasses)}>
+        {badge}
+      </span>
+    );
+  };
 
   return (
     <aside
@@ -99,13 +150,121 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
         </div>
 
         {/* Nav Items */}
-        <nav className="p-2 space-y-1 overflow-y-auto">
+        <nav className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-220px)]">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
+
+            // Group Menu (e.g. Kalkulator)
+            if (item.subItems) {
+              const isGroupActive = isKalkulatorActive;
+
+              if (isCollapsed) {
+                return (
+                  <div key={item.title} className="relative group">
+                    <button
+                      className={cn(
+                        'flex items-center justify-center w-full p-2 rounded-lg text-xs font-medium transition-all duration-150',
+                        isGroupActive
+                          ? 'bg-brand-600/30 text-brand-300 border border-brand-500/30'
+                          : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+
+                    {/* Popover Flyout for Collapsed Sidebar */}
+                    <div className="absolute left-full top-0 ml-2 w-52 py-2 px-1.5 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-50">
+                      <div className="px-2.5 py-1 text-[11px] font-bold text-slate-300 border-b border-slate-800/80 mb-1 flex items-center justify-between">
+                        <span>{item.title}</span>
+                        <span className="text-[9px] text-slate-500">{item.subItems.length} Pilihan</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {item.subItems.map((sub) => {
+                          const SubIcon = sub.icon;
+                          const isSubActive = location.pathname === sub.path;
+                          return (
+                            <NavLink
+                              key={sub.path}
+                              to={sub.path}
+                              className={cn(
+                                'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                                isSubActive
+                                  ? 'bg-brand-600 text-white font-semibold shadow-sm'
+                                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
+                              )}
+                            >
+                              <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="truncate flex-1 text-[11px]">{sub.title}</span>
+                              {sub.badge && renderBadge(sub.badge, sub.badgeType)}
+                            </NavLink>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Expanded Sidebar Group Menu
+              return (
+                <div key={item.title} className="space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsKalkulatorOpen(prev => !prev)}
+                    className={cn(
+                      'flex items-center justify-between w-full gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 group',
+                      isGroupActive
+                        ? 'text-white bg-slate-800/70 font-semibold'
+                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon className={cn('w-4 h-4 flex-shrink-0', isGroupActive ? 'text-brand-400' : 'text-slate-400 group-hover:text-slate-200')} />
+                      <span className="truncate">{item.title}</span>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        'w-3.5 h-3.5 text-slate-400 transition-transform duration-200',
+                        isKalkulatorOpen && 'transform rotate-180'
+                      )}
+                    />
+                  </button>
+
+                  {/* Submenu Items */}
+                  {isKalkulatorOpen && (
+                    <div className="pl-3.5 pr-1 py-0.5 space-y-0.5 border-l border-slate-800 ml-4">
+                      {item.subItems.map((sub) => {
+                        const SubIcon = sub.icon;
+                        return (
+                          <NavLink
+                            key={sub.path}
+                            to={sub.path}
+                            className={({ isActive }: { isActive: boolean }) =>
+                              cn(
+                                'flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 group relative',
+                                isActive
+                                  ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/25 font-semibold'
+                                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                              )
+                            }
+                          >
+                            <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate flex-1 text-[11px]">{sub.title}</span>
+                            {sub.badge && renderBadge(sub.badge, sub.badgeType)}
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Standard Single NavItem
             return (
               <NavLink
                 key={item.path}
-                to={item.path}
+                to={item.path!}
                 className={({ isActive }: { isActive: boolean }) =>
                   cn(
                     'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 group relative',
@@ -117,11 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 {!isCollapsed && <span className="truncate flex-1">{item.title}</span>}
-                {!isCollapsed && item.badge && (
-                  <span className="px-1.5 py-0.2 text-[8px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    {item.badge}
-                  </span>
-                )}
+                {!isCollapsed && item.badge && renderBadge(item.badge, 'emerald')}
                 {isCollapsed && (
                   <div className="absolute left-full ml-2 px-2 py-1 bg-slate-950 text-white text-[11px] rounded-md shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                     {item.title}
