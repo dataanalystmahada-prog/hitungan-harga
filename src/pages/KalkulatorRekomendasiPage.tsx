@@ -51,6 +51,7 @@ export const KalkulatorRekomendasiPage: React.FC = () => {
   const [allVariantsCount, setAllVariantsCount] = useState<number>(0);
   const [cheapestAvailablePrice, setCheapestAvailablePrice] = useState<number>(0);
   const [lastCalculatedProduk, setLastCalculatedProduk] = useState<string>('');
+  const [lastCalculatedLogo, setLastCalculatedLogo] = useState<string>('');
   const [lastCalculatedQty, setLastCalculatedQty] = useState<number>(0);
   const [lastCalculatedBudget, setLastCalculatedBudget] = useState<number>(0);
 
@@ -187,6 +188,7 @@ export const KalkulatorRekomendasiPage: React.FC = () => {
 
     setCalculatedItems(filtered);
     setLastCalculatedProduk(produk);
+    setLastCalculatedLogo(prosesLogo);
     setLastCalculatedQty(numericQty);
     setLastCalculatedBudget(numericBudget);
     setHasCalculated(true);
@@ -214,15 +216,17 @@ export const KalkulatorRekomendasiPage: React.FC = () => {
   // Generate plain text according to required user format
   const generateCopyText = useCallback(() => {
     if (sortedItems.length === 0) return '';
+    const logoName = lastCalculatedLogo || prosesLogo || 'Tanpa Logo / Polos';
     const lines = [
       `Produk : ${lastCalculatedProduk || produk}`,
+      `Logo : ${logoName}`,
       `Qty : ${formatNumber(lastCalculatedQty || qty)} pcs`,
       '',
       'Kode : ',
       ...sortedItems.map(item => `${formatRupiah(item.hargaJual)} : ${item.kode}`),
     ];
     return lines.join('\n');
-  }, [sortedItems, lastCalculatedProduk, lastCalculatedQty, produk, qty]);
+  }, [sortedItems, lastCalculatedProduk, lastCalculatedLogo, lastCalculatedQty, produk, prosesLogo, qty]);
 
   // Copy to clipboard
   const handleCopy = async () => {
@@ -597,6 +601,13 @@ export const KalkulatorRekomendasiPage: React.FC = () => {
                           <span className="text-slate-400">:</span>
                           <span className="font-bold text-slate-800 dark:text-slate-200">
                             {lastCalculatedProduk || produk}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 dark:text-slate-400 w-16 font-medium">Logo</span>
+                          <span className="text-slate-400">:</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">
+                            {lastCalculatedLogo || prosesLogo || 'Tanpa Logo / Polos'}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
